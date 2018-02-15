@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 #include "Common.h"
 #include "CAdES.h"
 #include "DerEncode.h"

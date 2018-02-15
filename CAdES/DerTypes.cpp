@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
 #include "Common.h"
 
 std::ostream& operator<<(std::ostream& os, const DerTypeContainer& type)
