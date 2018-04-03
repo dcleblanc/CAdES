@@ -665,7 +665,7 @@ public:
 		const unsigned long linelength = 80;
 		const unsigned long blocksperline = linelength / sizeof(size_t);
 
-		unsigned long cBlocks = o.value.size() / sizeof(size_t);
+		unsigned long cBlocks = static_cast<unsigned long>(o.value.size() / sizeof(size_t));
 		unsigned long cRemaining = o.value.size() % sizeof(size_t);
 		const size_t* pData = reinterpret_cast<const size_t*>(&o.value[0]);
 		std::ostringstream osTmp;
