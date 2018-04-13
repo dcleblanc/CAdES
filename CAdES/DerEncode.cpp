@@ -73,8 +73,11 @@ bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRe
 
 	// Decode a maximum of 8 bytes, which adds up to a 56-bit number
 	// That's MUCH bigger than anything we could possibly decode
-	// And bytes to decode has to be at least two, or it isn't legal DER
-	if (bytesToDecode > 8 || bytesToDecode + 1 > cbIn || bytesToDecode < 2)
+	// And bytes to decode has to be at least one, or it isn't legal
+    // Note - the case of 1 happens when you have a length between 128 and 255,
+    // so the high bit is set, which precludes short form, resulting in a pattern of 0x81, 0x8b 
+    // to encode the value of 139.
+	if (bytesToDecode > 8 || bytesToDecode + 1 > cbIn || bytesToDecode == 0)
 		return false;
 
 	cbRead = bytesToDecode + 1;
@@ -300,7 +303,7 @@ public:
 	size_t cb;
 };
 
-void DebugDer(const unsigned char * pIn, size_t cbIn, unsigned long level)
+void DebugDer(std::ostream& outFile, const unsigned char * pIn, size_t cbIn, unsigned long level)
 {
 	if (cbIn < 2)
 		throw std::exception("Corrupt input");
@@ -321,19 +324,19 @@ void DebugDer(const unsigned char * pIn, size_t cbIn, unsigned long level)
 
 		offset += cbRead;
 
-		std::cout << std::setfill(' ') << std::setw(level + 1) << "  ";
+        outFile << std::setfill(' ') << std::setw(level + 1) << "  ";
 
 		if (type.constructed)
 		{
 			// It is a set, or sequence, possibly app-specific
 			// Print just the type, and the size, then recurse
-			std::cout << type << " 0x" << std::setfill('0') << std::setw(2) << std::hex << size << std::endl;
-			DebugDer(pIn + offset, size, level + 1);
+            outFile << type << " 0x" << std::setfill('0') << std::setw(2) << std::hex << size << std::endl;
+			DebugDer(outFile, pIn + offset, size, level + 1);
 		}
 		else
 		{
 			// It is a primitive type
-			std::cout << type << " 0x" << std::setfill('0') << std::setw(2) << std::hex << size << " " << BasicDerType(pType, cbType) << std::endl;
+            outFile << type << " 0x" << std::setfill('0') << std::setw(2) << std::hex << size << " " << BasicDerType(pType, cbType) << std::endl;
 		}
 
 		// And increment to the next item

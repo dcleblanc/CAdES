@@ -155,22 +155,73 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		names.Encode(pOut, cbOut, cbUsed);
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        // This is a sequence of sets of AttributeTypeAndValue
+        for (size_t item = 0; item < name.size(); ++item)
+        {
+            name[item].Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+            eh.Update();
+        }
 	}
 
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
 	{
-		return names.Decode(pIn, cbIn, cbUsed);
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        // This is a sequence of sets of AttributeTypeAndValue
+        for (size_t item = 0; sh.DataSize() > 0; ++item)
+        {
+            RelativeDistinguishedName rdn;
+            if (!rdn.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+                return false;
+
+            name.push_back(rdn);
+            sh.Update();
+        }
+
+        return true;
 	}
 
 private:
 	virtual size_t SetDataSize() override
 	{
-		cbData = names.EncodedSize();
-		return cbData;
-	}
+        size_t cbNeeded = 0; 
 
-	RelativeDistinguishedName names;
+        // First, calculate how much is needed for the set of names
+        for (size_t i = 0; i < name.size(); ++i)
+        {
+            cbNeeded += name[i].EncodedSize();
+        }
+
+        return (cbData = cbNeeded);
+    }
+
+    /*
+        Name ::= CHOICE { -- only one possibility for now -- rdnSequence  RDNSequence }
+
+        RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+
+        RelativeDistinguishedName ::=
+            SET SIZE (1..MAX) OF AttributeTypeAndValue
+
+        AttributeTypeAndValue ::= SEQUENCE {
+            type     AttributeType,
+            value    AttributeValue }
+    */
+	std::vector<RelativeDistinguishedName> name;
 
 };
 
@@ -181,39 +232,13 @@ public:
 	// And oddly, it is a sequence that is a sequence of only one type
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		size_t offset = 0;
-		size_t cbNeeded = EncodedSize();
-
-		if (cbNeeded > cbOut)
-			throw std::overflow_error("Overflow in Encode");
-
-		pOut[0] = static_cast<unsigned char>(DerType::ConstructedSequence);
-		offset = 1;
-
-		if (!EncodeSize(cbData, pOut + offset, cbNeeded - offset, cbUsed))
-			throw std::exception("Error in EncodeSize");
-
-		offset += cbUsed;
-		rdnSequence.Encode(pOut + offset, cbNeeded - offset, cbUsed);
+		rdnSequence.Encode(pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
 	{
-		size_t offset = 0;
-		bool isNull = false;
-
-		if (!DecodeSequence(pIn, cbIn, cbUsed, isNull))
-			return false;
-
-		if (isNull)
-			return true;
-
-		offset += cbUsed;
-		if (!rdnSequence.Decode(pIn + offset, cbIn - offset, cbUsed))
-			return false;
-
-		cbUsed = offset + cbUsed;
-		return true;
+        // A Name is a CHOICE, but there's only one possible type, which is an rdnSequence
+        return rdnSequence.Decode(pIn, cbIn, cbUsed);
 	}
 
 private:

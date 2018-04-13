@@ -189,25 +189,76 @@ bool ParseDer(const unsigned char* pIn, size_t cbIn)
 	return true;
 }
 
-void ParseTest()
+void ParseTest(const char * szFile)
 {
-	std::ifstream stm("test.cer", std::ios::in | std::ios::binary);
+	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
 	std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
-		printf("Doh!\n");
-		return;
+        std::cout << "FILE_NOT_FOUND: " << szFile << std::endl;
+        return;
 	}
 
-	printf("Opened file\n");
-//	DebugDer(&contents[0], contents.size());
-
-	Certificate cert;
+    Certificate cert;
 
 	size_t cbUsed = 0;
-	if (cert.Decode(&contents[0], contents.size(), cbUsed))
-		printf("Yay!\n");
+
+    bool fSuccess = false;
+
+    try
+    {
+        fSuccess = cert.Decode(&contents[0], contents.size(), cbUsed);
+        if(fSuccess)
+            std::cout << "SUCCESS: " << szFile << std::endl;
+
+        // Now let's see if we can round-trip the file
+        size_t cbBuffer = (contents.size() + (4096 - 1)) & ~(4096 - 1);
+        std::vector<unsigned char> outBuf(cbBuffer);
+
+        size_t cbOut = 0;
+        cert.Encode(&outBuf[0], outBuf.size(), cbOut);
+
+        if (cbUsed != cbOut)
+            std::cout << "Output size mismatch" << std::endl;
+
+        // Now let's compare the two, ensure that they match
+        // For convenience - 
+        for (size_t pos = 0; pos < contents.size(); ++pos)
+        {
+            if (contents[pos] != outBuf[pos])
+            {
+                std::cout << "Mismatch at offset " << pos << " Input = " << (int)contents[pos] << " Output = " << (int)outBuf[pos] << std::endl;
+            }
+        }
+    }
+    catch(std::exception& doh)
+    {
+        std::cout << doh.what() << std::endl;
+    }
+
+    if (!fSuccess)
+    {
+        std::cout << "FAILED: " << szFile << std::endl;
+
+        std::string dbgFile(szFile);
+        dbgFile += ".dmp";
+        
+        std::ofstream ostm(dbgFile.c_str());
+
+        if (ostm.is_open())
+        {
+            try { DebugDer(ostm, &contents[0], contents.size()); }
+            catch (std::exception& oops)
+            {
+                std::cout << "Cannot create debug file for: " << szFile << " error= " << oops.what() << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Cannot open dmp file: " << dbgFile << std::endl;
+        }
+    }
 	
 	return;
 
@@ -215,9 +266,20 @@ void ParseTest()
 
 int main(int argc, char* argv[])
 {
-	argc; argv;
+    const char* szFile = nullptr;
 
-	ParseTest();
+    if (argc == 2)
+    {
+        szFile = argv[1];
+    }
+    else
+    {
+        std::cout << "Enter file name to parse" << std::endl;
+        return -1;
+    }
+
+
+	ParseTest(szFile);
 	/*
 	OidTest();
 	EncodeSizeTest();

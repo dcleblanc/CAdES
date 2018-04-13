@@ -10,8 +10,6 @@ size_t GetEncodedSize(std::vector<T>& in) // Non-const reference, because Encode
 	if (ret == 0)
 		return 2;
 
-	// Since this is a SET, need to encode it as a set
-	ret += GetSizeBytes(ret) + 1;
 	return ret;
 }
 

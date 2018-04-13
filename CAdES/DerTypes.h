@@ -124,7 +124,7 @@ inline size_t GetSizeBytes(unsigned long long size)
 bool EncodeSize(size_t size, unsigned char* out, size_t cbOut, size_t& cbUsed);
 bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRead);
 
-void DebugDer(const unsigned char* pIn, size_t cbIn, unsigned long level = 0);
+void DebugDer(std::ostream& outFile, const unsigned char* pIn, size_t cbIn, unsigned long level = 0);
 
 template <typename T>
 void EncodeSet(std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & cbUsed)
@@ -186,6 +186,8 @@ class AnyType;
 
 class DerBase
 {
+    friend class SequenceHelper;
+
 public:
 	DerBase() : cbData(0) {}
 
@@ -203,7 +205,7 @@ protected:
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
 	// adjusts pIn and cbIn to only include the sequence
-	bool DecodeSequenceOrSet(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
+	static bool DecodeSequenceOrSet(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
 	{
 		// Avoid complications - 
 
@@ -230,14 +232,13 @@ protected:
 		return true;
 	}
 
-	bool DecodeSequence(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, bool& isNull)
+	static bool DecodeSequence(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
 	{
-		size_t size = 0;
 		return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
 	}
 
 	template <typename T>
-	bool DecodeSetOrSequenceOf(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSetOrSequenceOf(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
 	{
 		bool isNull = false;
 		size_t offset = 0;
@@ -259,6 +260,7 @@ protected:
 		}
 
 		offset = cbPrefix;
+        cbIn = cbPrefix + size;
 
 		for (;;)
 		{
@@ -285,20 +287,20 @@ protected:
 	}
 
 	template <typename T>
-	bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
 	{
 		return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbUsed, out);
 	}
 
 	template <typename T>
-	bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
 	{
 		return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbUsed, out);
 	}
 
 	// Check for types that have a vector or a type of string
 
-	bool DecodeNull(const unsigned char* pIn, size_t cbIn, size_t& cbUsed)
+	static bool DecodeNull(const unsigned char* pIn, size_t cbIn, size_t& cbUsed)
 	{
 		if (cbIn >= 2 && pIn[0] == static_cast<unsigned char>(DerType::Null) && pIn[1] == 0)
 		{
@@ -311,7 +313,7 @@ protected:
 	}
 
 	template <typename T>
-	bool Decode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
+	static bool Decode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -331,6 +333,127 @@ protected:
 
 	// Don't calculate the data size more than once
 	size_t cbData;
+};
+
+enum class DecodeResult
+{
+    Failed,
+    Null,
+    Success
+};
+
+class SequenceHelper
+{
+public:
+    SequenceHelper(size_t& _cbUsed) : dataSize(0), prefixSize(0), isNull(false), cbUsed(_cbUsed), cbCurrent(0) {}
+    ~SequenceHelper()
+    {
+        Update();
+        CheckExit();
+        cbUsed += prefixSize;
+    }
+
+    DecodeResult Init(const unsigned char * pIn, size_t cbIn)
+    {
+        // This checks internally to see if the data size is within bounds of cbIn
+        if (!DerBase::DecodeSequence(pIn, cbIn, cbUsed, dataSize, isNull))
+            return DecodeResult::Failed;
+
+        if (isNull)
+            return DecodeResult::Null;
+
+        prefixSize = cbUsed;
+        cbUsed = 0; // Let cbUsed now track just the amount of remaining data
+        return DecodeResult::Success;
+    }
+
+    void CheckExit()
+    {
+        // if it isn't an error return, then make sure we've consumed all the data
+        if (!isNull && cbUsed != dataSize)
+            throw std::exception("Parsing error");
+    }
+
+    const unsigned char* DataPtr(const unsigned char * pIn) const { return pIn + cbUsed + prefixSize; }
+    size_t DataSize() 
+    { 
+        if (cbUsed > dataSize)
+            throw std::exception("Integer overflow in data size");
+
+        return dataSize - cbUsed;
+    }
+
+    void Update() 
+    { 
+        cbUsed += cbCurrent; 
+        cbCurrent = 0;
+    }
+
+    size_t& CurrentSize() { return cbCurrent; }
+
+private:
+    size_t dataSize;
+    size_t prefixSize;
+    size_t cbCurrent;
+    size_t& cbUsed;
+    bool isNull;
+};
+
+class EncodeHelper
+{
+public:
+    EncodeHelper(size_t& _cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed){}
+
+    ~EncodeHelper()
+    {
+        Update();
+        CheckExit();
+        cbUsed = offset;
+    }
+
+    void Init(size_t _cbNeeded, unsigned char* pOut, size_t cbOut, unsigned char type, size_t cbData)
+    { 
+        cbNeeded = _cbNeeded; 
+        if(cbNeeded > cbOut || cbOut < 2)
+            throw std::overflow_error("Overflow in Encode");
+
+        // Set the type
+        *pOut = type;
+        offset = 1;
+
+        EncodeSize(cbData, DataPtr(pOut), DataSize(), CurrentSize());
+        Update();
+    }
+
+    void Update()
+    {
+        offset += cbCurrent;
+        cbCurrent = 0;
+    }
+
+    void CheckExit()
+    {
+        if (offset != cbNeeded)
+            throw std::exception("Size needed not equal to size used");
+    }
+
+    unsigned char* DataPtr(unsigned char * pOut) const { return pOut + offset; }
+
+    size_t DataSize()
+    {
+        if(offset > cbNeeded)
+            throw std::exception("Integer overflow in data size");
+
+        return cbNeeded - offset;
+    }
+
+    size_t& CurrentSize() { return cbCurrent; }
+
+private:
+    size_t offset;
+    size_t cbNeeded;
+    size_t cbCurrent;
+    size_t& cbUsed;
 };
 
 template <typename T>
@@ -433,7 +556,13 @@ class AnyType final : public DerBase
 {
 public:
 	// encode this to NULL if empty
-	virtual size_t EncodedSize() { return encodedValue.size(); }
+	virtual size_t EncodedSize() 
+    {
+        if (encodedValue.size() == 0)
+            SetNull();
+
+        return encodedValue.size(); 
+    }
 
 	void SetNull()
 	{
