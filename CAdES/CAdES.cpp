@@ -108,7 +108,7 @@ void Attribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     attrType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(attrValues, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool Attribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -448,7 +448,7 @@ void AttributeCertificateInfo::Encode(unsigned char * pOut, size_t cbOut, size_t
 	attrCertValidityPeriod.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(attributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	issuerUniqueID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
@@ -938,7 +938,7 @@ void NoticeReference::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     organization.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(noticeNumbers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool NoticeReference::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -1007,7 +1007,7 @@ void CrlOcspRef::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
-    EncodeSet(crlids, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	ocspids.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
@@ -1082,7 +1082,7 @@ bool OtherRevRefs::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 
 void OcspListID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 {
-	EncodeSet(ocspResponses, pOut, cbOut, cbUsed);
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, pOut, cbOut, cbUsed);
 }
 
 void RevocationValues::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
@@ -1091,10 +1091,10 @@ void RevocationValues::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUse
 
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
-    EncodeSet(crlVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(ocspVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	otherRevVals.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
@@ -1179,7 +1179,7 @@ void BasicOCSPResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
 	signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool BasicOCSPResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -1229,7 +1229,7 @@ void ResponseData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	producedAt.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(responses, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
@@ -1277,10 +1277,10 @@ void SigningCertificateV2::Encode(unsigned char * pOut, size_t cbOut, size_t & c
 
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
-    EncodeSet(certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SigningCertificateV2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -1619,7 +1619,7 @@ void PolicyInformation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
     policyIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(policyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -1688,10 +1688,10 @@ void SigningCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbU
 
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
-    EncodeSet(certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SigningCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -1954,7 +1954,7 @@ void SignerInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	digestAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(signedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
@@ -1963,7 +1963,7 @@ void SignerInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(unsignedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SignerInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -2170,16 +2170,16 @@ void SignedData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(digestAlgorithms, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	encapContentInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(crls, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(signerInfos, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SignedData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -2270,7 +2270,7 @@ void SignaturePolicyId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
 	sigPolicyHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(sigPolicyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SignaturePolicyId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -2382,7 +2382,7 @@ void CommitmentTypeIndication::Encode(unsigned char * pOut, size_t cbOut, size_t
     commitmentTypeId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(commitmentTypeQualifier, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool CommitmentTypeIndication::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -2421,7 +2421,7 @@ void SignerLocation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	localityName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
-	EncodeSet(postalAdddress, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 }
 
 bool SignerLocation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -2458,7 +2458,7 @@ void SignerAttribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
-    EncodeSet(claimedAttributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
 
 	certifiedAttributes.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());

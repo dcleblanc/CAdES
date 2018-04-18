@@ -522,16 +522,19 @@ bool Boolean::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 void Integer::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::Integer, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void BitString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::BitString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void OctetString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::OctetString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void Enumerated::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
@@ -543,21 +546,25 @@ void Enumerated::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 	pOut[1] = 1;
 	pOut[2] = value;
 	cbUsed = 3;
+    CheckOutputSize(cbUsed);
 }
 
 void ObjectIdentifier::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::ObjectIdentifier, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void UTCTime::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::UTCTime, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void GeneralizedTime::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::GeneralizedTime, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void Time::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
@@ -574,6 +581,7 @@ void Time::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 		pOut[0] = static_cast<unsigned char>(DerType::Null);
 		pOut[1] = 0;
 	}
+    CheckOutputSize(cbUsed);
 }
 
 bool Time::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -619,41 +627,49 @@ bool Time::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 void IA5String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::IA5String, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void GeneralString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::GeneralString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void PrintableString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::PrintableString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void T61String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::T61String, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void UTF8String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::UTF8String, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void VisibleString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::VisibleString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void UniversalString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char32_t>(DerType::UniversalString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 void BMPString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<wchar_t>(DerType::BMPString, value, pOut, cbOut, cbUsed);
+    CheckOutputSize(cbUsed);
 }
 
 // Shouldn't need this for this class, but everything needs it implemented

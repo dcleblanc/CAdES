@@ -131,7 +131,7 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		EncodeSet(attrs, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, attrs, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
@@ -203,7 +203,8 @@ private:
         // First, calculate how much is needed for the set of names
         for (size_t i = 0; i < name.size(); ++i)
         {
-            cbNeeded += name[i].EncodedSize();
+            size_t cbName = name[i].EncodedSize();
+            cbNeeded += cbName;
         }
 
         return (cbData = cbNeeded);
@@ -241,10 +242,15 @@ public:
         return rdnSequence.Decode(pIn, cbIn, cbUsed);
 	}
 
+    virtual size_t EncodedSize() override
+    {
+        return rdnSequence.EncodedSize();
+    }
+
 private:
 	virtual size_t SetDataSize() override
 	{
-		cbData = rdnSequence.EncodedSize();
+		cbData = 0;
 		return cbData;
 	}
 
@@ -467,7 +473,7 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		EncodeSet(values, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, values, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
@@ -509,17 +515,29 @@ public:
 private:
 	virtual size_t SetDataSize() override
 	{
+        // To facilitate debugging
+        size_t cbVersion = version.EncodedSize();
+        size_t cbSerial = serialNumber.EncodedSize();
+        size_t cbSignature = signature.EncodedSize();
+        size_t cbIssuer = issuer.EncodedSize();
+        size_t cbValidity = validity.EncodedSize();
+        size_t cbSubject = subject.EncodedSize();
+        size_t cbPublicKey = subjectPublicKeyInfo.EncodedSize();
+        size_t cbIssuerId = issuerUniqueID.EncodedSize();
+        size_t cbSubjectId = subjectUniqueID.EncodedSize();
+        size_t cbExtensions = extensions.EncodedSize();
+
 		cbData =
-			version.EncodedSize() +
-			serialNumber.EncodedSize() +
-			signature.EncodedSize() +
-			issuer.EncodedSize() +
-			validity.EncodedSize() + 
-			subject.EncodedSize() + 
-			subjectPublicKeyInfo.EncodedSize() +
-			issuerUniqueID.EncodedSize() +
-			subjectUniqueID.EncodedSize() +
-			extensions.EncodedSize();
+			cbVersion +
+			cbSerial +
+			cbSignature +
+			cbIssuer +
+			cbValidity + 
+			cbSubject + 
+			cbPublicKey +
+			cbIssuerId +
+			cbSubjectId +
+			cbExtensions;
 
 		return cbData;
 	}
@@ -743,7 +761,7 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		SetDataSize();
-		EncodeSet(names, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, names, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
@@ -985,7 +1003,7 @@ class RevokedCertificates final : public DerBase
 public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		EncodeSet(entries, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, entries, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
@@ -1676,7 +1694,7 @@ class PKIFreeText final : public DerBase
 public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-		EncodeSet(values, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, values, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override

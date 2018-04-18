@@ -127,7 +127,7 @@ bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRe
 void DebugDer(std::ostream& outFile, const unsigned char* pIn, size_t cbIn, unsigned long level = 0);
 
 template <typename T>
-void EncodeSet(std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 {
 	size_t cbInternal = 0;
 	size_t offset = 0;
@@ -135,7 +135,7 @@ void EncodeSet(std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & 
 	if (in.size() == 0)
 	{
 		if (cbOut < 2)
-			throw std::overflow_error("Overflow in EncodeSet");
+			throw std::overflow_error("Overflow in EncodeSetOrSequenceOf");
 
 		pOut[0] = static_cast<unsigned char>(DerType::Null);
 		pOut[1] = 0;
@@ -143,7 +143,7 @@ void EncodeSet(std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & 
 		return;
 	}
 
-	pOut[0] = static_cast<unsigned char>(DerType::ConstructedSet);
+	pOut[0] = static_cast<unsigned char>(type);
 
 	size_t cbVector = GetEncodedSize(in);
 
@@ -202,6 +202,12 @@ public:
 
 protected:
 	virtual size_t SetDataSize() = 0;
+
+    void CheckOutputSize(size_t cbUsed)
+    {
+        if (1 + GetSizeBytes(cbData) + cbData != cbUsed)
+            throw std::exception("Size mismatch!");
+    }
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
 	// adjusts pIn and cbIn to only include the sequence
@@ -434,7 +440,8 @@ public:
     void CheckExit()
     {
         if (offset != cbNeeded)
-            throw std::exception("Size needed not equal to size used");
+            //throw std::exception("Size needed not equal to size used");
+            std::cout << "Size needed not equal to size used" << std::endl;
     }
 
     unsigned char* DataPtr(unsigned char * pOut) const { return pOut + offset; }
@@ -465,6 +472,12 @@ public:
 	size_t EncodedSize()
 	{
 		size_t innerSize = innerType.EncodedSize();
+
+        // if innerType decodes to null, then this isn't present
+        // Mirror the logic in Encode
+        if (innerSize <= 2)
+            return 0;
+
 		return 1 + GetSizeBytes(innerSize) + innerSize;
 	}
 
@@ -592,26 +605,7 @@ public:
 
 		in.Encode(&encodedValue[0], cbOut, cbUsed);
 	}
-
-	template <typename T>
-	void SetValue(std::vector<T>& in)
-	{
-		if (in.size() == 0)
-		{
-			SetNull();
-			return;
-		}
-
-		size_t cbDataIn = GetEncodedSize(in);
-		size_t cbSize = GetSizeBytes(cbDataIn);
-		size_t cbBuffer = cbDataIn + cbSize + 1;
-
-		encodedValue.resize(cbBuffer);
-		unsigned char* pBuffer = &encodedValue[0];
-		size_t cbUsed = 0;
-		EncodeSet(in, pBuffer, cbBuffer, cbUsed);
-	}
-
+ 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		// Should be encoded already

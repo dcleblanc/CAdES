@@ -189,6 +189,27 @@ bool ParseDer(const unsigned char* pIn, size_t cbIn)
 	return true;
 }
 
+void DebugDump(const char* szFile, const unsigned char* pData, size_t cbData)
+{
+    std::string dbgFile(szFile);
+    dbgFile += ".dmp";
+
+    std::ofstream ostm(dbgFile.c_str());
+
+    if (ostm.is_open())
+    {
+        try { DebugDer(ostm, pData, cbData); }
+        catch (std::exception& oops)
+        {
+            std::cout << "Cannot create debug file for: " << szFile << " error= " << oops.what() << std::endl;
+        }
+    }
+    else
+    {
+        std::cout << "Cannot open dmp file: " << dbgFile << std::endl;
+    }
+}
+
 void ParseTest(const char * szFile)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
@@ -203,24 +224,34 @@ void ParseTest(const char * szFile)
     Certificate cert;
 
 	size_t cbUsed = 0;
+    size_t cbOut = 0;
 
-    bool fSuccess = false;
+    bool fEncode = false;
+    bool fDecode = false;
+    size_t cbBuffer = (contents.size() + (4096 - 1)) & ~(4096 - 1);
+    std::vector<unsigned char> outBuf(cbBuffer);
 
     try
     {
-        fSuccess = cert.Decode(&contents[0], contents.size(), cbUsed);
-        if(fSuccess)
+        fDecode = cert.Decode(&contents[0], contents.size(), cbUsed);
+        if (fDecode)
+        {
             std::cout << "SUCCESS: " << szFile << std::endl;
+        }
+
+        DebugDump(szFile, &contents[0], contents.size());
 
         // Now let's see if we can round-trip the file
-        size_t cbBuffer = (contents.size() + (4096 - 1)) & ~(4096 - 1);
-        std::vector<unsigned char> outBuf(cbBuffer);
-
-        size_t cbOut = 0;
         cert.Encode(&outBuf[0], outBuf.size(), cbOut);
 
         if (cbUsed != cbOut)
+        {
             std::cout << "Output size mismatch" << std::endl;
+        }
+        else
+        {
+            fEncode = true;
+        }
 
         // Now let's compare the two, ensure that they match
         // For convenience - 
@@ -229,34 +260,26 @@ void ParseTest(const char * szFile)
             if (contents[pos] != outBuf[pos])
             {
                 std::cout << "Mismatch at offset " << pos << " Input = " << (int)contents[pos] << " Output = " << (int)outBuf[pos] << std::endl;
+                fEncode = false;
             }
         }
     }
     catch(std::exception& doh)
     {
         std::cout << doh.what() << std::endl;
+        if (fDecode)
+            fEncode = false;
     }
 
-    if (!fSuccess)
+    if (fDecode && !fEncode)
     {
         std::cout << "FAILED: " << szFile << std::endl;
 
-        std::string dbgFile(szFile);
-        dbgFile += ".dmp";
-        
-        std::ofstream ostm(dbgFile.c_str());
-
-        if (ostm.is_open())
+        if (!fEncode)
         {
-            try { DebugDer(ostm, &contents[0], contents.size()); }
-            catch (std::exception& oops)
-            {
-                std::cout << "Cannot create debug file for: " << szFile << " error= " << oops.what() << std::endl;
-            }
-        }
-        else
-        {
-            std::cout << "Cannot open dmp file: " << dbgFile << std::endl;
+            std::string szEncode(szFile);
+            szEncode += "_encode";
+            DebugDump(szEncode.c_str(), &outBuf[0], cbOut);
         }
     }
 	
