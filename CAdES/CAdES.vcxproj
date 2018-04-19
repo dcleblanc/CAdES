@@ -163,6 +163,7 @@
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="DerEncode.cpp" />
     <ClCompile Include="DerTypes.cpp" />
+    <ClCompile Include="Oids.cpp" />
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="Win32Test.cpp" />
   </ItemGroup>

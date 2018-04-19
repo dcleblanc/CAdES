@@ -287,9 +287,13 @@ void ParseTest(const char * szFile)
 
 }
 
+void PrintOids();
+
 int main(int argc, char* argv[])
 {
     const char* szFile = nullptr;
+
+    PrintOids();
 
     if (argc == 2)
     {

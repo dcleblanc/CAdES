@@ -381,6 +381,8 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+private:
+
 	ObjectIdentifier algorithm;
 	AnyType parameters; // DEFINED BY algorithm OPTIONAL  
 };

@@ -245,4 +245,3 @@ const char id_ecdsa_with_SHA224[] = "1.2.840.10045.4.3.1";
 const char id_ecdsa_with_SHA256[] = "1.2.840.10045.4.3.2";
 const char id_ecdsa_with_SHA384[] = "1.2.840.10045.4.3.3";
 const char id_ecdsa_with_SHA512[] = "1.2.840.10045.4.3.4";
-

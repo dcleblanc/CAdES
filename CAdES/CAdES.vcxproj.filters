@@ -56,6 +56,9 @@
     <ClCompile Include="CAdES.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Oids.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore">

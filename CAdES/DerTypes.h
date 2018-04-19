@@ -783,6 +783,18 @@ public:
 		return DerBase::Decode(pIn, cbIn, DerType::BitString, cbUsed, value);
 	}
 
+    bool GetValue(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    {
+        if (value.size() < 2)
+            return false;
+
+        unusedBits = value[0];
+        out.clear();
+        out.resize(value.size() - 1);
+        out.insert(out.begin(), value.begin() + 1, value.end());
+        return true;
+    }
+
 	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
 	{
 		const unsigned long linelength = 80;
@@ -918,6 +930,8 @@ public:
 		os << s;
 		return os;
 	}
+
+    std::vector<unsigned char>& GetBytes() { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
