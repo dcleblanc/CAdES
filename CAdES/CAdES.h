@@ -14,6 +14,7 @@
 	https://www.rfc-editor.org/rfc/rfc3281.txt -- An Internet Attribute Certificate Profile for Authorization
 	https://www.rfc-editor.org/rfc/rfc3852.txt -- Cryptographic Message Syntax (CMS)
 	https://tools.ietf.org/html/rfc4055        -- Algorithm Identifiers
+    https://tools.ietf.org/html/rfc4519        -- LDAP protocol, defines additional name elements that can be included in issuer or subject names
 
 	https://www.rfc-editor.org/rfc/rfc5126.txt -- CMS Advanced Electronic Signatures (CAdES)
 	https://www.rfc-editor.org/rfc/rfc5035.txt -- Enhanced Security Services (ESS) Update: Adding CertID Algorithm Agility
@@ -513,6 +514,22 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+    unsigned long GetVersion() const
+    {
+        const Integer& _version = version.GetInnerType();
+        unsigned long l = 0;
+
+        if (_version.GetValue(l) && l < 3)
+        {
+            // Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }
+            return l + 1;
+        }
+        else
+        {
+            return static_cast<unsigned long>(0);
+        }
+    }
 
 private:
 	virtual size_t SetDataSize() override
@@ -1512,13 +1529,6 @@ id-cti-ets-proofOfCreation OBJECT IDENTIFIER ::=
 { iso(1) member-body(2) us(840) rsadsi(113549) pkcs(1) pkcs-9(9)
 smime(16) cti(6) 6}
 */
-
-const char id_cti_ets_proofOfOrigin[]   = "1.2.840.113549.1.9.16.1";
-const char id_cti_ets_proofOfReceipt[]  = "1.2.840.113549.1.9.16.2";
-const char id_cti_ets_proofOfDelivery[] = "1.2.840.113549.1.9.16.3";
-const char id_cti_ets_proofOfSender[]   = "1.2.840.113549.1.9.16.4";
-const char id_cti_ets_proofOfApproval[] = "1.2.840.113549.1.9.16.5";
-const char id_cti_ets_proofOfCreation[] = "1.2.840.113549.1.9.16.6";
 
 class CommitmentTypeQualifier final : public DerBase
 {

@@ -12,6 +12,15 @@ void OidTest();
 void OidTest() {}
 #endif // WIN32
 
+struct options
+{
+    options() : dumpDebug(false){}
+
+    bool dumpDebug;
+};
+
+options opts;
+
 void InstantiateObjects()
 {
 	EncapsulatedContentInfo a1;
@@ -210,6 +219,11 @@ void DebugDump(const char* szFile, const unsigned char* pData, size_t cbData)
     }
 }
 
+void TestCertificate(Certificate& cert)
+{
+    cert;
+}
+
 void ParseTest(const char * szFile)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
@@ -237,9 +251,11 @@ void ParseTest(const char * szFile)
         if (fDecode)
         {
             std::cout << "SUCCESS: " << szFile << std::endl;
+            TestCertificate(cert);
         }
 
-        DebugDump(szFile, &contents[0], contents.size());
+        if(opts.dumpDebug)
+            DebugDump(szFile, &contents[0], contents.size());
 
         // Now let's see if we can round-trip the file
         cert.Encode(&outBuf[0], outBuf.size(), cbOut);
@@ -288,20 +304,45 @@ void ParseTest(const char * szFile)
 }
 
 void PrintOids();
+void TestOidTable();
 
 int main(int argc, char* argv[])
 {
+    bool fPrintUsage = false;
     const char* szFile = nullptr;
 
+    // Ensure that the core elements of the library actually function
+    // PrintOids is needed if you need to regenerate the OID table else it is a noop
     PrintOids();
+    TestOidTable();
 
-    if (argc == 2)
+    // Last argument, if present, has to be the file name
+    for (int i = 1; i < argc - 1; ++i)
     {
-        szFile = argv[1];
+        if (argv[i][0] == '-')
+        {
+            switch (argv[i][1])
+            {
+            case 'd':
+                opts.dumpDebug = true;
+                break;
+            default:
+                std::cout << argv[i] << " unsupported option" << std::endl;
+                fPrintUsage = true;
+                break;
+            }
+        }
+    }
+
+    if (argc >= 2 && !fPrintUsage)
+    {
+        szFile = argv[argc-1];
     }
     else
     {
-        std::cout << "Enter file name to parse" << std::endl;
+        std::cout << "Usage is " << argv[0] << "[options] [Certificate file]" << std::endl;
+        std::cout << "Currently supported options are:" << std::endl;
+        std::cout << "\t-d - Create debug dump of input file" << std::endl;
         return -1;
     }
 

@@ -149,7 +149,7 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOu
 
 	offset = 1;
 	if (!EncodeSize(cbVector, pOut + offset, cbOut - offset, cbInternal))
-		throw std::exception("Error in EncodeSize");
+		throw std::out_of_range("Error in EncodeSize");
 
 	offset += cbInternal;
 
@@ -172,7 +172,7 @@ inline bool CheckDecode(const unsigned char* pIn, size_t cbIn, const DerType typ
 	}
 
 	if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
-		throw std::exception("Illegal size value");
+		throw std::out_of_range("Illegal size value");
 
 	cbPrefix++;
 	return true;
@@ -206,7 +206,7 @@ protected:
     void CheckOutputSize(size_t cbUsed)
     {
         if (1 + GetSizeBytes(cbData) + cbData != cbUsed)
-            throw std::exception("Size mismatch!");
+            throw std::out_of_range("Size mismatch!");
     }
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
@@ -274,7 +274,7 @@ protected:
 			T t;
 
 			if (offset > cbIn)
-				throw std::exception("Integer overflow");
+				throw std::overflow_error("Integer overflow");
 
 			if (!t.Decode(pIn + offset, cbIn - offset, cbElement))
 				return false;
@@ -377,14 +377,14 @@ public:
     {
         // if it isn't an error return, then make sure we've consumed all the data
         if (!isNull && cbUsed != dataSize)
-            throw std::exception("Parsing error");
+            throw std::runtime_error("Parsing error");
     }
 
     const unsigned char* DataPtr(const unsigned char * pIn) const { return pIn + cbUsed + prefixSize; }
     size_t DataSize() 
     { 
         if (cbUsed > dataSize)
-            throw std::exception("Integer overflow in data size");
+            throw std::overflow_error("Integer overflow in data size");
 
         return dataSize - cbUsed;
     }
@@ -440,8 +440,8 @@ public:
     void CheckExit()
     {
         if (offset != cbNeeded)
-            //throw std::exception("Size needed not equal to size used");
-            std::cout << "Size needed not equal to size used" << std::endl;
+            throw std::runtime_error("Size needed not equal to size used");
+            // std::cout << "Size needed not equal to size used" << std::endl;
     }
 
     unsigned char* DataPtr(unsigned char * pOut) const { return pOut + offset; }
@@ -449,7 +449,7 @@ public:
     size_t DataSize()
     {
         if(offset > cbNeeded)
-            throw std::exception("Integer overflow in data size");
+            throw std::overflow_error("Integer overflow in data size");
 
         return cbNeeded - offset;
     }
@@ -526,7 +526,7 @@ public:
 
 		if (1 + cbSize + innerSize > cbOut)
 		{
-			throw std::exception("Insufficient buffer");
+			throw std::out_of_range("Insufficient buffer");
 		}
 
 		DerTypeContainer typeContainer(type);
@@ -557,6 +557,8 @@ public:
 
 		return false;
 	}
+
+    const T& GetInnerType() const { return innerType; }
 
 private:
 	T innerType;
@@ -637,7 +639,7 @@ public:
 			size_t cbPrefix = 0;
 
 			if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
-				throw std::exception("Illegal size value");
+				throw std::out_of_range("Illegal size value");
 
 			encodedValue.clear();
 			cbUsed = 1 + cbPrefix + static_cast<size_t>(size);
@@ -763,6 +765,38 @@ public:
 		return os;
 	}
 
+    size_t ByteCount() const { return value.size(); }
+
+    bool GetValue(unsigned long& data) const
+    {
+        size_t cbValue = value.size();
+
+        if (cbValue == 0)
+            return false;
+
+        // Test for leading zero
+        const unsigned char* pData = &value[0];
+
+        if (*pData == 0)
+        {
+            ++pData;
+            --cbValue;
+        }
+
+        if (cbValue > 4)
+            return false;
+
+        data = 0;
+        for (size_t i = 0; i < cbValue; ++i)
+        {
+            data += *pData;
+            if (i < cbValue - 1)
+                data <<= 8;
+        }
+
+        return true;
+    }
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -883,7 +917,7 @@ public:
 
 		// Now check specifics for this type
 		if (cbPrefix + size != 3)
-			throw std::exception("Incorrect decode");
+			throw std::length_error("Incorrect decode");
 
 		value = pIn[2];
 		cbUsed = 3;
@@ -905,7 +939,7 @@ private:
 class ObjectIdentifier final : public DerBase
 {
 public:
-	ObjectIdentifier(const char* szOid)
+	ObjectIdentifier(const char* szOid) : oidIndex(~static_cast<size_t>(0))
 	{
 		SetValue(szOid);
 	}
@@ -919,7 +953,12 @@ public:
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
 	{
-		return DerBase::Decode(pIn, cbIn, DerType::ObjectIdentifier, cbUsed, value);
+        bool fRet = DerBase::Decode(pIn, cbIn, DerType::ObjectIdentifier, cbUsed, value);
+
+        if(fRet)
+            SetOidIndex();
+
+        return fRet;
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const ObjectIdentifier& obj)
@@ -931,9 +970,29 @@ public:
 		return os;
 	}
 
+    const char* GetOidLabel() const 
+    {
+        // This will internally ignore invalid values to return null
+        return ::GetOidLabel(oidIndex);
+    }
+
+    const char* GetOidString() const
+    {
+        return ::GetOidString(oidIndex);
+    }
+
     std::vector<unsigned char>& GetBytes() { return value; }
 
 private:
+
+    void SetOidIndex()
+    {
+        if (GetOidInfoIndex(value, oidIndex))
+            return;
+
+        oidIndex = ~static_cast<size_t>(0);
+    }
+
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
 	void EncodeLong(unsigned long in, unsigned char* out, size_t cbOut, size_t& cbUsed);
@@ -941,6 +1000,7 @@ private:
 	void GetNextLong(const char* start, const char*& next, unsigned long& out);
 
 	std::vector<unsigned char> value;
+    size_t oidIndex;
 
 };
 

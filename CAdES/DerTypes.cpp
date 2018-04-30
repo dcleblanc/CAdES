@@ -180,6 +180,12 @@ void BitString::SetValue(unsigned char unusedBits, const unsigned char * data, s
 
 bool ObjectIdentifier::ToString(std::string & out) const
 {
+    // If possible, just look it up in our table
+    const char* szOid = this->GetOidString();
+
+    if (szOid != nullptr)
+        out = szOid;
+
 	std::string tmp;
 	size_t cbRead = 0;
 	size_t pos = 0;
@@ -270,6 +276,8 @@ void ObjectIdentifier::SetValue(const char * szOid)
 		EncodeLong(first, buf, sizeof(buf), cbUsed);
 		value.insert(value.end(), buf, buf + cbUsed);
 	}
+
+    SetOidIndex();
 }
 
 void ObjectIdentifier::EncodeLong(unsigned long in, unsigned char * out, size_t cbOut, size_t & cbUsed)
