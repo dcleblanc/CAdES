@@ -200,6 +200,18 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) = 0;
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) = 0;
 
+    template <typename T>
+    static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+    {
+        return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbUsed, out);
+    }
+
+    template <typename T>
+    static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+    {
+        return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbUsed, out);
+    }
+
 protected:
 	virtual size_t SetDataSize() = 0;
 
@@ -207,6 +219,11 @@ protected:
     {
         if (1 + GetSizeBytes(cbData) + cbData != cbUsed)
             throw std::out_of_range("Size mismatch!");
+    }
+
+    static bool DecodeSequence(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
+    {
+        return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
     }
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
@@ -236,11 +253,6 @@ protected:
 		// Adjust these to start at the beginning of the sequence
 		cbUsed = cbPrefix;
 		return true;
-	}
-
-	static bool DecodeSequence(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
-	{
-		return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
 	}
 
 	template <typename T>
@@ -290,18 +302,6 @@ protected:
 				return true;
 			}
 		}
-	}
-
-	template <typename T>
-	static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
-	{
-		return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbUsed, out);
-	}
-
-	template <typename T>
-	static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
-	{
-		return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbUsed, out);
 	}
 
 	// Check for types that have a vector or a type of string
@@ -666,6 +666,42 @@ public:
 		return os;
 	}
 
+    bool ToString(std::string& out) const
+    {
+        out.clear();
+
+        switch (GetDerType())
+        {
+        case DerType::Null:
+            out = "";
+            break;
+
+        case DerType::IA5String:
+        case DerType::GeneralString:
+        case DerType::PrintableString:
+        case DerType::T61String:
+        case DerType::UTF8String:
+        case DerType::VisibleString:
+        {
+            size_t valueSize = 0;
+            size_t cbRead = 0;
+            if (DecodeSize(&encodedValue[1], encodedValue.size() - 1, valueSize, cbRead))
+            {
+                const char* sz = reinterpret_cast<const char*>(&encodedValue[1 + cbRead]);
+                out.reserve(valueSize);
+                out.append(sz, valueSize);
+                return true;
+            }
+            return false;
+        }
+
+        default:
+            return false;
+        }
+    }
+
+    DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
+
 private:
 	std::vector<unsigned char> encodedValue;
 };
@@ -797,6 +833,8 @@ public:
         return true;
     }
 
+    const std::vector<unsigned char>& GetBytes() const { return value; }
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -817,7 +855,16 @@ public:
 		return DerBase::Decode(pIn, cbIn, DerType::BitString, cbUsed, value);
 	}
 
-    bool GetValue(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    size_t ValueSize() const
+    {
+        if (value.size() < 2)
+            return 0;
+        
+        unsigned char unusedBits = value[0];
+        return value.size() * 8 - unusedBits;
+    }
+
+    bool GetValue(unsigned char& unusedBits, std::vector<unsigned char>& out) const 
     {
         if (value.size() < 2)
             return false;
@@ -827,6 +874,15 @@ public:
         out.resize(value.size() - 1);
         out.insert(out.begin(), value.begin() + 1, value.end());
         return true;
+    }
+
+    bool GetValue(const unsigned char*& pValue, size_t& cbValue)
+    {
+        if (value.size() < 2)
+            return false;
+
+        pValue = &value[0];
+        cbValue = value.size();
     }
 
 	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
@@ -873,6 +929,8 @@ public:
 		value.resize(cb);
 		value.insert(value.begin(), data, data + cb);
 	}
+
+    const std::vector<unsigned char>& GetValue() const { return value; }
 	
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 
@@ -982,6 +1040,8 @@ public:
     }
 
     std::vector<unsigned char>& GetBytes() { return value; }
+
+    bool IsEmpty() const { return value.size() == 0; }
 
 private:
 
@@ -1159,6 +1219,8 @@ public:
 		return os;
 	}
 
+    bool ToString(std::string& out) const;
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -1208,6 +1270,8 @@ public:
 		return os;
 	}
 
+    const std::string& ToString() const { return value; }
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -1239,6 +1303,8 @@ public:
 		return os;
 	}
 
+    const std::string& ToString() const { return value; }
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -1265,6 +1331,8 @@ public:
 		os << str.value;
 		return os;
 	}
+
+    const std::string& ToString() const { return value; }
 
 private:
 
@@ -1297,6 +1365,8 @@ public:
 		os << str.value;
 		return os;
 	}
+
+    const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1333,6 +1403,8 @@ public:
 		return os;
 	}
 
+    const std::string& ToString() const { return value; }
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -1363,6 +1435,8 @@ public:
 		os << str.value;
 		return os;
 	}
+
+    const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }

@@ -632,6 +632,57 @@ bool Time::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return fRet;
 }
 
+bool Time::ToString(std::string & out) const
+{
+    // Print this out as YYYY/MM/DD HH:MM:SSZ
+    size_t offset = 0;
+    switch (type)
+    {
+    case TimeType::GeneralizedTime:
+        out.append(value, offset, 4);
+        offset = 4;
+        break;
+
+    case TimeType::UTCTime:
+        if (value[0] < '5')
+        {
+            out = "20";
+        }
+        else
+        {
+            out = "19";
+        }
+
+        out.append(value, offset, 2);
+        offset = 2;
+        break;
+    case TimeType::NotSet:
+        return false;
+    }
+
+    out += '/';
+    // MM
+    out.append(value, offset, 2);
+    offset += 2;
+    out += '/';
+    // DD
+    out.append(value, offset, 2);
+    offset += 2;
+
+    out += ' ';
+    // HH
+    out.append(value, offset, 2);
+    offset += 2;
+    out += ':';
+    // MM
+    out.append(value, offset, 2);
+    offset += 2;
+    out += ':';
+    // SS
+    out.append(value, offset, 3);
+    return true;
+}
+
 void IA5String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::IA5String, value, pOut, cbOut, cbUsed);

@@ -115,6 +115,24 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+    const char* GetTypeLabel() const { return type.GetOidLabel(); }
+    const AnyType& GetValue() const { return value; }
+
+    bool GetValueAsString(std::string& out) const { return value.ToString(out); }
+    bool GetTypeAndValue(std::string& out) const
+    {
+        std::string tmp;
+
+        if (GetValueAsString(tmp))
+        {
+            out = GetTypeLabel();
+            out += "= ";
+            out += tmp;
+            return true;
+        }
+        return false;
+    }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -139,6 +157,35 @@ public:
 	{
 		return DecodeSet(pIn, cbIn, cbUsed, attrs);
 	}
+
+    // Note - this is declared as AttributeTypeAndValue, where the value could actually be anything,
+    // but the RFC says that it should be a printable string.
+    // Also, it says that this is a set, but only ever seen one element to the set.
+
+    bool ToString(std::string& out) const
+    {
+        std::string tmp;
+
+        for each (AttributeTypeAndValue attr in attrs)
+        {
+            const char* szLabel = attr.GetTypeLabel();
+            std::string s;
+            
+            attr.GetValueAsString(s);
+            tmp += szLabel;
+            tmp += "= ";
+            tmp += s;
+            tmp += ";";
+        }
+
+        if (tmp.size() > 0)
+        {
+            out.swap(tmp);
+            return true;
+        }
+        
+        return false;
+    }
 
 private:
 	virtual size_t SetDataSize() override
@@ -196,6 +243,28 @@ public:
         return true;
 	}
 
+    bool ToString(std::string& out) const 
+    {
+        std::string tmp;
+
+        for each (RelativeDistinguishedName rdn in name)
+        {
+            std::string s;
+            if (rdn.ToString(s))
+            {
+                tmp += s;
+            }
+        }
+
+        if (tmp.size() > 0)
+        {
+            out.swap(tmp);
+            return true;
+        }
+
+        return false;
+    }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -246,6 +315,11 @@ public:
     virtual size_t EncodedSize() override
     {
         return rdnSequence.EncodedSize();
+    }
+
+    bool ToString(std::string& s) const 
+    {
+        return rdnSequence.ToString(s);
     }
 
 private:
@@ -345,9 +419,149 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+    const char* ExtensionIdLabel() const { return extnID.GetOidLabel(); }
+    const char* ExtensionIdOidString() const { return extnID.GetOidString(); }
+    bool IsCritical() const { return critical.GetValue(); }
+
+    // The OctetString is really some number of sub-structures, which are defined by which extnID we have
+    // Need accessors for these
+
+    bool GetRawExtension(std::vector<unsigned char>& out)
+    {
+        const std::vector<unsigned char>& extnData = extnValue.GetValue();
+
+        if (extnData.size() > 0)
+        {
+            out.clear();
+            out = extnData;
+            return true;
+        }
+
+        return false;
+    }
+
+private:
 	ObjectIdentifier extnID;
 	Boolean critical;
 	OctetString extnValue;
+};
+
+struct KeyUsage
+{
+    int digitalSignature : 1;
+    int nonRepudiation : 1;
+    int keyEncipherment : 1;
+    int dataEncipherment : 1;
+    int keyAgreement : 1;
+    int keyCertSign : 1;
+    int cRLSign : 1;
+    int encipherOnly : 1;
+    int decipherOnly : 1;
+    int unused : 23;
+};
+
+class KeyUsageExtension
+{
+    /*
+      id-ce-keyUsage OBJECT IDENTIFIER ::=  { id-ce 15 }
+
+      KeyUsage ::= BIT STRING {
+           digitalSignature        (0),
+           nonRepudiation          (1), -- recent editions of X.509 have
+                                -- renamed this bit to contentCommitment
+           keyEncipherment         (2),
+           dataEncipherment        (3),
+           keyAgreement            (4),
+           keyCertSign             (5),
+           cRLSign                 (6),
+           encipherOnly            (7),
+           decipherOnly            (8) }
+
+    */
+ 
+public:
+    KeyUsageExtension() : szOid(id_ce_keyUsage) 
+    {
+        keyUsage = {};
+    }
+
+    void SetValue(const std::vector<unsigned char>& value)
+    {
+        if (value.size() < 3)
+            return;
+
+        DerTypeContainer derType(value[0]);
+
+        if (derType.type != DerType::BitString)
+            return;
+
+        BitString bits;
+        size_t cbUsed = 0;
+
+        if (!bits.Decode(&value[0], value.size(), cbUsed))
+            return;
+
+        unsigned char unusedBits = bits.UnusedBits();
+        unsigned char mask = 0xff << unusedBits;
+        const unsigned char* pBits = nullptr;
+        size_t cbData = 0;
+
+        if (!bits.GetValue(pBits, cbData))
+            return;
+
+        // 0th byte are the count of unused bits
+        unsigned char* pUsage = reinterpret_cast<unsigned char*>(&keyUsage);
+
+        for (size_t i = 1; i < cbData && i < sizeof(keyUsage); ++i)
+        {
+            if (i == cbData - 1) // Last byte
+            {
+                *pUsage = pBits[i] & mask;
+                break;
+            }
+
+            *pUsage++ = pBits[i];
+        }
+    }
+
+    const KeyUsage GetKeyUsage() const { return keyUsage; }
+    bool HasUsage() const { return (*reinterpret_cast<const int*>(&keyUsage) == 0); }
+
+private:
+    KeyUsage keyUsage;
+    const char* szOid;
+};
+
+class ExtendedKeyUsage
+{
+    /*
+    id-ce-extKeyUsage OBJECT IDENTIFIER ::= { id-ce 37 }
+
+    ExtKeyUsageSyntax ::= SEQUENCE SIZE (1..MAX) OF KeyPurposeId
+
+    KeyPurposeId ::= OBJECT IDENTIFIER
+
+    */
+public:
+    ExtendedKeyUsage() : szOid(id_ce_extKeyUsage) {}
+
+    // Also TODO - need to capture all the EKU OIDs
+    // in the samples, be able to translate the most common to a friendly name
+    void SetValue(const std::vector<unsigned char>& value)
+    {
+        size_t cbUsed = 0;
+        size_t size = 0;
+        bool isNull = false;
+
+        if (!DerBase::DecodeSequenceOf<UniqueIdentifier>(&value[0], value.size(), cbUsed, ekus))
+        {
+            // TODO - debug output here
+        }
+    }
+
+private:
+    std::vector<UniqueIdentifier> ekus;
+    const char* szOid;
 };
 
 enum class HashAlgorithm
@@ -381,6 +595,10 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+    // Accessors
+    const char* AlgorithmOid() const { return algorithm.GetOidString(); }
+    const char* AlgorithmLabel() const { return algorithm.GetOidLabel(); }
 
 private:
 
@@ -457,6 +675,10 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+    const AlgorithmIdentifier& GetAlgorithm() const { return algorithm; }
+    const BitString& GetSubjectPublicKey() const { return subjectPublicKey; }
+
+private:
 	AlgorithmIdentifier algorithm;
 	BitString subjectPublicKey;
 };
@@ -487,6 +709,18 @@ public:
 		return DecodeSequenceOf(pIn, cbIn, cbUsed, values);
 	}
 
+    size_t Count() const { return values.size(); }
+    const Extension& GetExtension(size_t index) const
+    {
+        if (index < values.size())
+        {
+            return values[index];
+        }
+
+        throw std::out_of_range("Incorrect index");
+    }
+
+private:
 	std::vector<Extension> values;
 };
 
@@ -495,6 +729,9 @@ class Validity final : public DerBase
 public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+
+    const Time& GetNotBefore() const { return notBefore; }
+    const Time& GetNotAfter() const { return notAfter; }
 
 private:
 	virtual size_t SetDataSize() override
@@ -515,6 +752,8 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+    // Accessors
+    // version
     unsigned long GetVersion() const
     {
         const Integer& _version = version.GetInnerType();
@@ -530,6 +769,100 @@ public:
             return static_cast<unsigned long>(0);
         }
     }
+
+    const char* GetVersionString() const
+    {
+        switch (GetVersion())
+        {
+        case 0:
+            return "v1";
+        case 1:
+            return "v2";
+        case 2:
+            return "v3";
+        default:
+            return "Unknown version";
+            break;
+        }
+    }
+
+    // serialNumber
+    // TBD, consider conversion to string as decimal or hexadecimal
+    void GetSerialNumber(std::vector<unsigned char>& out) const { out.clear(); out = serialNumber.GetBytes(); }
+
+    // signature
+    const char* SignatureAlgorithm() const { return signature.AlgorithmLabel(); }
+    const char* SignatureAlgorithmOid() const { return signature.AlgorithmOid(); }
+
+    // issuer
+    bool GetIssuer(std::string& out) const { return issuer.ToString(out); }
+
+    // validity
+    bool GetNotBefore(std::string& out) const
+    {
+        const Time& t = validity.GetNotBefore();
+        return t.ToString(out);
+    }
+
+    bool GetNotAfter(std::string& out) const
+    {
+        const Time& t = validity.GetNotAfter();
+        return t.ToString(out);
+    }
+
+    // subject
+    bool GetSubject(std::string& out) const { return subject.ToString(out); }
+
+    // subjectPublicKeyInfo
+    const char* PublicKeyAlgorithm() const 
+    { 
+        const AlgorithmIdentifier& alg = subjectPublicKeyInfo.GetAlgorithm();
+        return alg.AlgorithmLabel();
+    }
+
+    const char* PublicKeyOid() const
+    {
+        const AlgorithmIdentifier& alg = subjectPublicKeyInfo.GetAlgorithm();
+        return alg.AlgorithmOid();
+    }
+
+    void GetPublicKey(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    {
+        const BitString& bits = subjectPublicKeyInfo.GetSubjectPublicKey();
+        bits.GetValue(unusedBits, out);
+    }
+
+    // issuerUniqueID
+    bool GetIssuerUniqueID(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    {
+        const BitString& bits = issuerUniqueID.GetInnerType();
+
+        if (bits.ValueSize() > 0)
+        {
+            bits.GetValue(unusedBits, out);
+            return true;
+        }
+
+        return false;
+    }
+
+    // subjectUniqueID
+    bool GetSubjectUniqueID(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    {
+        const BitString& bits = subjectUniqueID.GetInnerType();
+
+        if (bits.ValueSize() > 0)
+        {
+            bits.GetValue(unusedBits, out);
+            return true;
+        }
+
+        return false;
+    }
+
+    // extensions
+    size_t GetExtensionCount() const { return (extensions.GetInnerType()).Count(); }
+    const Extension& GetExtension(size_t index) const { return (extensions.GetInnerType()).GetExtension(index); }
 
 private:
 	virtual size_t SetDataSize() override
@@ -579,6 +912,21 @@ class Certificate final : public DerBase
 public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+    // Accessors
+    // signatureValue
+    size_t SignatureSize() const { return signatureValue.ValueSize(); }
+    bool GetSignatureValue(unsigned char& unusedBits, std::vector<unsigned char>& out) const { return signatureValue.GetValue(unusedBits, out); }
+
+    // signatureAlgorithm 
+    // TBD - create a way to return parameters if they are ever not null
+    const char* SignatureAlgorithmLabel() const 
+    {
+        const char* szLabel = signatureAlgorithm.AlgorithmLabel();
+        return szLabel != nullptr ? szLabel : signatureAlgorithm.AlgorithmOid();
+    }
+
+    // tbsCertificate
 
 private:
 	virtual size_t SetDataSize() override
