@@ -666,41 +666,12 @@ public:
 		return os;
 	}
 
-    bool ToString(std::string& out) const
-    {
-        out.clear();
-
-        switch (GetDerType())
-        {
-        case DerType::Null:
-            out = "";
-            break;
-
-        case DerType::IA5String:
-        case DerType::GeneralString:
-        case DerType::PrintableString:
-        case DerType::T61String:
-        case DerType::UTF8String:
-        case DerType::VisibleString:
-        {
-            size_t valueSize = 0;
-            size_t cbRead = 0;
-            if (DecodeSize(&encodedValue[1], encodedValue.size() - 1, valueSize, cbRead))
-            {
-                const char* sz = reinterpret_cast<const char*>(&encodedValue[1 + cbRead]);
-                out.reserve(valueSize);
-                out.append(sz, valueSize);
-                return true;
-            }
-            return false;
-        }
-
-        default:
-            return false;
-        }
-    }
+    bool ToString(std::string& out) const;
 
     DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
+
+    const AnyType& operator=(const AnyType& rhs) { encodedValue = rhs.encodedValue; return *this; }
+    const std::vector<unsigned char>& GetData() const { return encodedValue; }
 
 private:
 	std::vector<unsigned char> encodedValue;
@@ -883,6 +854,7 @@ public:
 
         pValue = &value[0];
         cbValue = value.size();
+        return true;
     }
 
 	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
@@ -923,12 +895,27 @@ private:
 class OctetString final : public DerBase
 {
 public:
+
+    void SetValue(const std::vector<unsigned char>& in)
+    {
+        value = in;
+    }
+
 	void SetValue(const unsigned char* data, size_t cb)
 	{
 		value.clear();
 		value.resize(cb);
 		value.insert(value.begin(), data, data + cb);
 	}
+
+    // For use by extensions, which need to write
+    // internal structs into the buffer.
+    std::vector<unsigned char>& Resize(size_t cb)
+    {
+        value.clear();
+        value.resize(cb);
+        return value;
+    }
 
     const std::vector<unsigned char>& GetValue() const { return value; }
 	
@@ -1043,8 +1030,13 @@ public:
 
     bool IsEmpty() const { return value.size() == 0; }
 
-private:
+    const ObjectIdentifier& operator=(const ObjectIdentifier& rhs)
+    {
+        value = rhs.value;
+        oidIndex = rhs.oidIndex;
+    }
 
+private:
     void SetOidIndex()
     {
         if (GetOidInfoIndex(value, oidIndex))

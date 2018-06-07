@@ -133,6 +133,11 @@ public:
         return false;
     }
 
+    void SetType(const char* szOid) { type.SetValue(szOid); }
+    void SetType(const ObjectIdentifier& obj) { type = obj; }
+
+    void SetValue(const AnyType& at) { value = at; }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -351,7 +356,7 @@ private:
 	CertificateSerialNumber serialNumber;
 };
 
-typedef OctetString SubjectKeyIdentifier;
+class SubjectKeyIdentifier;
 
 enum class SignerIdentifierType
 {
@@ -446,7 +451,7 @@ private:
 	OctetString extnValue;
 };
 
-struct KeyUsage
+struct KeyUsageValue
 {
     int digitalSignature : 1;
     int nonRepudiation : 1;
@@ -460,7 +465,32 @@ struct KeyUsage
     int unused : 23;
 };
 
-class KeyUsageExtension
+class ExtensionBase : public DerBase
+{
+public:
+    ExtensionBase(const char* oid = nullptr) : szOid(oid) {}
+
+    void Encode(OctetString& os)
+    {
+        size_t cbUsed = 0;
+        size_t cbNeeded = EncodedSize();
+        std::vector<unsigned char>& data = os.Resize(cbNeeded);
+        DerBase::Encode(&data[0], data.size(), cbUsed);
+    }
+
+    bool Decode(const OctetString& os)
+    {
+        size_t cbUsed = 0;
+        const std::vector<unsigned char>& data = os.GetValue();
+        return DerBase::Decode(&data[0], data.size(), cbUsed);
+    }
+
+protected:
+
+    const char* szOid;
+};
+
+class KeyUsage : public ExtensionBase
 {
     /*
       id-ce-keyUsage OBJECT IDENTIFIER ::=  { id-ce 15 }
@@ -480,39 +510,49 @@ class KeyUsageExtension
     */
  
 public:
-    KeyUsageExtension() : szOid(id_ce_keyUsage) 
+    KeyUsage() : ExtensionBase(id_ce_keyUsage)
     {
-        keyUsage = {};
+        keyUsageValue = {};
     }
 
-    void SetValue(const std::vector<unsigned char>& value)
+    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
     {
-        if (value.size() < 3)
-            return;
+        // Encode the value into a BitString
+        bits.Encode(pOut, cbOut, cbUsed);
+    }
 
-        DerTypeContainer derType(value[0]);
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    {
+        if (!bits.Decode(pIn, cbIn, cbUsed) || !BitStringToKeyUsage())
+            return false;
 
-        if (derType.type != DerType::BitString)
-            return;
+        return true;
+    }
 
-        BitString bits;
-        size_t cbUsed = 0;
+    const KeyUsageValue GetKeyUsage() const { return keyUsageValue; }
+    bool HasUsage() const { return (*reinterpret_cast<const int*>(&keyUsageValue) == 0); }
 
-        if (!bits.Decode(&value[0], value.size(), cbUsed))
-            return;
+private:
 
+    virtual size_t SetDataSize() override
+    {
+        return cbData = bits.EncodedSize();
+    }
+
+    bool BitStringToKeyUsage()
+    {
         unsigned char unusedBits = bits.UnusedBits();
         unsigned char mask = 0xff << unusedBits;
         const unsigned char* pBits = nullptr;
-        size_t cbData = 0;
+        size_t _cbData = 0;
 
-        if (!bits.GetValue(pBits, cbData))
-            return;
+        if (!bits.GetValue(pBits, _cbData))
+            return false;
 
         // 0th byte are the count of unused bits
-        unsigned char* pUsage = reinterpret_cast<unsigned char*>(&keyUsage);
+        unsigned char* pUsage = reinterpret_cast<unsigned char*>(&keyUsageValue);
 
-        for (size_t i = 1; i < cbData && i < sizeof(keyUsage); ++i)
+        for (size_t i = 1; i < cbData && i < sizeof(keyUsageValue); ++i)
         {
             if (i == cbData - 1) // Last byte
             {
@@ -522,17 +562,43 @@ public:
 
             *pUsage++ = pBits[i];
         }
+
+        return true;
     }
 
-    const KeyUsage GetKeyUsage() const { return keyUsage; }
-    bool HasUsage() const { return (*reinterpret_cast<const int*>(&keyUsage) == 0); }
+    void KeyUsageToBitString()
+    {
+        int* pvalue = reinterpret_cast<int*>(&keyUsageValue);
+        unsigned char bitsUsed = 0;
 
-private:
-    KeyUsage keyUsage;
-    const char* szOid;
+        for (int tmp = *pvalue; tmp != 0; )
+        {
+            if (tmp != 0)
+            {
+                bitsUsed++;
+                tmp <<= 1;
+            }
+        }
+
+        // How many bytes do we write out?
+        unsigned char byteCount = bitsUsed > 0 ? bitsUsed / 8 + 1 : 0;
+        unsigned char unusedBits = (byteCount * 8) - bitsUsed;
+        unsigned char buffer[4];
+
+        for (unsigned char i = 0; i < byteCount && i < 4; ++i)
+        {
+            size_t offset = sizeof(buffer) - 1 - i;
+            buffer[offset] = *reinterpret_cast<unsigned char*>(pvalue);
+        }
+
+        bits.SetValue(unusedBits, buffer + (sizeof(buffer) - byteCount), byteCount);
+    }
+
+    BitString bits;
+    KeyUsageValue keyUsageValue;
 };
 
-class ExtendedKeyUsage
+class ExtendedKeyUsage : public ExtensionBase
 {
     /*
     id-ce-extKeyUsage OBJECT IDENTIFIER ::= { id-ce 37 }
@@ -543,27 +609,785 @@ class ExtendedKeyUsage
 
     */
 public:
-    ExtendedKeyUsage() : szOid(id_ce_extKeyUsage) {}
+    ExtendedKeyUsage() : ExtensionBase(id_ce_extKeyUsage) {}
 
     // Also TODO - need to capture all the EKU OIDs
     // in the samples, be able to translate the most common to a friendly name
-    void SetValue(const std::vector<unsigned char>& value)
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
     {
-        size_t cbUsed = 0;
-        size_t size = 0;
-        bool isNull = false;
+        return DecodeSequenceOf<ObjectIdentifier>(pIn, cbIn, cbUsed, ekus);
+    }
 
-        if (!DerBase::DecodeSequenceOf<UniqueIdentifier>(&value[0], value.size(), cbUsed, ekus))
-        {
-            // TODO - debug output here
-        }
+    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     }
 
 private:
-    std::vector<UniqueIdentifier> ekus;
-    const char* szOid;
+    size_t SetDataSize() { return (cbData = GetEncodedSize(ekus)); }
+
+    std::vector<ObjectIdentifier> ekus;
 };
 
+typedef BitString UniqueIdentifier;
+
+class SubjectKeyIdentifier : public ExtensionBase
+{
+    /*
+        See RFC 5280, 4.2.1.2
+        This should be a sha1 hash, but other approaches are possible.
+
+        Typical approach is:
+        (1) The keyIdentifier is composed of the 160-bit SHA-1 hash of the
+        value of the BIT STRING subjectPublicKey (excluding the tag,
+        length, and number of unused bits).
+    */
+public:
+    SubjectKeyIdentifier() : ExtensionBase(id_ce_subjectKeyIdentifier) {}
+
+    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    {
+        keyIdentifier.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    {
+        return keyIdentifier.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    OctetString keyIdentifier;
+
+    virtual size_t SetDataSize() override
+    {
+        return (cbData = keyIdentifier.EncodedSize());
+    }
+};
+
+/*
+GeneralName ::= CHOICE {
+otherName                       [0]     OtherName,
+rfc822Name                      [1]     IA5String,
+dNSName                         [2]     IA5String,
+x400Address                     [3]     ORAddress,
+directoryName                   [4]     Name,
+ediPartyName                    [5]     EDIPartyName,
+uniformResourceIdentifier       [6]     IA5String,
+iPAddress                       [7]     OCTET STRING,
+registeredID                    [8]     OBJECT IDENTIFIER }
+// Note - definition for ORAddress is in RFC 3280, and is complex.
+// Hopefully, we won't need it.
+
+*/
+
+typedef Attribute OtherName;
+enum class DirectoryStringType
+{
+    NotSet,
+    Printable, // This, or a UTF8 string, is what should be used currently
+    Universal,
+    BMP
+};
+
+// Ignore next as likely obsolete, implement if this is incorrect
+//	TeletexString teletexString;
+/*
+Note - from https://tools.ietf.org/html/rfc5280#section-4.1.2.6
+
+Section (c)
+TeletexString, BMPString, and UniversalString are included
+for backward compatibility, and SHOULD NOT be used for
+certificates for new subjects.
+*/
+
+class DirectoryString final : public DerBase
+{
+public:
+    DirectoryString(DirectoryStringType t = DirectoryStringType::NotSet) : type(t) {}
+    void SetValue(PrintableString& printableString) { SetValue(DirectoryStringType::Printable, printableString); }
+    void SetValue(UniversalString& universalString) { SetValue(DirectoryStringType::Universal, universalString); }
+    void SetValue(BMPString& bmpString) { SetValue(DirectoryStringType::BMP, bmpString); }
+
+    void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+    {
+        value.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        if (!value.Decode(pIn, cbIn, cbUsed))
+            return false;
+
+        switch (static_cast<DerType>(pIn[0]))
+        {
+        case DerType::PrintableString:
+            type = DirectoryStringType::Printable;
+            break;
+
+        case DerType::UniversalString:
+            type = DirectoryStringType::Universal;
+            break;
+
+        case DerType::BMPString:
+            type = DirectoryStringType::BMP;
+            break;
+
+        default:
+            cbUsed = 0;
+            return false;
+        }
+
+        return true;
+    }
+
+    virtual size_t SetDataSize() override
+    {
+        cbData = value.EncodedSize();
+        return cbData;
+    }
+
+    AnyType value;
+private:
+    template <typename T>
+    void SetValue(DirectoryStringType t, T& in)
+    {
+        type = t;
+        value.SetValue(in);
+    }
+
+    DirectoryStringType type;
+};
+
+
+class EDIPartyName final : public DerBase
+{
+public:
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+protected:
+    virtual size_t SetDataSize() override
+    {
+        return (cbData = nameAssigner.EncodedSize() + partyName.EncodedSize());
+    }
+
+    DirectoryString nameAssigner;
+    DirectoryString partyName;
+};
+
+enum class GeneralNameType
+{
+    NotSet = -1,
+    Other = 0,        // otherName = OtherName
+    RFC822 = 1,       // rfc822Name = IA5String
+    DNS = 2,          // dNSName = IA5String
+    x400Address = 3,  // ORAddress
+    Directory = 4,    // directoryName = Name
+    EDIParty = 5,     // ediPartyName = EDIPartyName
+    URI = 6,          // uniformResourceIdentifier = IA5String
+    IP = 7,           // iPAddress = OctetString
+    RegisteredID = 8, // registeredID = ObjectIdentifier
+    Max = 9
+};
+
+class GeneralName final : public DerBase
+{
+public:
+    GeneralName(GeneralNameType t = GeneralNameType::NotSet) : type(t) {}
+    virtual ~GeneralName() = default;
+
+    virtual size_t SetDataSize() override
+    {
+        cbData = value.EncodedSize();
+        return cbData;
+    }
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        value.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        return value.Decode(pIn, cbIn, cbUsed);
+    }
+
+    void SetType(unsigned char t)
+    {
+        DerTypeContainer typeContainer(t);
+
+        if (typeContainer._class == DerClass::ContextSpecific && !typeContainer.constructed)
+        {
+            // then the type this really is depends on the GeneralNameType enum
+            int _type = static_cast<int>(typeContainer.type);
+            if (_type > static_cast<int>(GeneralNameType::NotSet) && _type < static_cast<int>(GeneralNameType::Max))
+            {
+                type = static_cast<GeneralNameType>(_type);
+                return;
+            }
+        }
+
+        type = GeneralNameType::NotSet;
+    }
+
+private:
+    GeneralNameType type;
+    AnyType value;
+};
+
+class GeneralNames final : public DerBase
+{
+public:
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        SetDataSize();
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, names, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+    {
+        return DecodeSet(pIn, cbIn, cbUsed, names);
+    }
+
+protected:
+
+    virtual size_t SetDataSize() override
+    {
+        cbData = GetDataSize(names);
+        return cbData;
+    }
+
+    std::vector<GeneralName> names;
+};
+
+class DistributionPointName :public DerBase
+{
+public:
+    DistributionPointName() : fullName(0), nameRelativeToCRLIssuer(1)
+    {
+
+    }
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        fullName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+            
+        nameRelativeToCRLIssuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!fullName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!nameRelativeToCRLIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return true;
+    }
+
+private:
+    virtual size_t SetDataSize() override
+    {
+        return (cbData = fullName.EncodedSize() + nameRelativeToCRLIssuer.EncodedSize());
+    }
+
+    ContextSpecificHolder<GeneralNames> fullName;
+    ContextSpecificHolder<RelativeDistinguishedName> nameRelativeToCRLIssuer;
+};
+
+typedef BitString ReasonFlags;
+
+class DistributionPoint : public DerBase
+{
+public:
+    DistributionPoint() : distributionPoint(0), reasons(1), cRLIssuer(2)
+    {
+
+    }
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        
+        distributionPoint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        reasons.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        cRLIssuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!distributionPoint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!reasons.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!cRLIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return true;
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return cbData = distributionPoint.EncodedSize() + reasons.EncodedSize() + cRLIssuer.EncodedSize();
+    }
+
+    ContextSpecificHolder<DistributionPointName> distributionPoint;
+    ContextSpecificHolder<ReasonFlags> reasons;
+    ContextSpecificHolder<GeneralNames> cRLIssuer;
+};
+
+class CrlDistributionPoints : public ExtensionBase
+{
+    /*
+    RFC 5280 4.2.1.13
+
+    This is complicated
+    id-ce-cRLDistributionPoints OBJECT IDENTIFIER ::=  { id-ce 31 }
+
+    CRLDistributionPoints ::= SEQUENCE SIZE (1..MAX) OF DistributionPoint
+
+    DistributionPoint ::= SEQUENCE {
+    distributionPoint       [0]     DistributionPointName OPTIONAL,
+    reasons                 [1]     ReasonFlags OPTIONAL,
+    cRLIssuer               [2]     GeneralNames OPTIONAL }
+
+    DistributionPointName ::= CHOICE {
+    fullName                [0]     GeneralNames,
+    nameRelativeToCRLIssuer [1]     RelativeDistinguishedName }
+
+    ReasonFlags ::= BIT STRING {
+    unused                  (0),
+    keyCompromise           (1),
+    cACompromise            (2),
+    affiliationChanged      (3),
+    superseded              (4),
+    cessationOfOperation    (5),
+    certificateHold         (6),
+    privilegeWithdrawn      (7),
+    aACompromise            (8) }
+    */
+public:
+    CrlDistributionPoints() : ExtensionBase(id_ce_cRLDistributionPoints) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, cRLDistributionPoints, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, cRLDistributionPoints);
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = GetEncodedSize(cRLDistributionPoints));
+    }
+
+    std::vector<DistributionPoint> cRLDistributionPoints;
+
+};
+
+/*
+-- authority key identifier OID and syntax
+
+id-ce-authorityKeyIdentifier OBJECT IDENTIFIER ::=  { id-ce 35 }
+
+AuthorityKeyIdentifier ::= SEQUENCE {
+keyIdentifier             [0] KeyIdentifier            OPTIONAL,
+authorityCertIssuer       [1] GeneralNames             OPTIONAL,
+authorityCertSerialNumber [2] CertificateSerialNumber  OPTIONAL }
+-- authorityCertIssuer and authorityCertSerialNumber MUST both
+-- be present or both be absent
+
+KeyIdentifier ::= OCTET STRING
+
+*/
+
+class AuthorityKeyIdentifier : public ExtensionBase
+{
+public:
+    AuthorityKeyIdentifier() : 
+        keyIdentifier(0), 
+        authorityCertIssuer(1), 
+        authorityCertSerialNumber(2), 
+        ExtensionBase(id_ce_authorityKeyIdentifier) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        keyIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        authorityCertIssuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        authorityCertSerialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!keyIdentifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!authorityCertIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!authorityCertSerialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return true;
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return cbData = keyIdentifier.EncodedSize() + authorityCertIssuer.EncodedSize() + authorityCertSerialNumber.EncodedSize();
+    }
+
+    ContextSpecificHolder<OctetString> keyIdentifier;
+    ContextSpecificHolder<GeneralNames> authorityCertIssuer;
+    ContextSpecificHolder<CertificateSerialNumber> authorityCertSerialNumber;
+};
+
+/*
+id-pe-authorityInfoAccess OBJECT IDENTIFIER ::= { id-pe 1 }
+
+AuthorityInfoAccessSyntax  ::=
+SEQUENCE SIZE (1..MAX) OF AccessDescription
+
+AccessDescription  ::=  SEQUENCE {
+accessMethod          OBJECT IDENTIFIER,
+accessLocation        GeneralName  }
+
+Note - access methods will be one of the below
+
+id-ad OBJECT IDENTIFIER ::= { id-pkix 48 }
+id-ad-caIssuers OBJECT IDENTIFIER ::= { id-ad 2 }
+id-ad-ocsp OBJECT IDENTIFIER ::= { id-ad 1 }
+*/
+
+class AccessDescription : public DerBase
+{
+public:
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        accessMethod.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        accessLocation.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!accessMethod.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!accessLocation.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return true;
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = accessMethod.EncodedSize() + accessLocation.EncodedSize());
+    }
+
+    ObjectIdentifier accessMethod;
+    GeneralName accessLocation;
+};
+
+class AuthorityInfoAccess : public ExtensionBase
+{
+public:
+    AuthorityInfoAccess() : ExtensionBase(id_pe_authorityInfoAccess) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, accessDescriptions, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, accessDescriptions);
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = GetEncodedSize(accessDescriptions));
+    }
+
+    std::vector<AccessDescription> accessDescriptions;
+};
+
+class SubjectAltName : public ExtensionBase
+{
+public:
+    SubjectAltName() : ExtensionBase(id_ce_subjectAltName){}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        names.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        return names.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = names.EncodedSize());
+    }
+
+    GeneralNames names;
+};
+
+// The following is Microsoft-specific
+/*
+It decodes to this:
+
+Foo SEQUENCE OF: tag = [UNIVERSAL 16] constructed; length = 24
+Bar SEQUENCE OF: tag = [UNIVERSAL 16] constructed; length = 10
+OBJECT IDENTIFIER: tag = [UNIVERSAL 6] primitive; length = 8
+{ 1 3 6 1 5 5 7 3 2 }
+Bar SEQUENCE OF: tag = [UNIVERSAL 16] constructed; length = 10
+OBJECT IDENTIFIER: tag = [UNIVERSAL 6] primitive; length = 8
+{ 1 3 6 1 5 5 7 3 1 }
+Successfully decoded 26 bytes.
+rec1value Foo ::=
+{
+bar {
+{ 1 3 6 1 5 5 7 3 2 }
+},
+bar {
+{ 1 3 6 1 5 5 7 3 1 }
+}
+}
+*/
+class KeyPurposes : public DerBase
+{
+public:
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, keyPurposes, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, keyPurposes);
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = GetEncodedSize(keyPurposes));
+    }
+
+    std::vector<ObjectIdentifier> keyPurposes;
+};
+
+class ApplicationCertPolicies : public ExtensionBase
+{
+public:
+    ApplicationCertPolicies() : ExtensionBase(id_microsoft_appCertPolicies){}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, certPolicies, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        DecodeSequenceOf(pIn, cbIn, cbUsed, certPolicies);
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = GetEncodedSize(certPolicies));
+    }
+
+    std::vector<KeyPurposes> certPolicies;
+};
+
+/*
+    This is Microsoft-specific, is somewhat documented here:
+    https://msdn.microsoft.com/en-us/library/windows/desktop/aa377580(v=vs.85).aspx
+
+    CryptDecode will expand this to:
+    struct _CERT_TEMPLATE_EXT {
+    LPSTR pszObjId;
+    DWORD dwMajorVersion;
+    BOOL  fMinorVersion;
+    DWORD dwMinorVersion;
+    } CERT_TEMPLATE_EXT, *PCERT_TEMPLATE_EXT;
+*/
+class CertTemplate : public ExtensionBase
+{
+public:
+    CertTemplate() : ExtensionBase(id_microsoft_certTemplate){}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        objId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        majorVersion.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        minorVersion.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    }
+    
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!objId.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!majorVersion.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!minorVersion.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return false;
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return (cbData = objId.EncodedSize() + majorVersion.EncodedSize() + minorVersion.EncodedSize());
+    }
+
+    ObjectIdentifier objId;
+    Integer majorVersion;
+    Integer minorVersion; // possibly optional, uncertain how this shows up
+};
+
+/*
+2.5.29.1 is id_ce_authorityKeyIdentifier_old - an obsolete key identifier struct
+
+_CERT_AUTHORITY_KEY_ID_INFO {
+CRYPT_DATA_BLOB    KeyId;
+CERT_NAME_BLOB     CertIssuer;
+CRYPT_INTEGER_BLOB CertSerialNumber;
+} CERT_AUTHORITY_KEY_ID_INFO, *PCERT_AUTHORITY_KEY_ID_INFO;
+
+A sample of this decodes to:
+
+30 3C
+    80 10 1A1C16784CB2ADBB3193686842AA6118 - MD5 hash???
+    A1 16
+        30 14
+            31 12
+                30 10
+                    06 03 550403
+                    13 09 446F73436861727473 - Issuer name
+    82 10 4D380E26826DB1A245496B06658683B1 -- serialNumber - Integer
+*/
 enum class HashAlgorithm
 {
 	MD2 = 0,
@@ -660,8 +1484,6 @@ protected:
 	ObjectIdentifier otherCertFormat;
 	AnyType otherCert; // DEFINED BY otherCertFormat 
 };
-
-typedef BitString UniqueIdentifier;
 
 class SubjectPublicKeyInfo final : public DerBase
 {
@@ -952,201 +1774,6 @@ class DigestedObjectType : public Enumerated
 public:
 	DigestedObjectType(DigestedObjectTypeValue v = DigestedObjectTypeValue::publicKey) : Enumerated(static_cast<unsigned char>(v)) {}
 };
-
-enum class DirectoryStringType
-{
-	NotSet,
-	Printable, // This, or a UTF8 string, is what should be used currently
-	Universal,
-	BMP
-};
-
-// Ignore next as likely obsolete, implement if this is incorrect
-//	TeletexString teletexString;
-/*
-	Note - from https://tools.ietf.org/html/rfc5280#section-4.1.2.6
-
-	Section (c)
-	TeletexString, BMPString, and UniversalString are included
-	for backward compatibility, and SHOULD NOT be used for
-	certificates for new subjects.
-*/
-
-class DirectoryString final : public DerBase
-{
-public:
-	DirectoryString(DirectoryStringType t = DirectoryStringType::NotSet) : type(t) {}
-	void SetValue(PrintableString& printableString) { SetValue(DirectoryStringType::Printable, printableString); }
-	void SetValue(UniversalString& universalString) { SetValue(DirectoryStringType::Universal, universalString); }
-	void SetValue(BMPString& bmpString) { SetValue(DirectoryStringType::BMP, bmpString); }
-
-	void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
-	{
-		value.Encode(pOut, cbOut, cbUsed);
-	}
-
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
-	{
-		if (!value.Decode(pIn, cbIn, cbUsed))
-			return false;
-
-		switch (static_cast<DerType>(pIn[0]))
-		{
-		case DerType::PrintableString:
-			type = DirectoryStringType::Printable;
-			break;
-
-		case DerType::UniversalString:
-			type = DirectoryStringType::Universal;
-			break;
-
-		case DerType::BMPString:
-			type = DirectoryStringType::BMP;
-			break;
-
-		default:
-			cbUsed = 0;
-			return false;
-		}
-
-		return true;
-	}
-
-	virtual size_t SetDataSize() override
-	{
-		cbData = value.EncodedSize();
-		return cbData;
-	}
-
-	AnyType value;
-private:
-	template <typename T>
-	void SetValue(DirectoryStringType t, T& in)
-	{
-		type = t;
-		value.SetValue(in);
-	}
-
-	DirectoryStringType type;
-};
-
-typedef Attribute OtherName;
-
-class EDIPartyName final : public DerBase
-{
-public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
-
-protected:
-	virtual size_t SetDataSize() override
-	{
-		return (cbData = nameAssigner.EncodedSize() + partyName.EncodedSize());
-	}
-
-	DirectoryString nameAssigner;
-	DirectoryString partyName;
-};
-
-/*
-GeneralName ::= CHOICE {
-otherName                       [0]     OtherName,
-rfc822Name                      [1]     IA5String,
-dNSName                         [2]     IA5String,
-x400Address                     [3]     ORAddress,
-directoryName                   [4]     Name,
-ediPartyName                    [5]     EDIPartyName,
-uniformResourceIdentifier       [6]     IA5String,
-iPAddress                       [7]     OCTET STRING,
-registeredID                    [8]     OBJECT IDENTIFIER }
-// Note - definition for ORAddress is in RFC 3280, and is complex.
-// Hopefully, we won't need it.
-
-*/
-
-enum class GeneralNameType
-{
-	NotSet,
-	Other,  // otherName
-	RFC822, // rfc822Name
-	DNS,    // dNSName
-	Directory, // directoryName
-	EDIParty,  // ediPartyName
-	URI,       // uniformResourceIdentifier
-	IP,
-	RegisteredID
-};
-
-class GeneralName final : public DerBase
-{
-public:
-	GeneralName(GeneralNameType t = GeneralNameType::NotSet) : type(t) {}
-	virtual ~GeneralName() = default;
-
-	virtual size_t SetDataSize() override
-	{
-		cbData = value.EncodedSize();
-		return cbData;
-	}
-
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
-	{
-		value.Encode(pOut, cbOut, cbUsed);
-	}
-
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
-	{
-		return value.Decode(pIn, cbIn, cbUsed);
-	}
-
-	void SetValue(OtherName& in) { SetValue(GeneralNameType::Other, in); }
-	void SetValue(Name& directoryName) { SetValue(GeneralNameType::Directory, directoryName); }
-	void SetValue(EDIPartyName& ediPartyName) { SetValue(GeneralNameType::EDIParty, ediPartyName); }
-	void SetValue(OctetString& iPAddress) { SetValue(GeneralNameType::IP, iPAddress); }
-	void SetValue(ObjectIdentifier& registeredID) { SetValue(GeneralNameType::RegisteredID, registeredID); }
-
-	// Used for RFC822, DNS, URI
-	void SetValue(GeneralNameType t, IA5String in) { SetValue(t, in); }
-
-	AnyType value;
-
-private:
-	template <typename T>
-	void SetValue(GeneralNameType t, T& in)
-	{
-		type = t;
-		value.SetValue(in);
-	}
-
-	GeneralNameType type;
-
-};
-
-class GeneralNames final : public DerBase
-{
-public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
-	{
-		SetDataSize();
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, names, pOut, cbOut, cbUsed);
-	}
-
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
-	{
-		return DecodeSet(pIn, cbIn, cbUsed, names);
-	}
-
-protected:
-
-	virtual size_t SetDataSize() override
-	{
-		cbData = GetDataSize(names);
-		return cbData;
-	}
-
-	std::vector<GeneralName> names;
-};
-
 
 class IssuerSerial final : public DerBase
 {
@@ -1649,9 +2276,11 @@ private:
 	AnyType qualifier;
 };
 
-class PolicyInformation final : public DerBase
+class PolicyInformation final : public ExtensionBase
 {
 public:
+    PolicyInformation() : ExtensionBase(id_ce_certificatePolicies) {}
+
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 

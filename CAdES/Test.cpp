@@ -115,6 +115,16 @@ void InstantiateObjects()
 	BMPString a90;
 	Null a91;
 	GeneralNames a92;
+    KeyUsage a93;
+    ExtendedKeyUsage a94;
+    SubjectKeyIdentifier a95;
+    DistributionPoint a96;
+    CrlDistributionPoints a97;
+    AuthorityKeyIdentifier a98;
+    AccessDescription a99;
+    AuthorityInfoAccess a100;
+    KeyPurposes a101;
+    CertTemplate a102;
 
 }
 

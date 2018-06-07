@@ -747,3 +747,39 @@ size_t AnyType::SetDataSize()
 	cbData = static_cast<size_t>(tmp);
 	return cbData;
 }
+
+bool AnyType::ToString(std::string & out) const
+{
+    out.clear();
+
+    switch (GetDerType())
+    {
+    case DerType::Null:
+        out = "";
+        break;
+
+    case DerType::IA5String:
+    case DerType::GeneralString:
+    case DerType::PrintableString:
+    case DerType::T61String:
+    case DerType::UTF8String:
+    case DerType::VisibleString:
+    {
+        size_t valueSize = 0;
+        size_t cbRead = 0;
+        if (DecodeSize(&encodedValue[1], encodedValue.size() - 1, valueSize, cbRead))
+        {
+            const char* sz = reinterpret_cast<const char*>(&encodedValue[1 + cbRead]);
+            out.reserve(valueSize);
+            out.append(sz, valueSize);
+            return true;
+        }
+        return false;
+    }
+
+    default:
+        return false;
+    }
+
+    return false;
+}
