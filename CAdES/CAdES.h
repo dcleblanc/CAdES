@@ -490,6 +490,30 @@ protected:
     const char* szOid;
 };
 
+class RawExtension : public ExtensionBase
+{
+public:
+    RawExtension(const char* oid = nullptr) : ExtensionBase(oid){}
+
+    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    {
+        extension.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    {
+        return extension.Decode(pIn, cbIn, cbUsed);
+    }
+
+protected:
+    virtual size_t SetDataSize() override
+    {
+        return (cbData = extension.SetDataSize());
+    }
+
+    AnyType extension;
+};
+
 class KeyUsage : public ExtensionBase
 {
     /*
@@ -1284,7 +1308,7 @@ public:
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
-        DecodeSequenceOf(pIn, cbIn, cbUsed, certPolicies);
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, certPolicies);
     }
 
 private:
@@ -1353,7 +1377,7 @@ public:
         if (!minorVersion.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
-        return false;
+        return true;
     }
 
 private:
@@ -1388,6 +1412,388 @@ A sample of this decodes to:
                     13 09 446F73436861727473 - Issuer name
     82 10 4D380E26826DB1A245496B06658683B1 -- serialNumber - Integer
 */
+
+// Until we have the decode written for this, use RawExtension
+class KeyIdentifierObsolete : public RawExtension
+{
+public:
+    KeyIdentifierObsolete() : RawExtension(id_ce_authorityKeyIdentifier_old) {}
+
+};
+
+class BasicConstraints : public ExtensionBase
+{
+public:
+    BasicConstraints() : ExtensionBase(id_ce_basicConstraints) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+
+        cA.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        pathLenConstraint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        if (!cA.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        sh.Update();
+        if (!pathLenConstraint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+
+        return true;
+    }
+
+private:
+
+    virtual size_t SetDataSize()
+    {
+        return (cbData = cA.EncodedSize() + pathLenConstraint.EncodedSize());
+    }
+
+    Boolean cA;
+    Integer pathLenConstraint;
+};
+
+// See comments at definition of id_google_certTransparancy
+// Not well defined, draft RFC, enough for now to know it is present
+class GoogleCertTransparency : public RawExtension
+{
+public:
+    GoogleCertTransparency() : RawExtension(id_google_certTransparancy) {}
+};
+
+/*
+
+This is documented as:
+
+smimeCapabilities OBJECT IDENTIFIER ::= {iso(1) member-body(2)
+us(840) rsadsi(113549) pkcs(1) pkcs-9(9) 15}
+
+SMIMECapability ::= SEQUENCE {
+capabilityID OBJECT IDENTIFIER,
+parameters ANY DEFINED BY capabilityID OPTIONAL }
+
+SMIMECapabilities ::= SEQUENCE OF SMIMECapability
+
+A sample looks like the following:
+
+30 35
+30 0E
+06 08 2A864886F70D0302
+02 02 0080
+30 0E
+06 08 2A864886F70D0304
+02 02 0080
+30 07
+06 05 2B0E030207
+30 0A
+06 08 2A864886F70D0307
+
+*/
+class SmimeCapabilities : public RawExtension
+{
+public:
+    SmimeCapabilities() : RawExtension(id_smimeCapabilities) {}
+};
+
+/*
+    This is the CA version
+*/
+class MicrosoftCAVersion : public ExtensionBase
+{
+public:
+    MicrosoftCAVersion() : ExtensionBase(id_microsoft_certsrvCAVersion) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        version.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return version.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = version.EncodedSize()); }
+    Integer version;
+};
+
+/*
+    This is the enroll certificate type extension, it is a BMP string
+    Sample looks like this 1E 04 00430041 ("CA")
+*/
+
+class MicrosoftEnrollCertType : public ExtensionBase
+{
+public:
+    MicrosoftEnrollCertType() : ExtensionBase(id_microsoft_enrollCertType) {}
+
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        certType.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return certType.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = certType.EncodedSize()); }
+    BMPString certType;
+};
+
+// Contains the sha1 hash of the previous version of the CA certificate
+
+class MicrosoftPreviousCertHash : public ExtensionBase
+{
+public:
+    MicrosoftPreviousCertHash() : ExtensionBase(id_microsoft_certsrvPrevHash) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        prevCertHash.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return prevCertHash.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = prevCertHash.EncodedSize()); }
+    OctetString prevCertHash;
+};
+
+/*
+ Apple-specific extension, apparently carries no data
+*/
+class ApplePushDev : public ExtensionBase
+{
+public:
+    ApplePushDev() : ExtensionBase(id_apple_pushDev) {}
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        nothing.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return nothing.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    Null nothing;
+};
+
+/*
+Apple-specific extension, apparently carries no data
+*/
+class ApplePushProd : public ExtensionBase
+{
+public:
+    ApplePushProd() : ExtensionBase(id_apple_pushProd) {}
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        nothing.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return nothing.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    Null nothing;
+};
+
+/*
+Apple-specific extension, apparently carries no data
+Unknown why this is there, cannot find documentation, seems to occur with the two above
+*/
+class AppleCustom6 : public ExtensionBase
+{
+public:
+    AppleCustom6() : ExtensionBase(id_apple_custom6) {}
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        nothing.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return nothing.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    Null nothing;
+};
+
+
+/*
+    This is reasonably simple, but it is unusual, and we probably just need to know if it is there.
+    It decodes to:
+
+    30 0A
+    1B 04 56342E30 (GeneralString, decodes to "v4.0")
+    03 02 0490 (BitString, decodes to 9, unknown meaning)
+*/
+class EntrustVersion : public RawExtension
+{
+public:
+    EntrustVersion() : RawExtension(id_entrustVersInfo) {}
+};
+
+/*
+    Very rare, seems to only have issuer email and web address
+*/
+class IssuerAltNames : public ExtensionBase
+{
+public:
+    IssuerAltNames() : ExtensionBase(id_ce_issuerAltName) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        altNames.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return altNames.Decode(pIn, cbIn, cbUsed);
+    }
+
+    virtual size_t SetDataSize() { return (cbData = altNames.EncodedSize()); }
+
+private:
+    GeneralNames altNames;
+};
+
+/*
+    Only have one of these on an Entrust cert from 1999
+    Contains a bit string with a value of 0x07, unknown meaning
+*/
+class NetscapeCertUnknown : public RawExtension
+{
+public:
+    NetscapeCertUnknown() : RawExtension(id_netscape_certExt) {}
+};
+
+/*
+
+privateKeyUsagePeriod has been deprecated, but now is not recommended:
+
+This specification obsoletes [RFC3280].  Differences from RFC 3280
+are summarized below:
+
+[...]
+* Section 4.2.1.4 in RFC 3280, which specified the
+privateKeyUsagePeriod certificate extension but deprecated its
+use, was removed.  Use of this ISO standard extension is neither
+deprecated nor recommended for use in the Internet PKI.
+
+Note - this structure is defined as:
+
+PrivateKeyUsagePeriod ::= SEQUENCE {
+notBefore       [0]     GeneralizedTime OPTIONAL,
+notAfter        [1]     GeneralizedTime OPTIONAL }
+-- either notBefore or notAfter MUST be present
+
+It could be easily implemented once we have some way to manage OPTIONAL items,
+which are polymorphic. For now, leave it alone, only have one sample on an old Entrust root
+*/
+class PrivateKeyUsagePeriod : public RawExtension
+{
+public:
+    PrivateKeyUsagePeriod() : RawExtension(id_ce_privateKeyUsagePeriod) {}
+
+};
+
+/*
+    keyUsageRestriction
+    Very rarely seen, documented here - https://datatracker.ietf.org/doc/html/draft-ietf-pkix-ipki-part1-01.txt#section-4.2.5
+
+    keyUsageRestriction  ::=  SEQUENCE  {
+    certPolicySet            SEQUENCE OF CertPolicyId OPTIONAL,
+    restrictedKeyUsage       KeyUsage OPTIONAL  }
+
+    Sample:
+    30 14
+      30 0E
+        30 0C
+          06 0A 2B060104018237020116 (1.3.6.1.4.1.311.2.1.22, SPC_COMMERCIAL_SP_KEY_PURPOSE_OBJID - Microsoft specific)
+      03 02 0780 (one bit, digitalSignature)
+
+    For now, not parsing these, don't think any modern cert parser is going to enforce this
+*/
+
+class KeyUsageRestriction : public RawExtension
+{
+public:
+    KeyUsageRestriction() : RawExtension(id_ce_keyUsageRestriction) {}
+};
+
+/*
+4.2.1.15.  Freshest CRL (a.k.a. Delta CRL Distribution Point)
+
+The freshest CRL extension identifies how delta CRL information is
+obtained.  The extension MUST be marked as non-critical by conforming
+CAs.  Further discussion of CRL management is contained in Section 5.
+
+The same syntax is used for this extension and the
+cRLDistributionPoints extension, and is described in Section
+4.2.1.13.  The same conventions apply to both extensions.
+
+id-ce-freshestCRL OBJECT IDENTIFIER ::=  { id-ce 46 }
+
+FreshestCRL ::= CRLDistributionPoints
+
+*/
+
+class FreshestCRL : public ExtensionBase
+{
+public:
+    FreshestCRL() : ExtensionBase(id_ce_freshestCRL) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        crlDist.Encode(pOut, cbOut, cbUsed);
+    }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        return crlDist.Decode(pIn, cbIn, cbUsed);
+    }
+
+private:
+    virtual size_t SetDataSize() { return (cbData = crlDist.EncodedSize()); }
+
+    CrlDistributionPoints crlDist;
+};
+
 enum class HashAlgorithm
 {
 	MD2 = 0,
@@ -1398,6 +1804,7 @@ enum class HashAlgorithm
 	SHA384,
 	SHA512
 };
+
 
 class AlgorithmIdentifier final : public DerBase
 {

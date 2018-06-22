@@ -77,7 +77,7 @@ id-ce-authorityKeyIdentifier OBJECT IDENTIFIER ::=  { id-ce 35 }
 
 const char id_ce[]                               = "2.5.29";
 const char id_ce_authorityKeyIdentifier_old[]    = "2.5.29.1";
-const char id_ce_keyUsageRestriction[]           = "2.5.29.4";
+const char id_ce_keyUsageRestriction[]           = "2.5.29.4"; // https://datatracker.ietf.org/doc/html/draft-ietf-pkix-ipki-part1-01.txt
 const char id_ce_subjectDirectoryAttributes[]    = "2.5.29.9";
 const char id_ce_subjectKeyIdentifier[]          = "2.5.29.14";
 const char id_ce_keyUsage[]                      = "2.5.29.15";

@@ -125,7 +125,17 @@ void InstantiateObjects()
     AuthorityInfoAccess a100;
     KeyPurposes a101;
     CertTemplate a102;
-
+    BasicConstraints a103;
+    MicrosoftCAVersion a104;
+    MicrosoftEnrollCertType a105;
+    MicrosoftPreviousCertHash a106;
+    ApplePushDev a107;
+    ApplePushProd a108;
+    AppleCustom6 a109;
+    IssuerAltNames a110;
+    KeyUsageRestriction a111;
+    FreshestCRL a112;
+    PolicyInformation a113;
 }
 
 struct TestValue
