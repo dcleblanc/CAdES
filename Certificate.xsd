@@ -1,0 +1,95 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema targetNamespace="http://tempuri.org/XMLSchema.xsd"
+    elementFormDefault="qualified"
+    xmlns="http://tempuri.org/XMLSchema.xsd"
+    xmlns:mstns="http://tempuri.org/XMLSchema.xsd"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+>
+
+  <xs:complexType name="ObjectIdentifier" >
+    <xs:sequence>
+      <xs:element name="oid" type="xs:string"/>
+      <xs:element name="tag" type="xs:string"/>
+    </xs:sequence>  
+  </xs:complexType>
+  
+  <xs:complexType name="AlgorithmIdentifier">
+    <xs:sequence>
+      <xs:element name="algorithm" type="ObjectIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:any minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AttributeTypeAndValue">
+    <xs:sequence>
+      <xs:element name="type" type="ObjectIdentifier" />
+      <xs:element name="value" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="RelativeDistinguishedName">
+    <xs:sequence>
+      <xs:element name="attributeTypeAndValue" type="AttributeTypeAndValue" minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Name">
+    <xs:sequence>
+      <xs:element name="rdn" type="RelativeDistinguishedName"  minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Validity">
+    <xs:sequence>
+      <xs:element name="notBefore" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="notAfter" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SubjectPublicKeyInfo">
+    <xs:sequence>
+      <xs:element name="algorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="subjectPublicKey" type="xs:hexBinary" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Extension">
+    <xs:sequence>
+      <xs:element name="oid" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:choice>
+        <xs:element name="raw" type="xs:hexBinary"/>
+        <!-- Add others here -->
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="Extensions">
+    <xs:sequence minOccurs="1">
+      <xs:element name="extension" type="Extension"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="TbsCertificate">
+    <xs:sequence>
+      <xs:element name="version" type="xs:integer"/>
+      <xs:element name="serialNumber" type="xs:hexBinary" />
+      <xs:element name="signature" type="AlgorithmIdentifier"/>
+      <xs:element name="issuer" type="Name"/>
+      <xs:element name="validity" type ="Validity"/>
+      <xs:element name="subject" type="Name"/>
+      <xs:element name="subjectPublicKeyInfo" type="SubjectPublicKeyInfo"/>
+      <xs:element name="issuerUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
+      <xs:element name="subjectUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
+      <xs:element name="extensions" type="Extensions" minOccurs="0" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="Certificate">
+    <xs:sequence>
+      <xs:element name="tbsCertificate" type="TbsCertificate" minOccurs="1" maxOccurs="1" />
+      <xs:element name="signatureAlgorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1" />
+      <xs:element name="signatureValue" type="xs:hexBinary" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+</xs:schema>
