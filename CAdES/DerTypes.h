@@ -55,6 +55,7 @@ enum class DerType
 	NumericString = 18, // Not used in signing, don't need encoder for now
 	PrintableString = 19,
 	T61String = 20, // Not used in signing, don't need encoder for now
+    TeletexString = 20, // An alias for T61String
 	VideotexString = 21, // Not used in signing, don't need encoder for now
 	IA5String = 22,
 	UTCTime = 23,
@@ -165,17 +166,20 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOu
 // Basic check for any type
 inline bool CheckDecode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& size, size_t& cbPrefix)
 {
-	if (cbIn < 3 || pIn[0] != static_cast<unsigned char>(type))
-	{
-		cbPrefix = 0;
-		return false;
-	}
+    // Check for sufficient incoming bytes
+    if (cbIn >= 3 && 
+        // If it is context-specific, allow it, else verify that it is the type we expect
+        ((pIn[0] & 0x80) || pIn[0] == static_cast<unsigned char>(type)) )
+    {
+        if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
+            throw std::out_of_range("Illegal size value");
 
-	if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
-		throw std::out_of_range("Illegal size value");
+        cbPrefix++;
+        return true;
+    }
 
-	cbPrefix++;
-	return true;
+	cbPrefix = 0;
+	return false;
 }
 
 // Create an interface to ensure consistency
@@ -463,6 +467,35 @@ private:
     size_t& cbUsed;
 };
 
+/*
+    There are two incarnations of optional items
+    1) Structures, which are of the form:
+        class = context-specific
+        constructed = 1
+        type = item designation
+       For example, 0xA1
+    2) A CHOICE item, or sometimes a primitive optional item:
+        class = context-specific
+        constructed = 0
+        type = item designation, determines the data type, and sometimes what it means
+        An example of this is GeneralName, where 0x82 implies a DNS name  
+
+    In the case of a structure, there will be the tag specifying which option it is, followed by a size,
+    then the actual contained structure. If it is a primitive, it won't be contained, but will behave as if we just substituted
+    the tag of the type it contains for the initial optional tag
+*/
+
+template <typename T, unsigned char id>
+class ContextSpecificPrimitive
+{
+public:
+    ContextSpecificPrimitive() : pInnerType(nullptr) {}
+
+    bool IsPresent(unsigned char tag) const { return (0x80 | id) == tag; }
+private:
+    T * pInnerType;
+};
+
 template <typename T>
 class ContextSpecificHolder
 {
@@ -673,8 +706,65 @@ public:
     const AnyType& operator=(const AnyType& rhs) { encodedValue = rhs.encodedValue; return *this; }
     const std::vector<unsigned char>& GetData() const { return encodedValue; }
 
+    template <typename T>
+    bool ConvertToType(T& type)
+    {
+        size_t cbUsed = 0;
+        return type.Decode(&encodedValue[0], encodedValue.size(), cbUsed) && cbUsed == encodedValue.size();
+    }
+
 private:
 	std::vector<unsigned char> encodedValue;
+};
+
+/*
+    Any class that derives from this will need an enum converting the type
+    to what is defined for the class, and a set of accessors that return the desired data
+    in the correct format.
+
+    Note - it is possible to have a CHOICE that's constructed in any of the following ways:
+    Foo ::= {
+        [universal type],
+        [universal type 2]
+        }
+
+    Foo ::= {
+        [universal type],
+        [context-specific ID]
+        }
+
+    Foo ::= {
+        [context-specific ID]
+        [context-specific ID2]
+        }
+ */
+
+class ChoiceType : public DerBase
+{
+public:
+    ChoiceType() : derType(0xff){}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        value.Encode(pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        if (value.Decode(pIn, cbIn, cbUsed))
+        {
+            derType = *pIn;
+            return true;
+        }
+
+        return false;
+    }
+
+protected:
+    virtual size_t SetDataSize() override { return value.SetDataSize(); }
+
+    AnyType value;
+    DerTypeContainer derType;
 };
 
 class Boolean final : public DerBase
@@ -1035,6 +1125,8 @@ public:
         value = rhs.value;
         oidIndex = rhs.oidIndex;
     }
+
+    size_t GetOidIndex() const { return oidIndex; }
 
 private:
     void SetOidIndex()

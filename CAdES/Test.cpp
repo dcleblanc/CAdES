@@ -14,9 +14,11 @@ void OidTest() {}
 
 struct options
 {
-    options() : dumpDebug(false){}
+    options() : dumpDebug(false), parseTest(false) 
+    {}
 
     bool dumpDebug;
+    bool parseTest;
 };
 
 options opts;
@@ -244,6 +246,25 @@ void TestCertificate(Certificate& cert)
     cert;
 }
 
+bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
+{
+    std::ifstream stm(szFile, std::ios::in | std::ios::binary);
+    std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+
+    if (!stm.is_open())
+    {
+        return false;
+    }
+
+    size_t cbUsed = 0;
+    bool fDecode = cert.Decode(&contents[0], contents.size(), cbUsed);
+
+    if (!fDecode || cbUsed != contents.size())
+        return false;
+
+    return true;
+}
+
 void ParseTest(const char * szFile)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
@@ -323,6 +344,17 @@ void ParseTest(const char * szFile)
 
 }
 
+void DumpCertProperties(const char* szFile)
+{
+    Certificate cert;
+    if (!LoadCertificateFromFile(szFile, cert))
+    {
+        std::cout << "LoadCertificateFromFile failed: " << szFile << std::endl;
+    }
+
+    return;
+}
+
 void PrintOids();
 void TestOidTable();
 
@@ -333,8 +365,8 @@ int main(int argc, char* argv[])
 
     // Ensure that the core elements of the library actually function
     // PrintOids is needed if you need to regenerate the OID table else it is a noop
-    PrintOids();
-    TestOidTable();
+    // PrintOids();
+    // TestOidTable();
 
     // Last argument, if present, has to be the file name
     for (int i = 1; i < argc - 1; ++i)
@@ -345,6 +377,9 @@ int main(int argc, char* argv[])
             {
             case 'd':
                 opts.dumpDebug = true;
+                break;
+            case 'p':
+                opts.parseTest = true;
                 break;
             default:
                 std::cout << argv[i] << " unsupported option" << std::endl;
@@ -363,11 +398,14 @@ int main(int argc, char* argv[])
         std::cout << "Usage is " << argv[0] << "[options] [Certificate file]" << std::endl;
         std::cout << "Currently supported options are:" << std::endl;
         std::cout << "\t-d - Create debug dump of input file" << std::endl;
+        std::cout << "\t-p - Run parse test on input file" << std::endl;
         return -1;
     }
 
+    if(opts.parseTest)
+	    ParseTest(szFile);
 
-	ParseTest(szFile);
+    DumpCertProperties(szFile);
 	/*
 	OidTest();
 	EncodeSizeTest();

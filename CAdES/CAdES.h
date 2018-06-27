@@ -360,46 +360,36 @@ class SubjectKeyIdentifier;
 
 enum class SignerIdentifierType
 {
-	NotSet,
-	Issuer,
-	SubjectKey
+    NotSet,
+    Issuer,
+    SubjectKey,
+    Error
 };
 
-class SignerIdentifier final : public DerBase
+/*
+    SignerIdentifier ::= CHOICE {
+    issuerAndSerialNumber IssuerAndSerialNumber,
+    subjectKeyIdentifier [0] SubjectKeyIdentifier }
+*/
+
+class SignerIdentifier final : public ChoiceType
 {
 public:
-	SignerIdentifier(SignerIdentifierType t = SignerIdentifierType::NotSet) : type(t) {}
+	SignerIdentifier() {}
 
-	void SetValue(IssuerAndSerialNumber& issuerAndSerialNumber) { SetValue(SignerIdentifierType::Issuer, issuerAndSerialNumber); }
-	void SetValue(SubjectKeyIdentifier& subjectKeyIdentifier) { SetValue(SignerIdentifierType::SubjectKey, subjectKeyIdentifier); }
-
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
-	{
-		value.Encode(pOut, cbOut, cbUsed);
-	}
-
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
-	{
-		return value.Decode(pIn, cbIn, cbUsed);
-	}
-
-	AnyType value;
+    // Encode, Decode inherited
+    SignerIdentifierType GetType() const
+    {
+        if (derType._class == DerClass::Universal && derType.constructed == 1 && derType.type == DerType::Sequence)
+            return SignerIdentifierType::Issuer;
+        else if (derType._class == DerClass::ContextSpecific && derType.constructed == 0 && derType.type == static_cast<DerType>(0))
+            return SignerIdentifierType::SubjectKey;
+        else
+            return SignerIdentifierType::Error;
+    }
 
 private:
-	virtual size_t SetDataSize() override
-	{
-		cbData = value.EncodedSize();
-		return cbData;
-	}
 
-	template <typename T>
-	void SetValue(SignerIdentifierType t, T& in)
-	{
-		type = t;
-		value.SetValue(in);
-	}
-
-	SignerIdentifierType type;
 };
 
 class Extension final : public DerBase
@@ -429,7 +419,6 @@ public:
     bool IsCritical() const { return critical.GetValue(); }
 
     // The OctetString is really some number of sub-structures, which are defined by which extnID we have
-    // Need accessors for these
 
     bool GetRawExtension(std::vector<unsigned char>& out)
     {
@@ -444,6 +433,8 @@ public:
 
         return false;
     }
+
+    size_t GetOidIndex() const { return extnID.GetOidIndex(); }
 
 private:
 	ObjectIdentifier extnID;
@@ -650,6 +641,8 @@ public:
         EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     }
 
+    const std::vector<ObjectIdentifier>& GetEkus() const { return ekus; }
+
 private:
     size_t SetDataSize() { return (cbData = GetEncodedSize(ekus)); }
 
@@ -682,6 +675,8 @@ public:
         return keyIdentifier.Decode(pIn, cbIn, cbUsed);
     }
 
+    const std::vector<unsigned char>& GetKeyIdentifierValue() const { return keyIdentifier.GetValue(); }
+
 private:
     OctetString keyIdentifier;
 
@@ -711,9 +706,12 @@ typedef Attribute OtherName;
 enum class DirectoryStringType
 {
     NotSet,
-    Printable, // This, or a UTF8 string, is what should be used currently
-    Universal,
-    BMP
+    TeletexString,
+    PrintableString, // This, or a UTF8 string, is what should be used currently
+    UniversalString,
+    UTF8String,
+    BMPString,
+    Error
 };
 
 // Ignore next as likely obsolete, implement if this is incorrect
@@ -725,64 +723,45 @@ Section (c)
 TeletexString, BMPString, and UniversalString are included
 for backward compatibility, and SHOULD NOT be used for
 certificates for new subjects.
+
+DirectoryString ::= CHOICE {
+teletexString           TeletexString (SIZE (1..MAX)),
+printableString         PrintableString (SIZE (1..MAX)),
+universalString         UniversalString (SIZE (1..MAX)),
+utf8String              UTF8String (SIZE (1..MAX)),
+bmpString               BMPString (SIZE (1..MAX)) }
+
 */
 
-class DirectoryString final : public DerBase
+class DirectoryString final : public ChoiceType
 {
 public:
-    DirectoryString(DirectoryStringType t = DirectoryStringType::NotSet) : type(t) {}
-    void SetValue(PrintableString& printableString) { SetValue(DirectoryStringType::Printable, printableString); }
-    void SetValue(UniversalString& universalString) { SetValue(DirectoryStringType::Universal, universalString); }
-    void SetValue(BMPString& bmpString) { SetValue(DirectoryStringType::BMP, bmpString); }
+    DirectoryString() {}
 
-    void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+    DirectoryStringType GetType() const
     {
-        value.Encode(pOut, cbOut, cbUsed);
-    }
+        if (derType._class != DerClass::Universal || derType.constructed != 0)
+            return DirectoryStringType::NotSet;
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
-    {
-        if (!value.Decode(pIn, cbIn, cbUsed))
-            return false;
-
-        switch (static_cast<DerType>(pIn[0]))
+        switch (derType.type)
         {
+        case DerType::TeletexString:
+            return DirectoryStringType::TeletexString;
         case DerType::PrintableString:
-            type = DirectoryStringType::Printable;
-            break;
-
+            return DirectoryStringType::PrintableString;
         case DerType::UniversalString:
-            type = DirectoryStringType::Universal;
-            break;
-
+            return DirectoryStringType::UTF8String;
+        case DerType::UTF8String:
+            return DirectoryStringType::UTF8String;
         case DerType::BMPString:
-            type = DirectoryStringType::BMP;
-            break;
-
+            return DirectoryStringType::BMPString;
         default:
-            cbUsed = 0;
-            return false;
+            return DirectoryStringType::Error;
         }
-
-        return true;
     }
 
-    virtual size_t SetDataSize() override
-    {
-        cbData = value.EncodedSize();
-        return cbData;
-    }
-
-    AnyType value;
 private:
-    template <typename T>
-    void SetValue(DirectoryStringType t, T& in)
-    {
-        type = t;
-        value.SetValue(in);
-    }
 
-    DirectoryStringType type;
 };
 
 
@@ -805,61 +784,136 @@ protected:
 enum class GeneralNameType
 {
     NotSet = -1,
-    Other = 0,        // otherName = OtherName
-    RFC822 = 1,       // rfc822Name = IA5String
-    DNS = 2,          // dNSName = IA5String
-    x400Address = 3,  // ORAddress
-    Directory = 4,    // directoryName = Name
-    EDIParty = 5,     // ediPartyName = EDIPartyName
-    URI = 6,          // uniformResourceIdentifier = IA5String
-    IP = 7,           // iPAddress = OctetString
-    RegisteredID = 8, // registeredID = ObjectIdentifier
-    Max = 9
+    OtherName = 0,                 // otherName = OtherName
+    rfc822Name = 1,                // rfc822Name = IA5String
+    dNSName = 2,                   // dNSName = IA5String
+    x400Address = 3,               // ORAddress
+    directoryName = 4,             // directoryName = Name
+    ediPartyName = 5,              // ediPartyName = EDIPartyName
+    uniformResourceIdentifier = 6, // uniformResourceIdentifier = IA5String
+    iPAddress = 7,                 // iPAddress = OctetString
+    registeredID = 8,              // registeredID = ObjectIdentifier
+    Error = 9
 };
 
-class GeneralName final : public DerBase
+/*
+GeneralName ::= CHOICE {
+otherName                       [0]     OtherName,
+rfc822Name                      [1]     IA5String,
+dNSName                         [2]     IA5String,
+x400Address                     [3]     ORAddress,
+directoryName                   [4]     Name,
+ediPartyName                    [5]     EDIPartyName,
+uniformResourceIdentifier       [6]     IA5String,
+iPAddress                       [7]     OCTET STRING,
+registeredID                    [8]     OBJECT IDENTIFIER }
+
+OtherName ::= SEQUENCE {
+type-id    OBJECT IDENTIFIER,
+value      [0] EXPLICIT ANY DEFINED BY type-id }
+
+EDIPartyName ::= SEQUENCE {
+nameAssigner            [0]     DirectoryString OPTIONAL,
+partyName               [1]     DirectoryString }
+
+Note - ORAddress is large, looks like this - from Appendix A.1, RFC 5280
+
+ORAddress ::= SEQUENCE {
+built-in-standard-attributes BuiltInStandardAttributes,
+built-in-domain-defined-attributes
+BuiltInDomainDefinedAttributes OPTIONAL,
+-- see also teletex-domain-defined-attributes
+extension-attributes ExtensionAttributes OPTIONAL }
+
+For now, treat it as AnyType until we know if we need it.
+
+*/
+
+typedef AnyType ORAddress;
+
+class GeneralName final : public ChoiceType
 {
 public:
-    GeneralName(GeneralNameType t = GeneralNameType::NotSet) : type(t) {}
-    virtual ~GeneralName() = default;
+    GeneralName() {}
 
-    virtual size_t SetDataSize() override
+    bool GetOtherName(OtherName& otherName)
     {
-        cbData = value.EncodedSize();
-        return cbData;
+        return (GetType() == GeneralNameType::OtherName && value.ConvertToType(otherName));
     }
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    bool GetRFC822Name(IA5String& rfc822Name)
     {
-        value.Encode(pOut, cbOut, cbUsed);
+        return (GetType() == GeneralNameType::rfc822Name && value.ConvertToType(rfc822Name));
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    bool GetDNSName(IA5String& dNSName)
     {
-        return value.Decode(pIn, cbIn, cbUsed);
+        return (GetType() == GeneralNameType::dNSName && value.ConvertToType(dNSName));
     }
 
-    void SetType(unsigned char t)
+    bool GetX400Address(ORAddress& x400Address)
     {
-        DerTypeContainer typeContainer(t);
+        return (GetType() == GeneralNameType::x400Address && value.ConvertToType(x400Address));
+    }
 
-        if (typeContainer._class == DerClass::ContextSpecific && !typeContainer.constructed)
+    // EDIPartyName goes here, if implemented
+
+    bool GetDirectoryName(Name& directoryName)
+    {
+        return (GetType() == GeneralNameType::directoryName && value.ConvertToType(directoryName));
+    }
+
+    bool GetEDIPartyName(EDIPartyName& ediPartyName)
+    {
+        return (GetType() == GeneralNameType::ediPartyName && value.ConvertToType(ediPartyName));
+    }
+
+    bool GetURI(IA5String& uniformResourceIdentifier)
+    {
+        return (GetType() == GeneralNameType::uniformResourceIdentifier && value.ConvertToType(uniformResourceIdentifier));
+    }
+
+    bool GetIpAddress(OctetString& iPAddress)
+    {
+        return (GetType() == GeneralNameType::iPAddress && value.ConvertToType(iPAddress));
+    }
+
+    bool GetRegisteredId(ObjectIdentifier& registeredID)
+    {
+        return (GetType() == GeneralNameType::registeredID && value.ConvertToType(registeredID));
+    }
+
+    GeneralNameType GetType() const
+    {
+        if (derType._class != DerClass::ContextSpecific)
+            return GeneralNameType::Error;
+
+        switch (static_cast<unsigned char>(derType.type))
         {
-            // then the type this really is depends on the GeneralNameType enum
-            int _type = static_cast<int>(typeContainer.type);
-            if (_type > static_cast<int>(GeneralNameType::NotSet) && _type < static_cast<int>(GeneralNameType::Max))
-            {
-                type = static_cast<GeneralNameType>(_type);
-                return;
-            }
+        case 0:
+            return GeneralNameType::OtherName;
+        case 1:
+            return GeneralNameType::rfc822Name;
+        case 2:
+            return GeneralNameType::dNSName;
+        case 3:
+            return GeneralNameType::x400Address;
+        case 4:
+            return GeneralNameType::directoryName;
+        case 5:
+            return GeneralNameType::ediPartyName;
+        case 6:
+            return GeneralNameType::uniformResourceIdentifier;
+        case 7:
+            return GeneralNameType::iPAddress;
+        case 8:
+            return GeneralNameType::registeredID;
+        default:
+            return GeneralNameType::Error;
         }
-
-        type = GeneralNameType::NotSet;
     }
-
+    
 private:
-    GeneralNameType type;
-    AnyType value;
 };
 
 class GeneralNames final : public DerBase
@@ -1953,6 +2007,95 @@ private:
 	std::vector<Extension> values;
 };
 
+class ExtensionData
+{
+public:
+    ExtensionData(const std::vector<Extension>& ext) : extensions(ext) {}
+
+    void LoadExtensions()
+    {
+        bool hasKeyUsage = false;
+
+        for each (Extension ext in extensions)
+        {
+            size_t oidIndex = ext.GetOidIndex();
+            const char* oidString = oidIndex == ~static_cast<size_t>(0) ? nullptr : GetOidString(oidIndex);
+            // Get the raw data from inside the OctetString
+            std::vector<unsigned char> extensionData;
+
+            if (!ext.GetRawExtension(extensionData))
+            {
+                // Corrupted
+                continue;
+            }
+
+            // Unknown extension
+            if (oidString == nullptr)
+            {
+                // do something
+                continue;
+            }
+
+            size_t cbUsed = 0;
+
+            if (oidString == id_ce_keyUsage)
+            {
+                KeyUsage keyUsage;
+
+                if (!keyUsage.Decode(&extensionData[0], extensionData.size(), cbUsed))
+                    throw std::exception();
+
+                keyUsageValue = keyUsage.GetKeyUsage();
+                hasKeyUsage = true;
+                continue;
+            }
+
+            if (oidString == id_ce_extKeyUsage)
+            {
+                ExtendedKeyUsage eku;
+
+                if (!eku.Decode(&extensionData[0], extensionData.size(), cbUsed))
+                    throw std::exception();
+
+                ekus = eku.GetEkus();
+                continue;
+            }
+
+            if (oidString == id_ce_subjectKeyIdentifier)
+            {
+                SubjectKeyIdentifier ski;
+                
+                if (!ski.Decode(&extensionData[0], extensionData.size(), cbUsed))
+                    throw std::exception();
+
+                subjectKeyIdentifier = ski.GetKeyIdentifierValue();
+                continue;
+            }
+
+            if (oidString == id_ce_authorityKeyIdentifier)
+            {
+
+            }
+
+        }
+
+        if (!hasKeyUsage)
+        {
+            // Special case - if there is no key usage, all bits set
+            memset(&keyUsageValue, 0xff, sizeof(keyUsageValue));
+        }
+    
+
+    }
+
+private:
+    KeyUsageValue keyUsageValue;
+    std::vector<ObjectIdentifier> ekus;
+    std::vector<unsigned char> subjectKeyIdentifier;
+
+    const std::vector<Extension>& extensions;
+};
+
 class Validity final : public DerBase
 {
 public:
@@ -2342,6 +2485,19 @@ enum class CertificateChoicesType
 	OtherCert
 };
 
+/*
+CertificateChoices ::= CHOICE {
+    certificate Certificate,
+    extendedCertificate [0] IMPLICIT ExtendedCertificate, -- Obsolete
+    v1AttrCert [1] IMPLICIT AttributeCertificateV1,       -- Obsolete
+    v2AttrCert [2] IMPLICIT AttributeCertificateV2,
+    other [3] IMPLICIT OtherCertificateFormat }
+
+OtherCertificateFormat ::= SEQUENCE {
+    otherCertFormat OBJECT IDENTIFIER,
+    otherCert ANY DEFINED BY otherCertFormat }
+
+*/
 class CertificateChoices final : public DerBase
 {
 public:
@@ -2476,14 +2632,15 @@ public:
 class OtherRevocationInfoFormat final : public DerBase
 {
 public:
-	ObjectIdentifier otherRevInfoFormat;
-	AnyType otherRevInfo;
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
 
-protected:
-	virtual size_t SetDataSize() override
+private:
+    ObjectIdentifier otherRevInfoFormat;
+    AnyType otherRevInfo;
+
+    virtual size_t SetDataSize() override
 	{
 		return (cbData = otherRevInfoFormat.EncodedSize() + otherRevInfo.EncodedSize());
 	}
