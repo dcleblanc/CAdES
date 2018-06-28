@@ -65,4 +65,9 @@
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Xsd Include="..\Certificate.xsd">
+      <Filter>Resource Files</Filter>
+    </Xsd>
+  </ItemGroup>
 </Project>

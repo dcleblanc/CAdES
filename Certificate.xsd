@@ -6,6 +6,14 @@
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
 >
 
+  <xs:simpleType name="OctetString">
+    <xs:restriction base="xs:hexBinary" />
+  </xs:simpleType>
+
+  <xs:simpleType name="CertificateSerialNumber">
+    <xs:restriction base="xs:hexBinary" />
+  </xs:simpleType>
+
   <xs:complexType name="ObjectIdentifier" >
     <xs:sequence>
       <xs:element name="oid" type="xs:string"/>
@@ -53,12 +61,158 @@
     </xs:sequence>
   </xs:complexType>
 
+  <!-- Extensions -->
+  <xs:simpleType name="KeyUsage">
+    <xs:restriction base="xs:integer"/>
+  </xs:simpleType>
+
+  <xs:complexType name="ExtendedKeyUsage">
+    <xs:sequence>
+      <xs:element name="eku" type="ObjectIdentifier"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="SubjectKeyIdentifier">
+    <xs:restriction base="xs:hexBinary"/>
+  </xs:simpleType>
+  
+  <xs:simpleType name="DirectoryString">
+    <xs:restriction base="xs:string" />
+  </xs:simpleType>
+  
+  <xs:complexType name="EDIPartyName">
+    <xs:sequence>
+      <xs:element name="nameAssigner" type="DirectoryString" minOccurs="0" maxOccurs="1" />
+      <xs:element name="partyName" type="DirectoryString" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="GeneralName">
+    <xs:choice>
+      <xs:element name="otherName" type="AttributeTypeAndValue" />
+      <xs:element name="rfc822Name" type="xs:string" />
+      <xs:element name="dNSName" type="xs:string" />
+      <xs:element name="x400Address" type="xs:hexBinary" /> <!-- This is complex, hoping we don't see any of these -->
+      <xs:element name="directoryName" type="Name" />
+      <xs:element name="ediPartyName" type="EDIPartyName" />
+      <xs:element name="uniformResourceIdentifier" type="xs:string" />
+      <xs:element name="iPAddress" type="xs:hexBinary" />
+      <xs:element name="registeredID" type="ObjectIdentifier" />
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="GeneralNames">
+    <xs:sequence>
+      <xs:element name="generalName" type="GeneralName" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>  
+  </xs:complexType>
+  
+  <xs:complexType name="AuthorityKeyIdentifier">
+    <xs:sequence>
+      <xs:element name="keyIdentifier" type="OctetString" minOccurs="0" maxOccurs="1" />
+      <xs:element name="authorityCertIssuer" type="GeneralNames" minOccurs="0" maxOccurs="1" />
+      <xs:element name="authorityCertSerialNumber" type="CertificateSerialNumber" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>  
+  </xs:complexType>
+  
+    <xs:complexType name="DistributionPointName">
+    <xs:choice>
+      <xs:element name="fullName" type="GeneralNames" />
+      <xs:element name="nameRelativeToCRLIssuer" type="RelativeDistinguishedName" />
+    </xs:choice>
+  </xs:complexType>
+  
+  <xs:simpleType name="ReasonFlags">
+    <xs:restriction base="xs:byte" />
+    <!--
+    ReasonFlags ::= BIT STRING {
+    unused                  (0),
+    keyCompromise           (1),
+    cACompromise            (2),
+    affiliationChanged      (3),
+    superseded              (4),
+    cessationOfOperation    (5),
+    certificateHold         (6),
+    privilegeWithdrawn      (7),
+    aACompromise            (8) }
+  -->
+  </xs:simpleType>
+  
+  <xs:complexType name="DistributionPoint">
+    <xs:sequence>
+      <xs:element name="distributionPoint" type="DistributionPointName" minOccurs="0" maxOccurs="1" />
+      <xs:element name="reasons" type="ReasonFlags" minOccurs="0" maxOccurs="1" />
+      <xs:element name="cRLIssuer" type="GeneralNames" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="CRLDistributionPoints">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="distributionPoint" type="DistributionPoint" />
+    </xs:sequence>  
+  </xs:complexType>
+
+  <xs:complexType name="AccessDescription" >
+    <xs:sequence>
+      <xs:element name="accessMethod" type="ObjectIdentifier" minOccurs="1" maxOccurs="1" />
+      <xs:element name="accessLocation" type="GeneralName" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="AuthorityInfoAccess">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="accessDescription" type="AccessDescription" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- Microsoft-specific -->
+  <xs:complexType name="ApplicationCertPolicies">
+    <xs:sequence minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="keyPurposes" type="ObjectIdentifier" ></xs:element>
+    </xs:sequence>  
+  </xs:complexType>
+
+  <xs:complexType name="PolicyQualifierInfo" >
+    <xs:sequence>
+      <xs:element name="policyQualifierId" type="ObjectIdentifier" minOccurs="1" maxOccurs="1" />
+      <xs:element name="qualifier" type="xs:hexBinary" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="PolicyInformation">
+    <xs:sequence>
+      <xs:element name="policyIdentifier" type="ObjectIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="policyQualifiers" type="PolicyQualifierInfo" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <!-- Microsoft-specific -->
+  <xs:complexType name="CertTemplate">
+    <xs:sequence>
+      <xs:element name="objId" type="ObjectIdentifier" minOccurs="1" maxOccurs="1" />
+      <xs:element name="majorVersion" type="xs:integer" minOccurs="1" maxOccurs="1" />
+      <xs:element name="minorVersion" type="xs:integer" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>  
+  </xs:complexType>
+  
   <xs:complexType name="Extension">
     <xs:sequence>
       <xs:element name="oid" type="xs:string" minOccurs="1" maxOccurs="1"/>
       <xs:choice>
-        <xs:element name="raw" type="xs:hexBinary"/>
+        <xs:element name="keyUsage" type="KeyUsage" />
+        <xs:element name="extendedKeyUsage" type="ExtendedKeyUsage" />
+        <xs:element name="subjectKeyIdentifier" type="SubjectKeyIdentifier" />
+        <xs:element name="authorityKeyIdentifier" type="AuthorityKeyIdentifier" />
+        <xs:element name="cRLDistributionPoints" type="CRLDistributionPoints" />
+        <xs:element name="authorityInfoAccess" type="AuthorityInfoAccess" />
+        <xs:element name="subjectAltName" type="GeneralNames" />
+        <xs:element name="applicationCertPolicies" type="ApplicationCertPolicies" />
+        <xs:element name="certificatePolicies" type="PolicyInformation" />
+        <xs:element name="certTemplate" type="CertTemplate" />
+        <xs:element name="authorityKeyIdentifier_old" type="xs:hexBinary" /> <!-- antique, only very old certs -->
+
         <!-- Add others here -->
+        <xs:element name="raw" type="xs:hexBinary"/>
       </xs:choice>
     </xs:sequence>
   </xs:complexType>

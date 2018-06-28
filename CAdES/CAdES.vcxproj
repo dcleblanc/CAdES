@@ -151,6 +151,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CAdES.h" />
+    <ClInclude Include="Certificate.h">
+      <DependentUpon>..\Certificate.xsd</DependentUpon>
+    </ClInclude>
     <ClInclude Include="CMSSignature.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="DerEncode.h" />
@@ -169,6 +172,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xsd Include="..\Certificate.xsd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
