@@ -194,7 +194,49 @@
       <xs:element name="minorVersion" type="xs:integer" minOccurs="0" maxOccurs="1" />
     </xs:sequence>  
   </xs:complexType>
-  
+
+  <xs:complexType name="BasicConstraints">
+    <xs:sequence>
+      <xs:element name="CA" type="xs:boolean" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="pathLenConstraint" type="xs:integer" minOccurs="1" maxOccurs="1"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="GoogleCertTransparency">
+    <xs:restriction base="xs:hexBinary" />
+  </xs:simpleType>
+
+  <xs:simpleType name="SmimeCapabilities">
+    <xs:restriction base="xs:hexBinary" />
+  </xs:simpleType>
+
+  <xs:simpleType name="MicrosoftCAVersion">
+    <xs:restriction base="xs:integer" />
+  </xs:simpleType>
+
+  <xs:simpleType name="MicrosoftEnrollCertType">
+    <!-- This needs to be converted from a BMPString -->
+    <xs:restriction base="xs:string" />
+  </xs:simpleType>
+
+  <xs:simpleType name="MicrosoftPreviousCertHash">
+    <xs:restriction base="OctetString" />
+  </xs:simpleType>
+
+  <!-- Empty types for Apple extenstions, which have no data, and behave like an EKU -->
+  <xs:complexType name="ApplePushDev" >
+  </xs:complexType>
+
+  <xs:complexType name="ApplePushProd" >
+  </xs:complexType>
+
+  <xs:complexType name="AppleCustom6" >
+  </xs:complexType>
+
+  <xs:simpleType name="EntrustVersion">
+    <xs:restriction base="xs:hexBinary" />
+  </xs:simpleType>
+
   <xs:complexType name="Extension">
     <xs:sequence>
       <xs:element name="oid" type="xs:string" minOccurs="1" maxOccurs="1"/>
@@ -210,8 +252,22 @@
         <xs:element name="certificatePolicies" type="PolicyInformation" />
         <xs:element name="certTemplate" type="CertTemplate" />
         <xs:element name="authorityKeyIdentifier_old" type="xs:hexBinary" /> <!-- antique, only very old certs -->
+        <xs:element name="basicConstraints" type="BasicConstraints" />
+        <xs:element name="googleCertTransparency" type="GoogleCertTransparency" />
+        <xs:element name="smimeCapabilities" type="SmimeCapabilities" />
+        <xs:element name="microsoftCAVersion" type="MicrosoftCAVersion" />
+        <xs:element name="microsoftPreviousCertHash" type="MicrosoftPreviousCertHash" />
+        <xs:element name="applePushDev" type="ApplePushDev" />
+        <xs:element name="applePushProd" type="ApplePushProd" />
+        <xs:element name="appleCustom6" type="AppleCustom6" />
+        <xs:element name="entrustVersion" type="EntrustVersion" />
+        <xs:element name="issuerAltNames" type="GeneralNames" />
+        <xs:element name="netscapeCertUnknown" type="xs:hexBinary" />
+        <xs:element name="privateKeyUsagePeriod" type="xs:hexBinary" />
+        <xs:element name="keyUsageRestriction" type="xs:hexBinary" />
+        <xs:element name="FreshestCRL" type="CRLDistributionPoints" />
 
-        <!-- Add others here -->
+        <!-- Add others here, use the below for anything unknown -->
         <xs:element name="raw" type="xs:hexBinary"/>
       </xs:choice>
     </xs:sequence>
