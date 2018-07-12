@@ -16,22 +16,28 @@
 
   <xs:complexType name="ObjectIdentifier" >
     <xs:sequence>
-      <xs:element name="oid" type="xs:string"/>
-      <xs:element name="tag" type="xs:string"/>
+      <xs:element name="Oid" type="xs:string"/>
+      <xs:element name="Tag" type="xs:string"/>
     </xs:sequence>  
+  </xs:complexType>
+  
+  <xs:complexType name="Parameters">
+    <xs:sequence>
+      <xs:any minOccurs="0"/>
+    </xs:sequence>
   </xs:complexType>
   
   <xs:complexType name="AlgorithmIdentifier">
     <xs:sequence>
-      <xs:element name="algorithm" type="ObjectIdentifier" minOccurs="1" maxOccurs="1"/>
-      <xs:any minOccurs="0"/>
+      <xs:element name="Algorithm" type="ObjectIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="Parameters" type="Parameters" minOccurs="1" maxOccurs="1" />
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="AttributeTypeAndValue">
     <xs:sequence>
-      <xs:element name="type" type="ObjectIdentifier" />
-      <xs:element name="value" type="xs:string" />
+      <xs:element name="Type" type="ObjectIdentifier" />
+      <xs:element name="Value" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
     </xs:sequence>
   </xs:complexType>
   
@@ -49,15 +55,15 @@
 
   <xs:complexType name="Validity">
     <xs:sequence>
-      <xs:element name="notBefore" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="notAfter" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="NotBefore" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="NotAfter" type="xs:dateTime" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="SubjectPublicKeyInfo">
     <xs:sequence>
-      <xs:element name="algorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1"/>
-      <xs:element name="subjectPublicKey" type="xs:hexBinary" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="Algorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="SubjectPublicKey" type="xs:hexBinary" minOccurs="1" maxOccurs="1"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -68,7 +74,7 @@
 
   <xs:complexType name="ExtendedKeyUsage">
     <xs:sequence>
-      <xs:element name="eku" type="ObjectIdentifier"/>
+      <xs:element name="eku" type="ObjectIdentifier" minOccurs="1" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
 
@@ -89,15 +95,15 @@
   
   <xs:complexType name="GeneralName">
     <xs:choice>
-      <xs:element name="otherName" type="AttributeTypeAndValue" />
-      <xs:element name="rfc822Name" type="xs:string" />
-      <xs:element name="dNSName" type="xs:string" />
-      <xs:element name="x400Address" type="xs:hexBinary" /> <!-- This is complex, hoping we don't see any of these -->
-      <xs:element name="directoryName" type="Name" />
-      <xs:element name="ediPartyName" type="EDIPartyName" />
-      <xs:element name="uniformResourceIdentifier" type="xs:string" />
-      <xs:element name="iPAddress" type="xs:hexBinary" />
-      <xs:element name="registeredID" type="ObjectIdentifier" />
+      <xs:element name="OtherName" type="AttributeTypeAndValue" />
+      <xs:element name="Rfc822Name" type="xs:string" />
+      <xs:element name="DNSName" type="xs:string" />
+      <xs:element name="X400Address" type="xs:hexBinary" /> <!-- This is complex, hoping we don't see any of these -->
+      <xs:element name="DirectoryName" type="Name" />
+      <xs:element name="EdiPartyName" type="EDIPartyName" />
+      <xs:element name="UniformResourceIdentifier" type="xs:string" />
+      <xs:element name="IPAddress" type="xs:hexBinary" />
+      <xs:element name="RegisteredID" type="ObjectIdentifier" />
     </xs:choice>
   </xs:complexType>
 
@@ -109,9 +115,9 @@
   
   <xs:complexType name="AuthorityKeyIdentifier">
     <xs:sequence>
-      <xs:element name="keyIdentifier" type="OctetString" minOccurs="0" maxOccurs="1" />
-      <xs:element name="authorityCertIssuer" type="GeneralNames" minOccurs="0" maxOccurs="1" />
-      <xs:element name="authorityCertSerialNumber" type="CertificateSerialNumber" minOccurs="0" maxOccurs="1" />
+      <xs:element name="KeyIdentifier" type="OctetString" minOccurs="0" maxOccurs="1" />
+      <xs:element name="AuthorityCertIssuer" type="GeneralNames" minOccurs="0" maxOccurs="1" />
+      <xs:element name="AuthorityCertSerialNumber" type="CertificateSerialNumber" minOccurs="0" maxOccurs="1" />
     </xs:sequence>  
   </xs:complexType>
   
@@ -168,7 +174,7 @@
   <!-- Microsoft-specific -->
   <xs:complexType name="ApplicationCertPolicies">
     <xs:sequence minOccurs="1" maxOccurs="unbounded">
-      <xs:element name="keyPurposes" type="ObjectIdentifier" ></xs:element>
+      <xs:element name="KeyPurposes" type="ObjectIdentifier" ></xs:element>
     </xs:sequence>  
   </xs:complexType>
 
@@ -239,66 +245,67 @@
 
   <xs:complexType name="Extension">
     <xs:sequence>
-      <xs:element name="oid" type="xs:string" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="ExtensionId" type="ObjectIdentifier" minOccurs="1" maxOccurs="1"/>
+      <xs:element name="Critical" type="xs:boolean" minOccurs="0" maxOccurs="1" />
       <xs:choice>
-        <xs:element name="keyUsage" type="KeyUsage" />
-        <xs:element name="extendedKeyUsage" type="ExtendedKeyUsage" />
-        <xs:element name="subjectKeyIdentifier" type="SubjectKeyIdentifier" />
-        <xs:element name="authorityKeyIdentifier" type="AuthorityKeyIdentifier" />
-        <xs:element name="cRLDistributionPoints" type="CRLDistributionPoints" />
-        <xs:element name="authorityInfoAccess" type="AuthorityInfoAccess" />
-        <xs:element name="subjectAltName" type="GeneralNames" />
-        <xs:element name="applicationCertPolicies" type="ApplicationCertPolicies" />
-        <xs:element name="certificatePolicies" type="PolicyInformation" />
-        <xs:element name="certTemplate" type="CertTemplate" />
-        <xs:element name="authorityKeyIdentifier_old" type="xs:hexBinary" /> <!-- antique, only very old certs -->
-        <xs:element name="basicConstraints" type="BasicConstraints" />
-        <xs:element name="googleCertTransparency" type="GoogleCertTransparency" />
-        <xs:element name="smimeCapabilities" type="SmimeCapabilities" />
-        <xs:element name="microsoftCAVersion" type="MicrosoftCAVersion" />
-        <xs:element name="microsoftPreviousCertHash" type="MicrosoftPreviousCertHash" />
-        <xs:element name="applePushDev" type="ApplePushDev" />
-        <xs:element name="applePushProd" type="ApplePushProd" />
-        <xs:element name="appleCustom6" type="AppleCustom6" />
-        <xs:element name="entrustVersion" type="EntrustVersion" />
-        <xs:element name="issuerAltNames" type="GeneralNames" />
-        <xs:element name="netscapeCertUnknown" type="xs:hexBinary" />
-        <xs:element name="privateKeyUsagePeriod" type="xs:hexBinary" />
-        <xs:element name="keyUsageRestriction" type="xs:hexBinary" />
+        <xs:element name="KeyUsage" type="KeyUsage" />
+        <xs:element name="ExtendedKeyUsage" type="ExtendedKeyUsage" />
+        <xs:element name="SubjectKeyIdentifier" type="SubjectKeyIdentifier" />
+        <xs:element name="AuthorityKeyIdentifier" type="AuthorityKeyIdentifier" />
+        <xs:element name="CRLDistributionPoints" type="CRLDistributionPoints" />
+        <xs:element name="AuthorityInfoAccess" type="AuthorityInfoAccess" />
+        <xs:element name="SubjectAltName" type="GeneralNames" />
+        <xs:element name="ApplicationCertPolicies" type="ApplicationCertPolicies" />
+        <xs:element name="CertificatePolicies" type="PolicyInformation" />
+        <xs:element name="CertTemplate" type="CertTemplate" />
+        <xs:element name="AuthorityKeyIdentifier_old" type="xs:hexBinary" /> <!-- antique, only very old certs -->
+        <xs:element name="BasicConstraints" type="BasicConstraints" />
+        <xs:element name="GoogleCertTransparency" type="GoogleCertTransparency" />
+        <xs:element name="SmimeCapabilities" type="SmimeCapabilities" />
+        <xs:element name="MicrosoftCAVersion" type="MicrosoftCAVersion" />
+        <xs:element name="MicrosoftPreviousCertHash" type="MicrosoftPreviousCertHash" />
+        <xs:element name="ApplePushDev" type="ApplePushDev" />
+        <xs:element name="ApplePushProd" type="ApplePushProd" />
+        <xs:element name="AppleCustom6" type="AppleCustom6" />
+        <xs:element name="EntrustVersion" type="EntrustVersion" />
+        <xs:element name="IssuerAltNames" type="GeneralNames" />
+        <xs:element name="NetscapeCertUnknown" type="xs:hexBinary" />
+        <xs:element name="PrivateKeyUsagePeriod" type="xs:hexBinary" />
+        <xs:element name="KeyUsageRestriction" type="xs:hexBinary" />
         <xs:element name="FreshestCRL" type="CRLDistributionPoints" />
 
         <!-- Add others here, use the below for anything unknown -->
-        <xs:element name="raw" type="xs:hexBinary"/>
+        <xs:element name="Unknown" type="xs:hexBinary"/>
       </xs:choice>
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="Extensions">
     <xs:sequence minOccurs="1">
-      <xs:element name="extension" type="Extension"/>
+      <xs:element name="Extension" type="Extension"/>
     </xs:sequence>
   </xs:complexType>
   
   <xs:complexType name="TbsCertificate">
     <xs:sequence>
-      <xs:element name="version" type="xs:integer"/>
-      <xs:element name="serialNumber" type="xs:hexBinary" />
-      <xs:element name="signature" type="AlgorithmIdentifier"/>
-      <xs:element name="issuer" type="Name"/>
-      <xs:element name="validity" type ="Validity"/>
-      <xs:element name="subject" type="Name"/>
-      <xs:element name="subjectPublicKeyInfo" type="SubjectPublicKeyInfo"/>
-      <xs:element name="issuerUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
-      <xs:element name="subjectUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
-      <xs:element name="extensions" type="Extensions" minOccurs="0" />
+      <xs:element name="Version" type="xs:integer"/>
+      <xs:element name="SerialNumber" type="xs:hexBinary" />
+      <xs:element name="Signature" type="AlgorithmIdentifier"/>
+      <xs:element name="Issuer" type="Name"/>
+      <xs:element name="Validity" type ="Validity"/>
+      <xs:element name="Subject" type="Name"/>
+      <xs:element name="SubjectPublicKeyInfo" type="SubjectPublicKeyInfo"/>
+      <xs:element name="IssuerUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
+      <xs:element name="SubjectUniqueID" type="xs:hexBinary" minOccurs="0"/> <!--typically not in current use-->
+      <xs:element name="Extensions" type="Extensions" minOccurs="0" />
     </xs:sequence>
   </xs:complexType>
   
   <xs:complexType name="Certificate">
     <xs:sequence>
-      <xs:element name="tbsCertificate" type="TbsCertificate" minOccurs="1" maxOccurs="1" />
-      <xs:element name="signatureAlgorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1" />
-      <xs:element name="signatureValue" type="xs:hexBinary" minOccurs="1" maxOccurs="1" />
+      <xs:element name="TbsCertificate" type="TbsCertificate" minOccurs="1" maxOccurs="1" />
+      <xs:element name="SignatureAlgorithm" type="AlgorithmIdentifier" minOccurs="1" maxOccurs="1" />
+      <xs:element name="SignatureValue" type="xs:hexBinary" minOccurs="1" maxOccurs="1" />
     </xs:sequence>
   </xs:complexType>
   

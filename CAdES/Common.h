@@ -21,3 +21,4 @@
 #include "DerEncode.h"
 #include "CAdES.h"
 #include "CMSSignature.h"
+#include "CertToXml.h"

@@ -84,12 +84,16 @@ public:
 		attrValues.push_back(value);
 	}
 
+    const ObjectIdentifier& GetAttrType() const { return attrType; }
+    // Note: actually an array of AnyType
+    const std::vector<AttributeValue>& GetAttrValues() const { return attrValues; }
+
 private:
 	virtual size_t SetDataSize() override
 	{
 		size_t cbNeeded = 0; // For the set byte
 
-							 // First, calculate how much is needed for the set of attrValues
+		// First, calculate how much is needed for the set of attrValues
 		for (size_t i = 0; i < attrValues.size(); ++i)
 		{
 			cbNeeded += attrValues[i].EncodedSize();
@@ -103,7 +107,6 @@ private:
 
 	ObjectIdentifier attrType;
 	std::vector<AttributeValue> attrValues;
-
 };
 
 // This isn't an Attribute, slightly different structure
@@ -116,6 +119,8 @@ public:
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const char* GetTypeLabel() const { return type.GetOidLabel(); }
+
+    const ObjectIdentifier& GetOid() const { return type; }
     const AnyType& GetValue() const { return value; }
 
     bool GetValueAsString(std::string& out) const { return value.ToString(out); }
@@ -191,6 +196,8 @@ public:
         
         return false;
     }
+
+    const std::vector<AttributeTypeAndValue>& GetAttributeVector() const { return attrs; }
 
 private:
 	virtual size_t SetDataSize() override
@@ -270,6 +277,8 @@ public:
         return false;
     }
 
+    const std::vector<RelativeDistinguishedName>& GetRDNVector() const { return name; }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -326,6 +335,8 @@ public:
     {
         return rdnSequence.ToString(s);
     }
+
+    const RDNSequence& GetRDNSequence() const { return rdnSequence; }
 
 private:
 	virtual size_t SetDataSize() override
@@ -436,6 +447,9 @@ public:
 
     size_t GetOidIndex() const { return extnID.GetOidIndex(); }
 
+    const ObjectIdentifier& GetOid() const { return extnID; }
+    const OctetString& GetExtensionValue() const { return extnValue; }
+
 private:
 	ObjectIdentifier extnID;
 	Boolean critical;
@@ -495,6 +509,8 @@ public:
     {
         return extension.Decode(pIn, cbIn, cbUsed);
     }
+
+    const AnyType& GetRawExtensionData() const { return extension; }
 
 protected:
     virtual size_t SetDataSize() override
@@ -676,6 +692,7 @@ public:
     }
 
     const std::vector<unsigned char>& GetKeyIdentifierValue() const { return keyIdentifier.GetValue(); }
+    const OctetString& GetKeyIdentifer() const { return keyIdentifier; }
 
 private:
     OctetString keyIdentifier;
@@ -745,15 +762,17 @@ public:
     }
 
 private:
-
+    // the data is encapsulated in an AnyType
 };
-
 
 class EDIPartyName final : public DerBase
 {
 public:
     virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+    const DirectoryString& GetNameAssigner() const { return nameAssigner; }
+    const DirectoryString& GetPartyName() const { return partyName; }
 
 protected:
     virtual size_t SetDataSize() override
@@ -820,49 +839,49 @@ class GeneralName final : public ChoiceType
 public:
     GeneralName() {}
 
-    bool GetOtherName(OtherName& otherName)
+    bool GetOtherName(OtherName& otherName) const 
     {
         return (GetType() == GeneralNameType::OtherName && value.ConvertToType(otherName));
     }
 
-    bool GetRFC822Name(IA5String& rfc822Name)
+    bool GetRFC822Name(IA5String& rfc822Name) const
     {
         return (GetType() == GeneralNameType::rfc822Name && value.ConvertToType(rfc822Name));
     }
 
-    bool GetDNSName(IA5String& dNSName)
+    bool GetDNSName(IA5String& dNSName) const
     {
         return (GetType() == GeneralNameType::dNSName && value.ConvertToType(dNSName));
     }
 
-    bool GetX400Address(ORAddress& x400Address)
+    bool GetX400Address(ORAddress& x400Address) const
     {
         return (GetType() == GeneralNameType::x400Address && value.ConvertToType(x400Address));
     }
 
     // EDIPartyName goes here, if implemented
 
-    bool GetDirectoryName(Name& directoryName)
+    bool GetDirectoryName(Name& directoryName) const
     {
         return (GetType() == GeneralNameType::directoryName && value.ConvertToType(directoryName));
     }
 
-    bool GetEDIPartyName(EDIPartyName& ediPartyName)
+    bool GetEDIPartyName(EDIPartyName& ediPartyName) const
     {
         return (GetType() == GeneralNameType::ediPartyName && value.ConvertToType(ediPartyName));
     }
 
-    bool GetURI(IA5String& uniformResourceIdentifier)
+    bool GetURI(IA5String& uniformResourceIdentifier) const
     {
         return (GetType() == GeneralNameType::uniformResourceIdentifier && value.ConvertToType(uniformResourceIdentifier));
     }
 
-    bool GetIpAddress(OctetString& iPAddress)
+    bool GetIpAddress(OctetString& iPAddress) const
     {
         return (GetType() == GeneralNameType::iPAddress && value.ConvertToType(iPAddress));
     }
 
-    bool GetRegisteredId(ObjectIdentifier& registeredID)
+    bool GetRegisteredId(ObjectIdentifier& registeredID) const
     {
         return (GetType() == GeneralNameType::registeredID && value.ConvertToType(registeredID));
     }
@@ -913,6 +932,8 @@ public:
     {
         return DecodeSet(pIn, cbIn, cbUsed, names);
     }
+
+    const std::vector<GeneralName>& GetNames() const { return names; }
 
 protected:
 
@@ -969,6 +990,12 @@ public:
 
         return true;
     }
+
+    const GeneralNames& GetFullName() const { return fullName.GetInnerType(); }
+    const RelativeDistinguishedName& GetNameRelativeToCRLIssuer() const { return nameRelativeToCRLIssuer.GetInnerType(); }
+
+    bool HasFullName() const { return fullName.HasData(); }
+    bool HasNameRelativeToCRLIssuer() const { return nameRelativeToCRLIssuer.HasData(); }
 
 private:
     virtual size_t SetDataSize() override
@@ -1033,6 +1060,14 @@ public:
         return true;
     }
 
+    const DistributionPointName& GetDistributionPoint() const { return distributionPoint.GetInnerType(); }
+    const ReasonFlags& GetReasonFlags() const { return reasons.GetInnerType(); }
+    const GeneralNames& GetCRLIssuer() const { return cRLIssuer.GetInnerType(); }
+
+    bool HasDistributionPoint() const { return distributionPoint.HasData(); }
+    bool HasReasonFlags() const { return reasons.HasData(); }
+    bool HasCRLIssuer() const { return cRLIssuer.HasData(); }
+
 private:
     virtual size_t SetDataSize()
     {
@@ -1086,6 +1121,8 @@ public:
     {
         return DecodeSequenceOf(pIn, cbIn, cbUsed, cRLDistributionPoints);
     }
+
+    const std::vector<DistributionPoint>& GetDistributionPoints() const { return cRLDistributionPoints; }
 
 private:
     virtual size_t SetDataSize()
@@ -1165,6 +1202,14 @@ public:
         return true;
     }
 
+    const OctetString& GetKeyIdentifier() const { return keyIdentifier.GetInnerType(); }
+    const GeneralNames& GetAuthorityCertIssuer() const { return authorityCertIssuer.GetInnerType(); }
+    const CertificateSerialNumber& GetCertificateSerialNumber() const { return authorityCertSerialNumber.GetInnerType(); }
+
+    bool HasKeyIdentifier() const { return keyIdentifier.HasData(); }
+    bool HasAuthorityCertIssuer() const { return authorityCertIssuer.HasData(); }
+    bool HasCertificateSerialNumber() const { return authorityCertSerialNumber.HasData(); }
+
 private:
     virtual size_t SetDataSize()
     {
@@ -1232,6 +1277,9 @@ public:
         return true;
     }
 
+    const ObjectIdentifier& GetAccessMethod() const { return accessMethod; }
+    const GeneralName& GetAccessLocation() const { return accessLocation; }
+
 private:
     virtual size_t SetDataSize()
     {
@@ -1257,6 +1305,8 @@ public:
         return DecodeSequenceOf(pIn, cbIn, cbUsed, accessDescriptions);
     }
 
+    const std::vector<AccessDescription>& GetAccessDescriptions() const { return accessDescriptions; }
+
 private:
     virtual size_t SetDataSize()
     {
@@ -1280,6 +1330,8 @@ public:
     {
         return names.Decode(pIn, cbIn, cbUsed);
     }
+
+    const GeneralNames& GetNames() const { return names; }
 
 private:
     virtual size_t SetDataSize()
@@ -1325,6 +1377,8 @@ public:
         return DecodeSequenceOf(pIn, cbIn, cbUsed, keyPurposes);
     }
 
+    const std::vector<ObjectIdentifier>& GetKeyPurposes() const { return keyPurposes; }
+
 private:
     virtual size_t SetDataSize()
     {
@@ -1348,6 +1402,8 @@ public:
     {
         return DecodeSequenceOf(pIn, cbIn, cbUsed, certPolicies);
     }
+
+    const std::vector<KeyPurposes>& GetCertPolicies() { return certPolicies; }
 
 private:
     virtual size_t SetDataSize()
@@ -1417,6 +1473,10 @@ public:
 
         return true;
     }
+
+    const ObjectIdentifier& GetObjectIdentifier() const { return objId; }
+    const Integer& GetMajorVersion() const { return majorVersion; }
+    const Integer& GetMinorVersion() const { return minorVersion; }
 
 private:
     virtual size_t SetDataSize()
@@ -1500,6 +1560,9 @@ public:
         return true;
     }
 
+    bool GetIsCA() const { return cA.GetValue(); }
+    const Integer& GetPathLengthConstraint() const { return pathLenConstraint; }
+
 private:
 
     virtual size_t SetDataSize()
@@ -1571,6 +1634,8 @@ public:
         return version.Decode(pIn, cbIn, cbUsed);
     }
 
+    const Integer& GetVersion() const { return version; }
+
 private:
     virtual size_t SetDataSize() { return (cbData = version.EncodedSize()); }
     Integer version;
@@ -1596,6 +1661,8 @@ public:
     {
         return certType.Decode(pIn, cbIn, cbUsed);
     }
+
+    const BMPString& GetCertType() const { return certType; }
 
 private:
     virtual size_t SetDataSize() { return (cbData = certType.EncodedSize()); }
@@ -1726,6 +1793,8 @@ public:
 
     virtual size_t SetDataSize() { return (cbData = altNames.EncodedSize()); }
 
+    const GeneralNames& GetAltNames() const { return altNames; }
+
 private:
     GeneralNames altNames;
 };
@@ -1826,6 +1895,8 @@ public:
         return crlDist.Decode(pIn, cbIn, cbUsed);
     }
 
+    const CrlDistributionPoints& GetDistributionPoints() const { return crlDist; }
+
 private:
     virtual size_t SetDataSize() { return (cbData = crlDist.EncodedSize()); }
 
@@ -1868,6 +1939,9 @@ public:
     // Accessors
     const char* AlgorithmOid() const { return algorithm.GetOidString(); }
     const char* AlgorithmLabel() const { return algorithm.GetOidLabel(); }
+
+    const ObjectIdentifier& GetAlgorithm() const { return algorithm; }
+    const AnyType& GetParameters() const { return parameters; }
 
 private:
 
@@ -2219,6 +2293,17 @@ public:
     // extensions
     size_t GetExtensionCount() const { return (extensions.GetInnerType()).Count(); }
     const Extension& GetExtension(size_t index) const { return (extensions.GetInnerType()).GetExtension(index); }
+    // Accessors for translation to XML (or other output)
+    const Integer& GetVersionAsInteger() const { return version.GetInnerType(); }
+    const Integer& GetSerialNumber() const { return serialNumber; }
+    const AlgorithmIdentifier& GetSignature() const { return signature; }
+    const Name& GetIssuer() const { return issuer; }
+    const Validity& GetValidity() const { return validity; }
+    const Name& GetSubject() const { return subject; }
+    const SubjectPublicKeyInfo& GetSubjectPublicKeyInfo() const { return subjectPublicKeyInfo; }
+    const ContextSpecificHolder<UniqueIdentifier>& GetIssuerId() const { return issuerUniqueID; }
+    const ContextSpecificHolder<UniqueIdentifier>& GetSubjectId() const { return subjectUniqueID; }
+    const Extensions& GetExtensions() const { return extensions.GetInnerType(); }
 
 private:
 	virtual size_t SetDataSize() override
@@ -2282,7 +2367,9 @@ public:
         return szLabel != nullptr ? szLabel : signatureAlgorithm.AlgorithmOid();
     }
 
-    // tbsCertificate
+    const AlgorithmIdentifier& GetSignatureAlgorithm() const { return signatureAlgorithm; }
+    const BitString& GetSignatureValue() const { return signatureValue; }
+    const TBSCertificate& GetTBSCertificate() const { return tbsCertificate; }
 
 private:
 	virtual size_t SetDataSize() override
@@ -2814,6 +2901,9 @@ public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
 
+    const PolicyQualifierId& GetPolicyQualifierId() const { return policyQualifierId; }
+    const AnyType& GetQualifier() const { return qualifier; }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -2831,6 +2921,9 @@ public:
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+
+    const CertPolicyId& GetPolicyIdentifier() const { return policyIdentifier;}
+    const std::vector<PolicyQualifierInfo>& GetPolicyQualifiers() const { return policyQualifiers; }
 
 private:
 	virtual size_t SetDataSize() override

@@ -33,6 +33,12 @@
     <ClInclude Include="CMSSignature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CertToXml.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Certificate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DerEncode.cpp">
@@ -57,6 +63,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Oids.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CertToXml.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32_xml.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

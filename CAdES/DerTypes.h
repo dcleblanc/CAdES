@@ -500,7 +500,7 @@ template <typename T>
 class ContextSpecificHolder
 {
 public:
-	ContextSpecificHolder(unsigned char _type) : type(_type) {}
+	ContextSpecificHolder(unsigned char _type) : type(_type), hasData(false) {}
 
 	size_t EncodedSize()
 	{
@@ -537,6 +537,7 @@ public:
 			if (innerType.Decode(pIn + offset, size, cbUsed))
 			{
 				cbUsed += cbPrefix;
+                hasData = true;
 				return true;
 			}
 		}
@@ -592,10 +593,12 @@ public:
 	}
 
     const T& GetInnerType() const { return innerType; }
+    bool HasData() const { return hasData; }
 
 private:
 	T innerType;
 	unsigned char type;
+    bool hasData;
 };
 
 // In order for this to work without being overly clunky,
@@ -688,15 +691,11 @@ public:
 	// Shouldn't need this for this class, but everything needs it implemented
 	virtual size_t SetDataSize() override;
 
+    static std::ostream& Output(std::ostream& os, const AnyType& o);
+
 	friend std::ostream& operator<<(std::ostream& os, const AnyType& o)
 	{
-		// TODO - this should be nicer
-		for (size_t pos = 0; pos < o.encodedValue.size(); ++pos)
-		{
-			os << std::hex << o.encodedValue[pos] << " ";
-		}
-
-		return os;
+        return Output(os, o);
 	}
 
     bool ToString(std::string& out) const;
@@ -707,10 +706,21 @@ public:
     const std::vector<unsigned char>& GetData() const { return encodedValue; }
 
     template <typename T>
-    bool ConvertToType(T& type)
+    bool ConvertToType(T& type) const
     {
         size_t cbUsed = 0;
         return type.Decode(&encodedValue[0], encodedValue.size(), cbUsed) && cbUsed == encodedValue.size();
+    }
+
+    template <typename T>
+    bool OutputFromType(std::ostream& os) const 
+    {
+        T t;
+        bool fConverted = ConvertToType(t);
+        if (fConverted)
+            os << t;
+
+        return fConverted;
     }
 
 private:
@@ -759,6 +769,8 @@ public:
 
         return false;
     }
+
+    const AnyType& GetValue() const { return value; }
 
 protected:
     virtual size_t SetDataSize() override { return value.SetDataSize(); }
@@ -1007,8 +1019,6 @@ public:
         return value;
     }
 
-    const std::vector<unsigned char>& GetValue() const { return value; }
-	
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
@@ -1026,6 +1036,8 @@ public:
 		os << std::setfill(' ');
 		return os;
 	}
+
+    const std::vector<unsigned char>& GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1074,12 +1086,14 @@ private:
 class ObjectIdentifier final : public DerBase
 {
 public:
-	ObjectIdentifier(const char* szOid) : oidIndex(~static_cast<size_t>(0))
+	ObjectIdentifier(const char* szOid) : oidIndex(OidIndexUnknown)
 	{
 		SetValue(szOid);
 	}
 
 	ObjectIdentifier() = default;
+
+    static const size_t OidIndexUnknown = ~static_cast<size_t>(0);
 
 	bool ToString(std::string& out) const;
 	void SetValue(const char* szOid);
@@ -1304,6 +1318,8 @@ public:
 	}
 
     bool ToString(std::string& out) const;
+    const std::string& GetValue() const { return value; }
+    TimeType GetType() const { return type; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }

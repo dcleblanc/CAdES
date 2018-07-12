@@ -437,7 +437,91 @@ const char* GetOidLabel(size_t index)
     return oidTable[index].szOidLabel;
 }
 
+ExtensionId OidToExtensionId(const char* szOidTag)
+{
+    // Note - these are ranked in order of which are most common
+    if (szOidTag == id_ce_keyUsage)
+        return ExtensionId::KeyUsage;
 
+    if (szOidTag == id_ce_extKeyUsage)
+        return ExtensionId::ExtendedKeyUsage;
+
+    if (szOidTag == id_ce_subjectKeyIdentifier)
+        return ExtensionId::SubjectKeyIdentifier;
+
+    if (szOidTag == id_ce_authorityKeyIdentifier)
+        return ExtensionId::AuthorityKeyIdentifier;
+
+    if (szOidTag == id_ce_cRLDistributionPoints)
+        return ExtensionId::CRLDistributionPoints;
+
+    if (szOidTag == id_pe_authorityInfoAccess)
+        return ExtensionId::AuthorityInfoAccess;
+
+    if (szOidTag == id_ce_subjectAltName)
+        return ExtensionId::SubjectAltName;
+
+    if (szOidTag == id_microsoft_appCertPolicies)
+        return ExtensionId::MicrosoftAppCertPolicies;
+
+    if (szOidTag == id_ce_certificatePolicies)
+        return ExtensionId::CertificatePolicies;
+
+    if (szOidTag == id_microsoft_certTemplate)
+        return ExtensionId::MicrosoftCertTemplate;
+
+    if (szOidTag == id_ce_authorityKeyIdentifier_old)
+        return ExtensionId::AuthorityKeyIdentifierOld;
+
+    if (szOidTag == id_ce_basicConstraints)
+        return ExtensionId::BasicConstraints;
+
+    if (szOidTag == id_google_certTransparancy)
+        return ExtensionId::GoogleCertTransparancy;
+
+    if (szOidTag == id_smimeCapabilities)
+        return ExtensionId::SMIMECapabilities;
+
+    if (szOidTag == id_microsoft_certsrvCAVersion)
+        return ExtensionId::MicrosoftCertSrvCAVersion;
+
+    if (szOidTag == id_microsoft_enrollCertType)
+        return ExtensionId::MicrosoftEnrollCertType;
+
+    if (szOidTag == id_microsoft_certsrvPrevHash)
+        return ExtensionId::MicrosoftCertSrvPrevHash;
+
+    if (szOidTag == id_apple_pushDev)
+        return ExtensionId::ApplePushDev;
+
+    if (szOidTag == id_apple_pushProd)
+        return ExtensionId::ApplePushProd;
+
+    if (szOidTag == id_apple_custom6)
+        return ExtensionId::AppleCustom6;
+
+    if (szOidTag == id_entrustVersInfo)
+        return ExtensionId::EntrustVersionInfo;
+
+    if (szOidTag == id_ce_issuerAltName)
+        return ExtensionId::IssuerAltName;
+
+    if (szOidTag == id_netscape_certExt)
+        return ExtensionId::NetscapeCertExt;
+
+    if (szOidTag == id_ce_privateKeyUsagePeriod)
+        return ExtensionId::PrivateKeyUsagePeriod;
+
+    if (szOidTag == id_ce_keyUsageRestriction)
+        return ExtensionId::KeyUsageRestriction;
+
+    if (szOidTag == id_ce_freshestCRL)
+        return ExtensionId::FreshestCRL;
+
+    return ExtensionId::Unknown;
+}
+
+#if _DEBUG
 const char* testOids[] =
 {
     "0.9.2342.19200300.100.1.1",
@@ -534,3 +618,8 @@ void TestOidTable()
 
     CheckOids();
 }
+
+#else
+    void TestOidTable(){}
+    void CheckOids(){}
+#endif

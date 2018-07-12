@@ -374,3 +374,38 @@ const char id_entrustVersInfo[] = "1.2.840.113533.7.65.0";
 bool GetOidInfoIndex(const std::vector<unsigned char>& value, size_t& index);
 const char* GetOidString(size_t index);
 const char* GetOidLabel(size_t index);
+
+// Extension map
+
+enum class ExtensionId
+{
+    KeyUsage = 0,
+    ExtendedKeyUsage,
+    SubjectKeyIdentifier,
+    AuthorityKeyIdentifier,
+    CRLDistributionPoints, 
+    AuthorityInfoAccess,
+    SubjectAltName,
+    MicrosoftAppCertPolicies,
+    CertificatePolicies,
+    MicrosoftCertTemplate,
+    AuthorityKeyIdentifierOld,
+    BasicConstraints,
+    GoogleCertTransparancy,
+    SMIMECapabilities,
+    MicrosoftCertSrvCAVersion,
+    MicrosoftEnrollCertType,
+    MicrosoftCertSrvPrevHash,
+    ApplePushDev,
+    ApplePushProd,
+    AppleCustom6,
+    EntrustVersionInfo,
+    IssuerAltName,
+    NetscapeCertExt,
+    PrivateKeyUsagePeriod,
+    KeyUsageRestriction,
+    FreshestCRL,
+    Unknown
+};
+
+ExtensionId OidToExtensionId(const char* szOidTag);

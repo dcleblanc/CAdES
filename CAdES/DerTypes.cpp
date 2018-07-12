@@ -783,3 +783,92 @@ bool AnyType::ToString(std::string & out) const
 
     return false;
 }
+
+std::ostream& AnyType::Output(std::ostream& os, const AnyType& o)
+{
+    DerType type = o.GetDerType();
+    bool fConverted = true;
+
+    switch (type)
+    {
+    case DerType::Boolean:
+        fConverted = o.OutputFromType<Boolean>(os);
+        break;
+
+    case DerType::Integer:
+        fConverted = o.OutputFromType<Integer>(os);
+        break;
+
+    case DerType::BitString:
+        fConverted = o.OutputFromType<BitString>(os);
+        break;
+
+    case DerType::OctetString:
+        fConverted = o.OutputFromType<OctetString>(os);
+        break;
+
+    case DerType::Null:
+        os << "null";
+        fConverted = true;
+        break;
+
+    case DerType::ObjectIdentifier:
+        fConverted = o.OutputFromType<ObjectIdentifier>(os);
+        break;
+
+    case DerType::UTF8String:
+        fConverted = o.OutputFromType<UTF8String>(os);
+        break;
+
+    case DerType::PrintableString:
+        fConverted = o.OutputFromType<PrintableString>(os);
+        break;
+
+    case DerType::T61String: // aka TeletexString
+        fConverted = o.OutputFromType<T61String>(os);
+        break;
+
+    case DerType::IA5String:
+        fConverted = o.OutputFromType<IA5String>(os);
+        break;
+
+    case DerType::VisibleString:
+        fConverted = o.OutputFromType<VisibleString>(os);
+        break;
+
+    case DerType::GeneralString:
+        fConverted = o.OutputFromType<GeneralString>(os);
+        break;
+
+    case DerType::BMPString:
+        fConverted = o.OutputFromType<BMPString>(os);
+        break;
+
+    case DerType::ObjectDescriptor:
+    case DerType::External:
+    case DerType::Real:
+    case DerType::Enumerated:
+    case DerType::EmbeddedPDV:
+    case DerType::RelativeOid:
+    case DerType::Reserved1:
+    case DerType::Reserved2:
+    case DerType::NumericString:
+    case DerType::GraphicString:
+    case DerType::CharacterString:
+    case DerType::UniversalString:
+    default:
+        fConverted = false;
+        break;
+    }
+
+    if (!fConverted)
+    {
+        for (size_t pos = 0; !fConverted && pos < o.encodedValue.size(); ++pos)
+        {
+            os << std::hex << o.encodedValue[pos] << " ";
+        }
+    }
+
+    return os;
+}
+

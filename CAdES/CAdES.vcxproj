@@ -154,6 +154,7 @@
     <ClInclude Include="Certificate.h">
       <DependentUpon>..\Certificate.xsd</DependentUpon>
     </ClInclude>
+    <ClInclude Include="CertToXml.h" />
     <ClInclude Include="CMSSignature.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="DerEncode.h" />
@@ -162,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CAdES.cpp" />
+    <ClCompile Include="CertToXml.cpp" />
     <ClCompile Include="CMSSignature.cpp" />
     <ClCompile Include="Common.cpp" />
     <ClCompile Include="DerEncode.cpp" />
@@ -169,6 +171,7 @@
     <ClCompile Include="Oids.cpp" />
     <ClCompile Include="Test.cpp" />
     <ClCompile Include="Win32Test.cpp" />
+    <ClCompile Include="Win32_xml.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\.gitignore" />
