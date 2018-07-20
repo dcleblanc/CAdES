@@ -385,6 +385,7 @@ public:
     }
 
     const unsigned char* DataPtr(const unsigned char * pIn) const { return pIn + cbUsed + prefixSize; }
+
     size_t DataSize() 
     { 
         if (cbUsed > dataSize)
@@ -400,6 +401,7 @@ public:
     }
 
     size_t& CurrentSize() { return cbCurrent; }
+    bool IsAllUsed() const { return cbUsed == dataSize; }
 
 private:
     size_t dataSize;
@@ -468,39 +470,29 @@ private:
 };
 
 /*
-    There are two incarnations of optional items
-    1) Structures, which are of the form:
-        class = context-specific
-        constructed = 1
-        type = item designation
-       For example, 0xA1
-    2) A CHOICE item, or sometimes a primitive optional item:
-        class = context-specific
-        constructed = 0
-        type = item designation, determines the data type, and sometimes what it means
-        An example of this is GeneralName, where 0x82 implies a DNS name  
+    There are two incarnations of optional items,
+    EXPLICIT and IMPLICIT
 
-    In the case of a structure, there will be the tag specifying which option it is, followed by a size,
-    then the actual contained structure. If it is a primitive, it won't be contained, but will behave as if we just substituted
+    In the case of EXPLICIT, there will be the tag specifying which option it is, followed by a size,
+    then the actual contained type. If it is IMPLICIT, it won't be contained, but will behave as if we just substituted
     the tag of the type it contains for the initial optional tag
 */
 
-template <typename T, unsigned char id>
-class ContextSpecificPrimitive
+enum class OptionType
 {
-public:
-    ContextSpecificPrimitive() : pInnerType(nullptr) {}
-
-    bool IsPresent(unsigned char tag) const { return (0x80 | id) == tag; }
-private:
-    T * pInnerType;
+    Implicit = 0,
+    Explicit,
 };
 
-template <typename T>
-class ContextSpecificHolder
+
+template <typename T, unsigned char type, OptionType optionType>
+class ContextSpecificHolder;
+
+template <typename T, unsigned char type>
+class ContextSpecificHolder <T, type, OptionType::Explicit>
 {
 public:
-	ContextSpecificHolder(unsigned char _type) : type(_type), hasData(false) {}
+	ContextSpecificHolder() : hasData(false) {}
 
 	size_t EncodedSize()
 	{
@@ -518,31 +510,37 @@ public:
 	// that is defined by the context
 	bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	{
-		if (IsOptionPresent(*pIn))
-		{
-			size_t offset = 0;
+        // If this is an optional type, we could have used
+        // all the bytes on the previous item
+        if (cbIn == 0)
+            throw std::out_of_range("Insufficient buffer");
 
-			// Validate the sequence
-			size_t size = 0;
-			size_t cbPrefix = 0;
+        if (pIn[0] == type)
+        {
+            size_t offset = 0;
 
-			if (!CheckDecode(pIn, cbIn, static_cast<const DerType>(*pIn), size, cbPrefix))
-			{
-				cbUsed = 0;
-				return false;
-			}
+            // Validate the sequence
+            size_t size = 0;
+            size_t cbPrefix = 0;
 
-			offset += cbPrefix;
-			// Now, we can decode the inner type
-			if (innerType.Decode(pIn + offset, size, cbUsed))
-			{
-				cbUsed += cbPrefix;
+            if (!CheckDecode(pIn, cbIn, static_cast<const DerType>(*pIn), size, cbPrefix))
+            {
+                cbUsed = 0;
+                return false;
+            }
+
+            offset += cbPrefix;
+            // Now, we can decode the inner type
+            if (innerType.Decode(pIn + offset, size, cbUsed))
+            {
+                cbUsed += cbPrefix;
                 hasData = true;
-				return true;
-			}
-		}
+                return true;
+            }
+        }
 
-		return false;
+        cbUsed = 0;
+        return false;
 	}
 
 	void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
@@ -563,41 +561,83 @@ public:
 			throw std::out_of_range("Insufficient buffer");
 		}
 
-		DerTypeContainer typeContainer(type);
+        size_t offset = 1;
+        cbUsed = 0;
 
-		typeContainer.constructed = true;
-		typeContainer._class = DerClass::ContextSpecific;
+        *pOut = type;
+        EncodeSize(innerSize, pOut + offset, cbOut - offset, cbUsed);
 
-		size_t offset = 1;
-		cbUsed = 0;
+        offset += cbUsed;
+        innerType.Encode(pOut + offset, cbOut - offset, cbUsed);
 
-		*pOut = static_cast<unsigned char>(typeContainer);
-		EncodeSize(innerSize, pOut + offset, cbOut - offset, cbUsed);
-
-		offset += cbUsed;
-		innerType.Encode(pOut + offset, cbOut - offset, cbUsed);
-
-		cbUsed += offset;
-	}
-
-	bool IsOptionPresent(unsigned char c)
-	{
-		DerTypeContainer typeContainer(c);
-
-		if (typeContainer.constructed &&
-			typeContainer._class == DerClass::ContextSpecific &&
-			typeContainer.type == static_cast<DerType>(type))
-			return true;
-
-		return false;
+        cbUsed += offset;
 	}
 
     const T& GetInnerType() const { return innerType; }
     bool HasData() const { return hasData; }
 
 private:
+
 	T innerType;
-	unsigned char type;
+    bool hasData;
+};
+
+template <typename T, unsigned char type>
+class ContextSpecificHolder <T, type, OptionType::Implicit>
+{
+public:
+    ContextSpecificHolder() : hasData(false) {}
+
+    size_t EncodedSize() { return innerType.EncodedSize(); }
+
+    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    {
+        // If this is an optional type, we could have used
+        // all the bytes on the previous item
+        if (cbIn == 0)
+            throw std::out_of_range("Insufficient buffer");
+
+        if (pIn[0] == type)
+        {
+            bool fRet = innerType.Decode(pIn, cbIn, cbUsed);
+            hasData = fRet;
+            return fRet;
+        }
+
+        cbUsed = 0;
+        return false;
+    }
+
+    void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+    {
+        // Handle the case where there is no data, and we shouldn't write out anything
+        size_t innerSize = innerType.EncodedSize();
+
+        if (innerSize <= 2)
+        {
+            cbUsed = 0;
+            return;
+        }
+
+        size_t cbSize = GetSizeBytes(innerSize);
+
+        if (1 + cbSize + innerSize > cbOut)
+        {
+            throw std::out_of_range("Insufficient buffer");
+        }
+
+        // A non-constructed type is the same as the type it wraps, 
+        // except for the type byte, which will be ([0x80 or 0xA0] | option number)
+        innerType.Encode(pOut, cbOut, cbUsed);
+        *pOut = static_cast<unsigned char>(type);
+    }
+
+    const T& GetInnerType() const { return innerType; }
+    bool HasData() const { return hasData; }
+
+private:
+
+    T innerType;
     bool hasData;
 };
 
@@ -868,7 +908,7 @@ public:
 	{
 		for (size_t pos = o.value.size(); pos > 0; --pos)
 		{
-			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos-1] << " ";
+			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos-1];
 		}
 
 		return os;
@@ -969,8 +1009,6 @@ public:
 		const size_t* pData = reinterpret_cast<const size_t*>(&o.value[0]);
 		std::ostringstream osTmp;
 
-		osTmp << std::endl;
-
 		for (size_t pos = 0; pos < cBlocks; ++pos)
 		{
 			if (pos > 0 && (pos % blocksperline) == 0)
@@ -984,7 +1022,7 @@ public:
 			osTmp << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[cBlocks * sizeof(size_t) + pos];
 		}
 
-		os << osTmp.str() << std::endl;
+        os << osTmp.str();
 		return os;
 	}
 
@@ -1030,7 +1068,7 @@ public:
 	{
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
-			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos] << " ";
+			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos];
 		}
 
 		os << std::setfill(' ');

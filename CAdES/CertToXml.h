@@ -59,7 +59,7 @@ namespace ctx
             // We could have an unknown OID, won't have a label for it
             const char* oidLabel = oi.GetOidLabel();
 
-            oid = oi.GetOidString();
+            ctx::ToString(oi, oid);
             tag = oidLabel == nullptr ? "unknown" : oidLabel;
         }
 

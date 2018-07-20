@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-#ifdef WIN32
+#ifdef _WIN32
 void OidTest();
 #else
 void OidTest() {}
@@ -351,6 +351,11 @@ void DumpCertProperties(const char* szFile)
     {
         std::cout << "LoadCertificateFromFile failed: " << szFile << std::endl;
     }
+
+    std::string xmlFile = szFile;
+    xmlFile += ".xml";
+
+    CertificateToXml(cert, xmlFile.c_str());
 
     return;
 }

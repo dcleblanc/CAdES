@@ -405,8 +405,9 @@ bool GetOidInfoIndex(const std::vector<unsigned char>& value, size_t& index)
     OidInfo* pLast = oidTable + _countof(oidTable);
     OidInfo oiTest = { 0 };
 
+    // If it is larger than our buffer, we certainly won't find it
     if (value.size() >= sizeof(oiTest.encodedOid))
-        throw std::exception("Insufficient buffer");
+        return false;
 
     memcpy_s(oiTest.encodedOid, sizeof(oiTest.encodedOid), &value[0], value.size());
     oiTest.encodedOid[sizeof(oiTest.encodedOid) - 1] = static_cast<unsigned char>(value.size());

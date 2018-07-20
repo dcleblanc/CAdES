@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <Windows.h>
 #include "Common.h"

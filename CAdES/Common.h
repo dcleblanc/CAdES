@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 #include <assert.h>
 #include <time.h>
 

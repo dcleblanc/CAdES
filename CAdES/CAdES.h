@@ -458,16 +458,16 @@ private:
 
 struct KeyUsageValue
 {
-    int digitalSignature : 1;
-    int nonRepudiation : 1;
-    int keyEncipherment : 1;
-    int dataEncipherment : 1;
-    int keyAgreement : 1;
-    int keyCertSign : 1;
-    int cRLSign : 1;
-    int encipherOnly : 1;
-    int decipherOnly : 1;
-    int unused : 23;
+   unsigned int digitalSignature : 1;
+   unsigned int nonRepudiation : 1;
+   unsigned int keyEncipherment : 1;
+   unsigned int dataEncipherment : 1;
+   unsigned int keyAgreement : 1;
+   unsigned int keyCertSign : 1;
+   unsigned int cRLSign : 1;
+   unsigned int encipherOnly : 1;
+   unsigned int decipherOnly : 1;
+   unsigned int unused : 23;
 };
 
 class ExtensionBase : public DerBase
@@ -560,6 +560,7 @@ public:
         return true;
     }
 
+    const BitString& GetBitString() const { return bits; }
     const KeyUsageValue GetKeyUsage() const { return keyUsageValue; }
     bool HasUsage() const { return (*reinterpret_cast<const int*>(&keyUsageValue) == 0); }
 
@@ -573,25 +574,61 @@ private:
     bool BitStringToKeyUsage()
     {
         unsigned char unusedBits = bits.UnusedBits();
-        unsigned char mask = 0xff << unusedBits;
         const unsigned char* pBits = nullptr;
         size_t _cbData = 0;
 
-        if (!bits.GetValue(pBits, _cbData))
+        if (!bits.GetValue(pBits, _cbData) || _cbData < 2)
             return false;
 
         // 0th byte are the count of unused bits
-        unsigned char* pUsage = reinterpret_cast<unsigned char*>(&keyUsageValue);
+        // According to the standard, we can't rely on the layout of a bitfield
+        // But ASN.1 does define the bit layout from left to right
 
-        for (size_t i = 1; i < cbData && i < sizeof(keyUsageValue); ++i)
+        // Let's find out how many bits we actually have to set - 
+        size_t cBits = ((_cbData - 1) * 8) - unusedBits;
+        keyUsageValue = { 0 };
+
+        for (size_t i = 0; i < cBits; ++i)
         {
-            if (i == cbData - 1) // Last byte
+            switch (i)
             {
-                *pUsage = pBits[i] & mask;
+            case 0:
+                if (pBits[1] & 0x80)
+                    keyUsageValue.digitalSignature = 1;
+                break;
+            case 1:
+                if (pBits[1] & 0x40)
+                    keyUsageValue.nonRepudiation = 1;
+                break;
+            case 2:
+                if (pBits[1] & 0x20)
+                    keyUsageValue.keyEncipherment = 1;
+                break;
+            case 3:
+                if (pBits[1] & 0x10)
+                    keyUsageValue.dataEncipherment = 1;
+                break;
+            case 4:
+                if (pBits[1] & 0x08)
+                    keyUsageValue.keyAgreement = 1;
+                break;
+            case 5:
+                if (pBits[1] & 0x04)
+                    keyUsageValue.keyCertSign = 1;
+                break;
+            case 6:
+                if (pBits[1] & 0x02)
+                    keyUsageValue.cRLSign = 1;
+                break;
+            case 7:
+                if (pBits[1] & 0x01)
+                    keyUsageValue.encipherOnly = 1;
+                break;
+            case 8:
+                if (pBits[2] & 0x80)
+                    keyUsageValue.decipherOnly = 1;
                 break;
             }
-
-            *pUsage++ = pBits[i];
         }
 
         return true;
@@ -930,7 +967,7 @@ public:
 
     virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
     {
-        return DecodeSet(pIn, cbIn, cbUsed, names);
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, names);
     }
 
     const std::vector<GeneralName>& GetNames() const { return names; }
@@ -949,10 +986,7 @@ protected:
 class DistributionPointName :public DerBase
 {
 public:
-    DistributionPointName() : fullName(0), nameRelativeToCRLIssuer(1)
-    {
-
-    }
+    DistributionPointName() = default;
 
     virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
     {
@@ -985,6 +1019,9 @@ public:
             return false;
 
         sh.Update();
+        if (sh.IsAllUsed())
+            return true;
+
         if (!nameRelativeToCRLIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
@@ -1003,8 +1040,8 @@ private:
         return (cbData = fullName.EncodedSize() + nameRelativeToCRLIssuer.EncodedSize());
     }
 
-    ContextSpecificHolder<GeneralNames> fullName;
-    ContextSpecificHolder<RelativeDistinguishedName> nameRelativeToCRLIssuer;
+    ContextSpecificHolder<GeneralNames, 0xA0, OptionType::Implicit > fullName;
+    ContextSpecificHolder<RelativeDistinguishedName, 0xA1, OptionType::Implicit > nameRelativeToCRLIssuer;
 };
 
 typedef BitString ReasonFlags;
@@ -1012,10 +1049,7 @@ typedef BitString ReasonFlags;
 class DistributionPoint : public DerBase
 {
 public:
-    DistributionPoint() : distributionPoint(0), reasons(1), cRLIssuer(2)
-    {
-
-    }
+    DistributionPoint() = default;
 
     virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
     {
@@ -1050,10 +1084,16 @@ public:
             return false;
 
         sh.Update();
+        if (sh.IsAllUsed())
+            return true;
+
         if (!reasons.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
         sh.Update();
+        if (sh.IsAllUsed())
+            return true;
+
         if (!cRLIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
@@ -1074,9 +1114,9 @@ private:
         return cbData = distributionPoint.EncodedSize() + reasons.EncodedSize() + cRLIssuer.EncodedSize();
     }
 
-    ContextSpecificHolder<DistributionPointName> distributionPoint;
-    ContextSpecificHolder<ReasonFlags> reasons;
-    ContextSpecificHolder<GeneralNames> cRLIssuer;
+    ContextSpecificHolder<DistributionPointName, 0xA0, OptionType::Implicit> distributionPoint;
+    ContextSpecificHolder<ReasonFlags, 0xA1, OptionType::Implicit> reasons;
+    ContextSpecificHolder<GeneralNames, 0xA2, OptionType::Implicit> cRLIssuer;
 };
 
 class CrlDistributionPoints : public ExtensionBase
@@ -1153,11 +1193,7 @@ KeyIdentifier ::= OCTET STRING
 class AuthorityKeyIdentifier : public ExtensionBase
 {
 public:
-    AuthorityKeyIdentifier() : 
-        keyIdentifier(0), 
-        authorityCertIssuer(1), 
-        authorityCertSerialNumber(2), 
-        ExtensionBase(id_ce_authorityKeyIdentifier) {}
+    AuthorityKeyIdentifier() = default;
 
     virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
     {
@@ -1192,10 +1228,16 @@ public:
             return false;
 
         sh.Update();
+        if (sh.IsAllUsed())
+            return true;
+
         if (!authorityCertIssuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
         sh.Update();
+        if (sh.IsAllUsed())
+            return true;
+
         if (!authorityCertSerialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
@@ -1216,9 +1258,9 @@ private:
         return cbData = keyIdentifier.EncodedSize() + authorityCertIssuer.EncodedSize() + authorityCertSerialNumber.EncodedSize();
     }
 
-    ContextSpecificHolder<OctetString> keyIdentifier;
-    ContextSpecificHolder<GeneralNames> authorityCertIssuer;
-    ContextSpecificHolder<CertificateSerialNumber> authorityCertSerialNumber;
+    ContextSpecificHolder<OctetString, 0x80, OptionType::Implicit> keyIdentifier;
+    ContextSpecificHolder<GeneralNames, 0xA1, OptionType::Implicit> authorityCertIssuer;
+    ContextSpecificHolder<CertificateSerialNumber, 0x82, OptionType::Implicit> authorityCertSerialNumber;
 };
 
 /*
@@ -2177,7 +2219,7 @@ class TBSCertificate final : public DerBase
 {
 public:
 	// These fields are context-specific, and may not be present (not just null)
-	TBSCertificate() : version(0), issuerUniqueID(1), subjectUniqueID(2), extensions(3){}
+    TBSCertificate() = default;
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
@@ -2301,8 +2343,12 @@ public:
     const Validity& GetValidity() const { return validity; }
     const Name& GetSubject() const { return subject; }
     const SubjectPublicKeyInfo& GetSubjectPublicKeyInfo() const { return subjectPublicKeyInfo; }
-    const ContextSpecificHolder<UniqueIdentifier>& GetIssuerId() const { return issuerUniqueID; }
-    const ContextSpecificHolder<UniqueIdentifier>& GetSubjectId() const { return subjectUniqueID; }
+
+    bool HasIssuerId() const { return issuerUniqueID.HasData(); }
+    bool HasSubjectId() const { return subjectUniqueID.HasData(); }
+    const UniqueIdentifier& GetIssuerId() const { return issuerUniqueID.GetInnerType(); }
+    const UniqueIdentifier& GetSubjectId() const { return subjectUniqueID.GetInnerType(); }
+
     const Extensions& GetExtensions() const { return extensions.GetInnerType(); }
 
 private:
@@ -2335,7 +2381,7 @@ private:
 		return cbData;
 	}
 
-	ContextSpecificHolder<Integer> version;
+	ContextSpecificHolder<Integer, 0xA0, OptionType::Explicit> version;
 	CertificateSerialNumber serialNumber;
 	AlgorithmIdentifier signature;
 	Name issuer;
@@ -2343,9 +2389,9 @@ private:
 	Name subject;
 	SubjectPublicKeyInfo subjectPublicKeyInfo;
 	// Note - optional fields may be missing, not have null placeholders
-	ContextSpecificHolder<UniqueIdentifier> issuerUniqueID;  // optional, will have value 0xA1
-	ContextSpecificHolder<UniqueIdentifier> subjectUniqueID; // optional, will have value 0xA2
-	ContextSpecificHolder<Extensions> extensions;            // optional, will have value 0xA3
+	ContextSpecificHolder<UniqueIdentifier, 0x81, OptionType::Implicit> issuerUniqueID;  // optional
+	ContextSpecificHolder<UniqueIdentifier, 0x82, OptionType::Implicit> subjectUniqueID; // optional
+	ContextSpecificHolder<Extensions, 0xA3, OptionType::Explicit> extensions;            // optional, will have value 0xA3
 };
 
 class Certificate final : public DerBase
@@ -2914,10 +2960,10 @@ private:
 	AnyType qualifier;
 };
 
-class PolicyInformation final : public ExtensionBase
+class PolicyInformation final : public DerBase
 {
 public:
-    PolicyInformation() : ExtensionBase(id_ce_certificatePolicies) {}
+    PolicyInformation() = default;
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
@@ -2933,6 +2979,57 @@ private:
 
 	CertPolicyId policyIdentifier;
 	std::vector<PolicyQualifierInfo> policyQualifiers; // optional
+};
+
+/*
+    id-ce-certificatePolicies OBJECT IDENTIFIER ::=  { id-ce 32 }
+
+    anyPolicy OBJECT IDENTIFIER ::= { id-ce-certificate-policies 0 }
+
+    certificatePolicies ::= SEQUENCE SIZE (1..MAX) OF PolicyInformation
+
+    PolicyInformation ::= SEQUENCE {
+    policyIdentifier   CertPolicyId,
+    policyQualifiers   SEQUENCE SIZE (1..MAX) OF
+    PolicyQualifierInfo OPTIONAL }
+
+    CertPolicyId ::= OBJECT IDENTIFIER
+
+    PolicyQualifierInfo ::= SEQUENCE {
+    policyQualifierId  PolicyQualifierId,
+    qualifier          ANY DEFINED BY policyQualifierId }
+
+    -- policyQualifierIds for Internet policy qualifiers
+
+    id-qt          OBJECT IDENTIFIER ::=  { id-pkix 2 }
+    id-qt-cps      OBJECT IDENTIFIER ::=  { id-qt 1 }
+    id-qt-unotice  OBJECT IDENTIFIER ::=  { id-qt 2 }
+
+*/
+class CertificatePolicies final : public ExtensionBase
+{
+public:
+    CertificatePolicies() : ExtensionBase(id_ce_certificatePolicies) {}
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeSetOrSequenceOf(DerType::ConstructedSet, certificatePolicies, pOut, cbOut, cbUsed);
+    }
+
+    virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+    {
+        return DecodeSequenceOf(pIn, cbIn, cbUsed, certificatePolicies);
+    }
+
+    const std::vector<PolicyInformation>& GetPolicyInformationVector() const { return certificatePolicies; }
+
+private:
+    virtual size_t SetDataSize() override
+    {
+        return (cbData = GetEncodedSize(certificatePolicies));
+    }
+
+    std::vector<PolicyInformation> certificatePolicies;
 };
 
 class ESSCertID final : public DerBase

@@ -117,7 +117,7 @@ public:
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
         const Name& name = tbsCert.GetSubject();
-        WriteNameElement(L"Issuer", name);
+        WriteNameElement(L"Subject", name);
     }
 
     void WriteValidity()
@@ -147,7 +147,9 @@ public:
             WriteStartElement(L"Algorithm");
             WriteAlgorithmIdentifier(tbsCert.GetSubjectPublicKeyInfo().GetAlgorithm());
             WriteEndElement();
-            WriteSimpleElement(L"SubjectPublicKey", hexKey);
+            WriteStartElement(L"SubjectPublicKey");
+            WriteRawElementString(hexKey);
+            WriteEndElement();
         }
         WriteEndElement();
     }
@@ -155,31 +157,39 @@ public:
     void WriteIssuerUniqueId()
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
-        const ContextSpecificHolder<UniqueIdentifier>& issuerId = tbsCert.GetIssuerId();
-        const UniqueIdentifier& innerUID = issuerId.GetInnerType(); // This is just a BitString
 
-        if (innerUID.ValueSize() == 0)
-            return;
+        if (tbsCert.HasIssuerId())
+        {
+            const UniqueIdentifier& innerUID = tbsCert.GetIssuerId(); // This is just a BitString
 
-        std::string uid;
-        ctx::ToString(innerUID, uid);
+            if (innerUID.ValueSize() == 0)
+                return;
 
-        WriteSimpleElement(L"IssuerUniqueID", uid);
+            std::string uid;
+            ctx::ToString(innerUID, uid);
+
+            WriteSimpleElement(L"IssuerUniqueID", uid);
+
+        }
     }
 
     void WriteSubjectUniqueId()
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
-        const ContextSpecificHolder<UniqueIdentifier>& issuerId = tbsCert.GetSubjectId();
-        const UniqueIdentifier& innerUID = issuerId.GetInnerType(); // This is just a BitString
 
-        if (innerUID.ValueSize() == 0)
-            return;
+        if (tbsCert.HasSubjectId())
+        {
+            const UniqueIdentifier& innerUID = tbsCert.GetSubjectId(); // This is just a BitString
 
-        std::string uid;
-        ctx::ToString(innerUID, uid);
+            if (innerUID.ValueSize() == 0)
+                return;
 
-        WriteSimpleElement(L"SubjectUniqueID", uid);
+            std::string uid;
+            ctx::ToString(innerUID, uid);
+
+            WriteSimpleElement(L"SubjectUniqueID", uid);
+        }
+
     }
 
     template <typename T>
@@ -198,12 +208,12 @@ public:
     {
         KeyUsage ku;
         DecodeExtension(ku, extensionBytes);
+        const BitString& bits = ku.GetBitString();
+        std::string str;
 
-        ctx::xKeyUsage xmlKU;
-        xmlKU.Convert(ku);
+        ctx::ToString(bits, str);
 
-        std::string s = std::to_string(xmlKU.usage);
-        WriteSimpleElement(L"KeyUsage", s);
+        WriteSimpleElement(L"KeyUsage", str);
     }
 
     void WriteObjectIdentifier(const wchar_t* wzElementName, const ObjectIdentifier& oid)
@@ -538,27 +548,34 @@ public:
 
     void WriteCertificatePolicies(const std::vector<unsigned char>& extensionBytes)
     {
-        PolicyInformation policyInfo;
-        DecodeExtension(policyInfo, extensionBytes);
+        CertificatePolicies certPolicies;
+        DecodeExtension(certPolicies, extensionBytes);
 
-        const CertPolicyId& certPolicyId = policyInfo.GetPolicyIdentifier();
-        const std::vector<PolicyQualifierInfo>& policyQualifiers = policyInfo.GetPolicyQualifiers();
+        const std::vector<PolicyInformation>& policyInfos = certPolicies.GetPolicyInformationVector();
 
-        WriteStartElement(L"PolicyInformation");
+        WriteStartElement(L"CertificatePolicies");
+        for each (const PolicyInformation& policyInfo in policyInfos)
         {
-            WriteObjectIdentifier(L"CertPolicyId", certPolicyId);
+            const CertPolicyId& certPolicyId = policyInfo.GetPolicyIdentifier();
+            const std::vector<PolicyQualifierInfo>& policyQualifiers = policyInfo.GetPolicyQualifiers();
 
-            for each (const PolicyQualifierInfo& qualifierInfo in policyQualifiers)
+            WriteStartElement(L"PolicyInformation");
             {
-                const PolicyQualifierId& policyQualifierId = qualifierInfo.GetPolicyQualifierId();
-                const AnyType& qualifier = qualifierInfo.GetQualifier();
+                WriteObjectIdentifier(L"CertPolicyId", certPolicyId);
 
-                WriteObjectIdentifier(L"PolicyQualifierId", policyQualifierId);
+                for each (const PolicyQualifierInfo& qualifierInfo in policyQualifiers)
+                {
+                    const PolicyQualifierId& policyQualifierId = qualifierInfo.GetPolicyQualifierId();
+                    const AnyType& qualifier = qualifierInfo.GetQualifier();
 
-                std::string str;
-                ctx::ToString(qualifier, str);
-                WriteSimpleElement(L"Qualifier", str);
+                    WriteObjectIdentifier(L"PolicyQualifierId", policyQualifierId);
+
+                    std::string str;
+                    ctx::ToString(qualifier, str);
+                    WriteSimpleElement(L"Qualifier", str);
+                }
             }
+            WriteEndElement();
         }
         WriteEndElement();
     }
@@ -719,8 +736,9 @@ public:
     void WriteExtensionData(const Extension& ext)
     {
         const std::vector<unsigned char>& extensionBytes = ext.GetExtensionValue().GetValue();
+        const ObjectIdentifier& oid = ext.GetOid();
 
-        switch (OidToExtensionId(ext.GetOid().GetOidLabel()))
+        switch (OidToExtensionId(oid.GetOidString()))
         {
            case ExtensionId::KeyUsage:
                WriteKeyUsage(extensionBytes);
@@ -847,6 +865,7 @@ public:
             }
 
             // Now need to go figure out what this element is
+            WriteExtensionData(ext);
         }
         WriteEndElement();
     }
@@ -885,6 +904,7 @@ public:
             WriteSubjectPublicKeyInfo();
             WriteIssuerUniqueId();
             WriteSubjectUniqueId();
+            WriteExtensions();
         }
         WriteEndElement();
     }
@@ -902,7 +922,9 @@ public:
         std::string sigValue;
 
         ctx::ToString(signatureValue, sigValue);
-        WriteSimpleElement(L"SignatureValue", sigValue);
+        WriteStartElement(L"SignatureValue");
+        WriteRawElementString(sigValue.c_str());
+        WriteEndElement();
     }
 
 private:
@@ -933,6 +955,24 @@ private:
     void WriteElementString(const wchar_t* wz)
     {
         CheckSuccess(pWriter->WriteString(wz));
+    }
+
+    void WriteRawElementString(const std::string str)
+    {
+        std::wstring ws = utf8ToUtf16(str);
+        WriteRawElementString(ws.c_str());
+    }
+
+    void WriteRawElementString(const char* sz)
+    {
+        std::wstring ws = utf8ToUtf16(sz);
+        WriteRawElementString(ws.c_str());
+    }
+
+    // Use this to avoid having LF turned into LFLFCR
+    void WriteRawElementString(const wchar_t* wz)
+    {
+        CheckSuccess(pWriter->WriteRaw(wz));
     }
 
     void WriteSimpleElement(const wchar_t* wzElement, const std::string& content)
@@ -1014,11 +1054,102 @@ private:
     const Certificate& cert;
 };
 
+// Class to wrap a std::vector into an IStream
+class IStreamVector : public ISequentialStream
+{
+public:
+    IStreamVector(size_t initSize = 0) : pos(0), data(0), refcount(0) 
+    {
+        data.reserve(initSize);
+    }
+
+    operator ISequentialStream*() { return this; }
+    ISequentialStream* operator->() { return this; }
+
+    // IUnknown methods
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void   **ppvObject)
+    {
+        if (ppvObject == nullptr)
+            return E_POINTER;
+
+        if (riid != __uuidof(ISequentialStream))
+            return E_NOINTERFACE;
+
+        *ppvObject = static_cast<ISequentialStream*>(this);
+        return S_OK;
+    }
+
+    // This is intended to be used declared on the stack,
+    // and doesn't delete itself until it goes out of scope
+    virtual ULONG STDMETHODCALLTYPE AddRef() { return ++refcount; }
+    virtual ULONG STDMETHODCALLTYPE Release() { return --refcount; }
+
+    // And the ISequentialStream methods
+    virtual HRESULT STDMETHODCALLTYPE Read(void *pv, ULONG cb, ULONG *pcbRead)
+    {
+        if (pv == nullptr)
+            return E_POINTER;
+
+        if (pos >= data.size() || cb == 0)
+        {
+            if (pcbRead != nullptr)
+                *pcbRead = 0;
+
+            return S_FALSE;
+        }
+
+        unsigned char* pCurrent = &data[pos];
+        size_t remaining = data.size() - pos;
+
+        ULONG bytes = cb < remaining ? cb : static_cast<ULONG>(remaining);
+        memcpy_s(pv, cb, pCurrent, bytes);
+        pos += bytes;
+
+        if (pcbRead != nullptr)
+            *pcbRead = bytes;
+
+        return S_OK;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Write(const void *pv, ULONG cb, ULONG *pcbWritten)
+    {
+        if (pv == nullptr)
+            return E_POINTER;
+
+        if (cb == 0)
+        {
+            if (pcbWritten != nullptr)
+            {
+                *pcbWritten = 0;
+            }
+
+            return S_FALSE;
+        }
+
+        data.insert(data.begin() + pos, static_cast<const unsigned char*>(pv), static_cast<const unsigned char*>(pv) + cb);
+        pos += cb;
+
+        if (pcbWritten != nullptr)
+            *pcbWritten = cb;
+
+        return S_OK;
+    }
+
+    const std::vector<unsigned char>& GetData() const { return data; }
+    size_t GetPos() const { return pos; }
+
+private:
+    size_t pos;
+    std::vector<unsigned char> data;
+    ULONG refcount;
+};
+
 bool CertificateToXml(const Certificate& cert, const char* szXmlFile)
 {
     CoInit init;
     ComPtr<IXmlWriter> pWriter;
-    ComPtr<IStream> stm = SHCreateMemStream(nullptr, 0);
+    IStreamVector stm(1024);
+
     HRESULT hr = CreateXmlWriter(__uuidof(IXmlWriter), pWriter.PtrAddr(), nullptr);
 
     if (hr != ERROR_SUCCESS)
@@ -1039,6 +1170,22 @@ bool CertificateToXml(const Certificate& cert, const char* szXmlFile)
 
     certWriter.WriteStartDocument();
     certWriter.WriteCertificate();
+    pWriter->Flush();
+
+    std::ofstream ostm;
+    ostm.open(szXmlFile, std::ios_base::out);
+
+    if (!ostm.is_open())
+    {
+        assert(false);
+        return false;
+    }
+
+    const std::vector<unsigned char>& stmData = stm.GetData();
+
+    ostm.write(reinterpret_cast<const char*>(&stmData[0]), stm.GetPos());
+    ostm.flush();
+
     return true;
 }
 
