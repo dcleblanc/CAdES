@@ -177,6 +177,13 @@ inline bool CheckDecode(const unsigned char* pIn, size_t cbIn, const DerType typ
         cbPrefix++;
         return true;
     }
+    else if (cbIn == 2 && pIn[1] == 0)
+    {
+        // Zero length sequence, which can happen if the first member has a default, and the remaining are optional
+        size = 2;
+        cbPrefix = 2;
+        return true;
+    }
 
 	cbPrefix = 0;
 	return false;
@@ -349,6 +356,7 @@ enum class DecodeResult
 {
     Failed,
     Null,
+    EmptySequence,
     Success
 };
 
@@ -371,6 +379,9 @@ public:
 
         if (isNull)
             return DecodeResult::Null;
+
+        if (cbUsed == cbIn)
+            return DecodeResult::EmptySequence;
 
         prefixSize = cbUsed;
         cbUsed = 0; // Let cbUsed now track just the amount of remaining data
@@ -475,7 +486,10 @@ private:
 
     In the case of EXPLICIT, there will be the tag specifying which option it is, followed by a size,
     then the actual contained type. If it is IMPLICIT, it won't be contained, but will behave as if we just substituted
-    the tag of the type it contains for the initial optional tag
+    the tag of the type it contains for the initial optional tag.
+
+    Note - there are some implicit types seen in a CHOICE that are tagged as 0x80, 0x81, etc. But for something that is just 
+    OPTIONAL, it might be the actual type, and the structure just terminates on a prior member if it isn't present.
 */
 
 enum class OptionType
@@ -590,6 +604,8 @@ public:
 
     size_t EncodedSize() { return innerType.EncodedSize(); }
 
+    bool IsPresent(unsigned char t) const { return t == type; }
+
     bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     {
         // If this is an optional type, we could have used
@@ -597,7 +613,7 @@ public:
         if (cbIn == 0)
             throw std::out_of_range("Insufficient buffer");
 
-        if (pIn[0] == type)
+        if (IsPresent(pIn[0]))
         {
             bool fRet = innerType.Decode(pIn, cbIn, cbUsed);
             hasData = fRet;
@@ -633,6 +649,8 @@ public:
     }
 
     const T& GetInnerType() const { return innerType; }
+    T& GetInnerType() { return innerType; }
+
     bool HasData() const { return hasData; }
 
 private:
@@ -812,6 +830,40 @@ public:
 
     const AnyType& GetValue() const { return value; }
 
+    // It appears that these are EXPLICIT, at least GeneralName is
+    bool GetInnerType(AnyType& inner)
+    {
+        size_t cbUsed = 0;
+        SequenceHelper sh(cbUsed);
+        const unsigned char* pIn = value.GetBuffer();
+
+        switch (sh.Init(pIn, value.GetBufferSize()))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        return inner.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize());
+    }
+
+    const unsigned char* GetInnerBuffer(size_t& innerSize) const
+    {
+        const unsigned char* pIn = value.GetBuffer();
+        size_t cbIn = value.GetBufferSize();
+        size_t cbPrefix = 0;
+
+        innerSize = 0;
+
+        if (!DecodeSize(pIn + 1, cbIn - 1, innerSize, cbPrefix) || 1 + cbPrefix + innerSize > cbIn)
+            throw std::out_of_range("Illegal size value");
+
+        return pIn + cbPrefix + 1;
+    }
+
 protected:
     virtual size_t SetDataSize() override { return value.SetDataSize(); }
 
@@ -906,9 +958,9 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const Integer& o)
 	{
-		for (size_t pos = o.value.size(); pos > 0; --pos)
+		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
-			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos-1];
+			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[pos];
 		}
 
 		return os;
@@ -1025,6 +1077,8 @@ public:
         os << osTmp.str();
 		return os;
 	}
+
+    const std::vector<unsigned char>& GetBits() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }

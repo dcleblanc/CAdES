@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>FFF7606F7F47C5021FF5AF430657A8B7FAB4AA66.cer</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>6B98AC2C4CB90321F9E88A0C6FD99EC903D84BFC.cer</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
@@ -11,7 +11,7 @@
     <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>FFF7606F7F47C5021FF5AF430657A8B7FAB4AA66.cer</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>6B98AC2C4CB90321F9E88A0C6FD99EC903D84BFC.cer</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

@@ -571,8 +571,26 @@ private:
         return cbData = bits.EncodedSize();
     }
 
+    bool IsKeyUsageNil() const
+    {
+        // Deal with the case where you have a bit string of value zero
+        // which is 03 01 00
+        const std::vector<unsigned char>& value = bits.GetBits();
+
+        if (value.size() == 1 && value[0] == 0)
+            return true;
+
+        return false;
+    }
+
     bool BitStringToKeyUsage()
     {
+        if (IsKeyUsageNil())
+        {
+            keyUsageValue = { 0 };
+            return true;
+        }
+
         unsigned char unusedBits = bits.UnusedBits();
         const unsigned char* pBits = nullptr;
         size_t _cbData = 0;
@@ -878,49 +896,49 @@ public:
 
     bool GetOtherName(OtherName& otherName) const 
     {
-        return (GetType() == GeneralNameType::OtherName && value.ConvertToType(otherName));
+        return (GetType() == GeneralNameType::OtherName && DecodeInternalType(otherName));
     }
 
     bool GetRFC822Name(IA5String& rfc822Name) const
     {
-        return (GetType() == GeneralNameType::rfc822Name && value.ConvertToType(rfc822Name));
+        return (GetType() == GeneralNameType::rfc822Name && DecodeInternalType(rfc822Name));
     }
 
     bool GetDNSName(IA5String& dNSName) const
     {
-        return (GetType() == GeneralNameType::dNSName && value.ConvertToType(dNSName));
+        return (GetType() == GeneralNameType::dNSName && DecodeInternalType(dNSName));
     }
 
     bool GetX400Address(ORAddress& x400Address) const
     {
-        return (GetType() == GeneralNameType::x400Address && value.ConvertToType(x400Address));
+        return (GetType() == GeneralNameType::x400Address && DecodeInternalType(x400Address));
     }
 
     // EDIPartyName goes here, if implemented
 
     bool GetDirectoryName(Name& directoryName) const
     {
-        return (GetType() == GeneralNameType::directoryName && value.ConvertToType(directoryName));
+        return (GetType() == GeneralNameType::directoryName && DecodeInternalType(directoryName, OptionType::Explicit));
     }
 
     bool GetEDIPartyName(EDIPartyName& ediPartyName) const
     {
-        return (GetType() == GeneralNameType::ediPartyName && value.ConvertToType(ediPartyName));
+        return (GetType() == GeneralNameType::ediPartyName && DecodeInternalType(ediPartyName));
     }
 
     bool GetURI(IA5String& uniformResourceIdentifier) const
     {
-        return (GetType() == GeneralNameType::uniformResourceIdentifier && value.ConvertToType(uniformResourceIdentifier));
+        return (GetType() == GeneralNameType::uniformResourceIdentifier && DecodeInternalType(uniformResourceIdentifier));
     }
 
     bool GetIpAddress(OctetString& iPAddress) const
     {
-        return (GetType() == GeneralNameType::iPAddress && value.ConvertToType(iPAddress));
+        return (GetType() == GeneralNameType::iPAddress && DecodeInternalType(iPAddress));
     }
 
     bool GetRegisteredId(ObjectIdentifier& registeredID) const
     {
-        return (GetType() == GeneralNameType::registeredID && value.ConvertToType(registeredID));
+        return (GetType() == GeneralNameType::registeredID && DecodeInternalType(registeredID));
     }
 
     GeneralNameType GetType() const
@@ -954,6 +972,23 @@ public:
     }
     
 private:
+    template <typename T>
+    bool DecodeInternalType(T& t, OptionType option = OptionType::Implicit) const
+    {
+        if (option == OptionType::Implicit)
+        {
+            return value.ConvertToType(t);
+
+        }
+        else if (option == OptionType::Explicit)
+        {
+            size_t cbUsed = 0;
+            size_t innerSize = 0;
+            const unsigned char* pIn = ChoiceType::GetInnerBuffer(innerSize);
+            return t.Decode(pIn, innerSize, cbUsed);
+        }
+        return false;
+    }
 };
 
 class GeneralNames final : public DerBase
@@ -1561,6 +1596,15 @@ public:
 
 };
 
+/*
+id-ce-basicConstraints OBJECT IDENTIFIER ::=  { id-ce 19 }
+
+BasicConstraints ::= SEQUENCE {
+cA                      BOOLEAN DEFAULT FALSE,
+pathLenConstraint       INTEGER (0..MAX) OPTIONAL }
+
+*/
+
 class BasicConstraints : public ExtensionBase
 {
 public:
@@ -1590,20 +1634,36 @@ public:
             return true;
         case DecodeResult::Success:
             break;
+        case DecodeResult::EmptySequence:
+            (cA.GetInnerType()).SetValue(false);
+            return true;
         }
 
-        if (!cA.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
-            return false;
+        if (cA.IsPresent(*sh.DataPtr(pIn)))
+        {
+            if (!cA.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+                return false;
 
-        sh.Update();
+            sh.Update();
+            if (sh.IsAllUsed())
+                return true;
+        }
+        else
+        {
+            // Default to false
+            (cA.GetInnerType()).SetValue(false);
+        }
+
         if (!pathLenConstraint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
 
         return true;
     }
 
-    bool GetIsCA() const { return cA.GetValue(); }
-    const Integer& GetPathLengthConstraint() const { return pathLenConstraint; }
+    bool GetIsCA() const { return cA.GetInnerType().GetValue(); }
+    bool HasPathLength() const { return pathLenConstraint.HasData(); }
+
+    const Integer& GetPathLengthConstraint() const { return pathLenConstraint.GetInnerType(); }
 
 private:
 
@@ -1612,8 +1672,8 @@ private:
         return (cbData = cA.EncodedSize() + pathLenConstraint.EncodedSize());
     }
 
-    Boolean cA;
-    Integer pathLenConstraint;
+    ContextSpecificHolder<Boolean, 0x01, OptionType::Implicit> cA;
+    ContextSpecificHolder<Integer, 0x02, OptionType::Implicit> pathLenConstraint;
 };
 
 // See comments at definition of id_google_certTransparancy
@@ -1728,6 +1788,8 @@ public:
         return prevCertHash.Decode(pIn, cbIn, cbUsed);
     }
 
+    const OctetString& GetPrevCertHash() const { return prevCertHash; }
+
 private:
     virtual size_t SetDataSize() { return (cbData = prevCertHash.EncodedSize()); }
     OctetString prevCertHash;
@@ -1813,6 +1875,12 @@ class EntrustVersion : public RawExtension
 {
 public:
     EntrustVersion() : RawExtension(id_entrustVersInfo) {}
+};
+
+class NetscapeCertExt : public RawExtension
+{
+public:
+    NetscapeCertExt() : RawExtension(id_netscape_certExt) {}
 };
 
 /*

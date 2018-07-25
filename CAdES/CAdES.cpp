@@ -1640,6 +1640,9 @@ bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
 		return false;
 
     sh.Update();
+    if (sh.IsAllUsed()) // policy qualifiers are optional
+        return true;
+
 	if (!DecodeSequenceOf(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), policyQualifiers))
 		return false;
 

@@ -863,9 +863,9 @@ std::ostream& AnyType::Output(std::ostream& os, const AnyType& o)
 
     if (!fConverted)
     {
-        for (size_t pos = 0; !fConverted && pos < o.encodedValue.size(); ++pos)
+        for (size_t pos = 0; pos < o.encodedValue.size(); ++pos)
         {
-            os << std::hex << o.encodedValue[pos] << " ";
+            os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.encodedValue[pos];
         }
     }
 

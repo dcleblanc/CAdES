@@ -672,6 +672,16 @@ public:
         WriteSimpleElement(L"MicrosoftEnrollCertType", str);
     }
 
+    void WriteMicrosoftCertSrvPrevHash(const std::vector<unsigned char>& extensionBytes)
+    {
+        MicrosoftPreviousCertHash prevCertHash;
+        DecodeExtension(prevCertHash, extensionBytes);
+
+        std::string str;
+        ctx::ToString(prevCertHash.GetPrevCertHash(), str);
+        WriteSimpleElement(L"MicrosoftPreviousCertHash", str);
+    }
+
     void WriteEntrustVersionInfo(const std::vector<unsigned char>& extensionBytes)
     {
         EntrustVersion entrustVersion;
@@ -688,6 +698,13 @@ public:
         WriteStartElement(L"IssuerAltNames");
         WriteGeneralNames(names);
         WriteEndElement();
+    }
+
+    void WriteNetscapeCertExt(const std::vector<unsigned char>& extensionBytes)
+    {
+        NetscapeCertExt certExt;
+        DecodeExtension(certExt, extensionBytes);
+        WriteRawExtension(L"NetscapeCertExt", certExt.GetRawExtensionData());
     }
 
     void WritePrivateKeyUsagePeriod(const std::vector<unsigned char>& extensionBytes)
@@ -805,7 +822,7 @@ public:
                return;
 
            case ExtensionId::MicrosoftCertSrvPrevHash:
-               WriteMicrosoftEnrollCertType(extensionBytes);
+               WriteMicrosoftCertSrvPrevHash(extensionBytes);
                return;
 
            case ExtensionId::ApplePushDev:
@@ -829,7 +846,7 @@ public:
                return;
 
            case ExtensionId::NetscapeCertExt:
-               WriteIssuerAltName(extensionBytes);
+               WriteNetscapeCertExt(extensionBytes);
                return;
 
            case ExtensionId::PrivateKeyUsagePeriod:
