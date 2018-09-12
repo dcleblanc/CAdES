@@ -1054,24 +1054,16 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
 	{
 		const unsigned long linelength = 80;
-		const unsigned long blocksperline = linelength / sizeof(size_t);
-
-		unsigned long cBlocks = static_cast<unsigned long>(o.value.size() / sizeof(size_t));
-		unsigned long cRemaining = o.value.size() % sizeof(size_t);
-		const size_t* pData = reinterpret_cast<const size_t*>(&o.value[0]);
+		const unsigned char* pData = &o.value[0];
 		std::ostringstream osTmp;
 
-		for (size_t pos = 0; pos < cBlocks; ++pos)
+		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
-			if (pos > 0 && (pos % blocksperline) == 0)
-				osTmp << std::endl;
+            if (pos > 0 && (pos % linelength) == 0)
+                osTmp << std::endl;
 
-			osTmp << std::setfill('0') << std::setw(sizeof(size_t)*2) << std::hex << pData[pos];
-		}
-
-		for (size_t pos = 0; pos < cRemaining; ++pos)
-		{
-			osTmp << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.value[cBlocks * sizeof(size_t) + pos];
+            // This is done byte by byte
+			osTmp << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)pData[pos];
 		}
 
         os << osTmp.str();

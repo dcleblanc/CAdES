@@ -1,5 +1,15 @@
 #include "Common.h"
 
+std::ostream& ctx::operator<<(std::ostream& os, const std::vector<unsigned char>& data)
+{
+    for (size_t pos = 0; pos < data.size(); ++pos)
+    {
+        os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)data[pos];
+    }
+
+    return os;
+}
+
 void ctx::xValidity::ConvertTime(const Time & t, std::string & out)
 {
     // The incoming data will be in the form of either:

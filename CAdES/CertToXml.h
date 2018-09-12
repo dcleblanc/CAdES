@@ -7,6 +7,8 @@
 
 namespace ctx
 {
+    std::ostream& operator<<(std::ostream& os, const std::vector<unsigned char>& data);
+
     template <typename T>
     void ToString(const T& t, std::string& out)
     {
@@ -174,15 +176,6 @@ namespace ctx
         xDirectoryString nameAssigner;
         xDirectoryString partyName;
     };
-
-    /* 
-        GeneralName TODO 
-        GeneralNames is just a sequence of GeneralName
-    */
-
-    /* TODO AuthorityKeyIdentifier */
-
-
 
 } // namespace ctx
 

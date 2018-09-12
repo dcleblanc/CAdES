@@ -6,6 +6,10 @@
 #include <fstream>
 #include <sstream>
 
+// Crypto functions - should go in a header, but for now declare here
+bool HashVectorSha256(const std::vector<unsigned char>& data, std::vector<unsigned char>& out);
+bool HashVectorSha1(const std::vector<unsigned char>& data, std::vector<unsigned char>& out);
+
 #ifdef _WIN32
 void OidTest();
 #else
@@ -261,6 +265,10 @@ bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
 
     if (!fDecode || cbUsed != contents.size())
         return false;
+
+    cert.SetFileName(szFile);
+    HashVectorSha1(contents, cert.GetThumbprint());
+    HashVectorSha256(contents, cert.GetThumbprint256());
 
     return true;
 }

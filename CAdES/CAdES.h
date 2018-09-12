@@ -909,18 +909,18 @@ public:
         return (GetType() == GeneralNameType::dNSName && DecodeInternalType(dNSName));
     }
 
+    // Note - we do not have a sample of this, untested code
     bool GetX400Address(ORAddress& x400Address) const
     {
         return (GetType() == GeneralNameType::x400Address && DecodeInternalType(x400Address));
     }
-
-    // EDIPartyName goes here, if implemented
 
     bool GetDirectoryName(Name& directoryName) const
     {
         return (GetType() == GeneralNameType::directoryName && DecodeInternalType(directoryName, OptionType::Explicit));
     }
 
+    // Note - we do not have a sample of this, untested code
     bool GetEDIPartyName(EDIPartyName& ediPartyName) const
     {
         return (GetType() == GeneralNameType::ediPartyName && DecodeInternalType(ediPartyName));
@@ -931,11 +931,13 @@ public:
         return (GetType() == GeneralNameType::uniformResourceIdentifier && DecodeInternalType(uniformResourceIdentifier));
     }
 
+    // Note - we do not have a sample of this, untested code
     bool GetIpAddress(OctetString& iPAddress) const
     {
         return (GetType() == GeneralNameType::iPAddress && DecodeInternalType(iPAddress));
     }
 
+    // Note - we do not have a sample of this, untested code
     bool GetRegisteredId(ObjectIdentifier& registeredID) const
     {
         return (GetType() == GeneralNameType::registeredID && DecodeInternalType(registeredID));
@@ -2485,6 +2487,15 @@ public:
     const BitString& GetSignatureValue() const { return signatureValue; }
     const TBSCertificate& GetTBSCertificate() const { return tbsCertificate; }
 
+    const std::string& GetFileName() const { return fileName; }
+    void SetFileName(const std::string& name) { fileName = name; }
+
+    const std::vector<unsigned char>& GetThumbprint() const { return thumbprint; }
+    std::vector<unsigned char>& GetThumbprint() { return thumbprint; }
+
+    const std::vector<unsigned char>& GetThumbprint256() const { return thumbprint256; }
+    std::vector<unsigned char>& GetThumbprint256() { return thumbprint256; }
+
 private:
 	virtual size_t SetDataSize() override
 	{
@@ -2495,6 +2506,9 @@ private:
 	TBSCertificate tbsCertificate;
 	AlgorithmIdentifier signatureAlgorithm;
 	BitString signatureValue;
+    std::string fileName;
+    std::vector<unsigned char> thumbprint;
+    std::vector<unsigned char> thumbprint256;
 };
 
 enum class DigestedObjectTypeValue

@@ -67,9 +67,26 @@ public:
         CheckSuccess(pWriter->WriteStartDocument(XmlStandalone_Omit));
     }
 
+    void WriteMetadata()
+    {
+        WriteStartElement(L"Metadata");
+        {
+            std::string thumbprint;
+            std::string thumbprint256;
+            ctx::ToString(cert.GetThumbprint(), thumbprint);
+            ctx::ToString(cert.GetThumbprint256(), thumbprint256);
+
+            WriteSimpleElement(L"FileName", cert.GetFileName());
+            WriteSimpleElement(L"Thumbprint", thumbprint);
+            WriteSimpleElement(L"Thumbprint256", thumbprint256);
+        }
+        WriteEndElement();
+    }
+
     void WriteCertificate()
     {
         WriteStartElement(L"Certificate");
+        WriteMetadata();
         WriteTbsCertificate();
         WriteSignatureAlgorithm();
         WriteSignatureValue();
@@ -222,7 +239,7 @@ public:
         xOid.Convert(oid);
 
         WriteStartElement(wzElementName);
-        WriteSimpleElement(L"OID", xOid.oid);
+        WriteSimpleElement(L"Oid", xOid.oid);
         WriteSimpleElement(L"Tag", xOid.tag);
         WriteEndElement();
     }
@@ -500,12 +517,16 @@ public:
         {
             for each (const AccessDescription& accessDesc in accessVector)
             {
-                const ObjectIdentifier& oid = accessDesc.GetAccessMethod();
-                WriteObjectIdentifier(L"AccessMethod", oid);
+                WriteStartElement(L"AccessDescription");
+                {
+                    const ObjectIdentifier& oid = accessDesc.GetAccessMethod();
+                    WriteObjectIdentifier(L"AccessMethod", oid);
 
-                const GeneralName& name = accessDesc.GetAccessLocation();
-                WriteStartElement(L"AccessLocation");
-                WriteGeneralName(name);
+                    const GeneralName& name = accessDesc.GetAccessLocation();
+                    WriteStartElement(L"AccessLocation");
+                    WriteGeneralName(name);
+                    WriteEndElement();
+                }
                 WriteEndElement();
             }
         }
@@ -1006,11 +1027,7 @@ private:
 
         xAlgId.Convert(algId);
 
-        WriteStartElement(L"Algorithm");
-        WriteSimpleElement(L"Oid", xAlgId.oid.oid);
-        WriteSimpleElement(L"Tag", xAlgId.oid.tag);
-        WriteEndElement();
-
+        WriteObjectIdentifier(L"Algorithm", algId.GetAlgorithm());
         WriteSimpleElement(L"Parameters", xAlgId.params.hexValue);
     }
 

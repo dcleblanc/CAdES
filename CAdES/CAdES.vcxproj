@@ -170,6 +170,7 @@
     <ClCompile Include="DerTypes.cpp" />
     <ClCompile Include="Oids.cpp" />
     <ClCompile Include="Test.cpp" />
+    <ClCompile Include="Win32Crypto.cpp" />
     <ClCompile Include="Win32Test.cpp" />
     <ClCompile Include="Win32_xml.cpp" />
   </ItemGroup>
