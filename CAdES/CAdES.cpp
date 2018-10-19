@@ -1436,12 +1436,13 @@ bool TBSCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
         break;
     }
 
-	// Note - the way that app-specific types seem to work are that
-	// they are optional, but we're treating this one as required.
-	// A V3 cert will always have this, to support a V2 cert, need to find a way to generate them
-	// for testing.
-	if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
-		return false;
+    // A V3 cert should always have this, anything with extensions must be v3
+    // If it is missing, it implies v1 (value of 0)
+    if (*(sh.DataPtr(pIn)) == 0xA0)
+    {
+        if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
+    }
 
     sh.Update();
 	if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))

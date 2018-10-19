@@ -261,7 +261,17 @@ bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
     }
 
     size_t cbUsed = 0;
-    bool fDecode = cert.Decode(&contents[0], contents.size(), cbUsed);
+    bool fDecode = false;
+
+    try
+    {
+        fDecode = cert.Decode(&contents[0], contents.size(), cbUsed);
+    }
+    catch (...)
+    {
+        std::cout << "Malformed certificate: " << szFile << std::endl;
+        return false;
+    }
 
     if (!fDecode || cbUsed != contents.size())
         return false;

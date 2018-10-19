@@ -100,6 +100,11 @@ public:
         std::string szVersion;
 
         ctx::ToString(version, szVersion);
+
+        // This will happen if the version is missing, which indicates a v1 cert
+        if (szVersion.size() == 0)
+            szVersion = "0";
+
         WriteSimpleElement(L"Version", szVersion);
     }
 
@@ -649,7 +654,26 @@ public:
             std::string isCa = basicConstraints.GetIsCA() ? "true" : "false";
             std::string pathLen;
 
-            ctx::ToString(basicConstraints.GetPathLengthConstraint(), pathLen);
+            if (basicConstraints.HasPathLength())
+            {
+                ctx::ToString(basicConstraints.GetPathLengthConstraint(), pathLen);
+            }
+            else
+            {
+                // it isn't present
+                /*
+                   RFC 5280, 4.2.1.9.  Basic Constraints:
+
+                   A pathLenConstraint of zero indicates that no non-
+                   self-issued intermediate CA certificates may follow in a valid
+                   certification path.  Where it appears, the pathLenConstraint field
+                   MUST be greater than or equal to zero.  Where pathLenConstraint does
+                   not appear, no limit is imposed.
+
+                   So, use a magic value that amounts to infinity
+                */
+                pathLen = "ffffffff";
+            }
 
             WriteSimpleElement(L"CA", isCa);
             WriteSimpleElement(L"PathLengthConstraint", pathLen);

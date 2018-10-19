@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>34476EAD09F1419B44983EE8B1F067115C66F802.cer</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>417E225037FBFAA4F95761D5AE729E1AEA7E3A42.cer</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\dSMS</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments>FFF7606F7F47C5021FF5AF430657A8B7FAB4AA66.cer</LocalDebuggerCommandArguments>
@@ -11,9 +11,9 @@
     <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>34476EAD09F1419B44983EE8B1F067115C66F802.cer</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>417E225037FBFAA4F95761D5AE729E1AEA7E3A42.cer</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>D:\CAdES\TestCerts\dSMS</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerCommandArguments>FFF7606F7F47C5021FF5AF430657A8B7FAB4AA66.cer</LocalDebuggerCommandArguments>

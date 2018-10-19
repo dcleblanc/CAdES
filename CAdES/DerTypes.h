@@ -364,7 +364,10 @@ class SequenceHelper
 {
 public:
     SequenceHelper(size_t& _cbUsed) : dataSize(0), prefixSize(0), isNull(false), cbUsed(_cbUsed), cbCurrent(0) {}
-    ~SequenceHelper()
+
+    // Note - because CheckExit throws, the destructor must also be marked as throwing
+    // or we will land in terminate and not the catch block.
+    ~SequenceHelper() noexcept(false)
     {
         Update();
         CheckExit();
@@ -388,7 +391,7 @@ public:
         return DecodeResult::Success;
     }
 
-    void CheckExit()
+    void CheckExit() noexcept(false)
     {
         // if it isn't an error return, then make sure we've consumed all the data
         if (!isNull && cbUsed != dataSize)
