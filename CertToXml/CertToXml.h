@@ -3,6 +3,8 @@
 /*
     Use this to extract a Certificate to a structure suitable for
     serializing to XML. Use only standard library types here.
+
+	While it is currently only consumed from Win32 code, it would be good to be able to port it to Linux
 */
 
 namespace ctx

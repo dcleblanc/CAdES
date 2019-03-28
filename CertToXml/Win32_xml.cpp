@@ -1,4 +1,5 @@
-#include "Common.h"
+#include "../CAdESLib/Common.h"
+#include "CertToXml.h"
 
 #include <Windows.h>
 #include <xmllite.h>
@@ -51,12 +52,6 @@ public:
     T * ptr;
 };
 
-std::wstring utf8ToUtf16(const std::string& utf8Str)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
-    return conv.from_bytes(utf8Str);
-}
-
 class CertXmlWriter
 {
 public:
@@ -73,6 +68,7 @@ public:
         {
             std::string thumbprint;
             std::string thumbprint256;
+
             ctx::ToString(cert.GetThumbprint(), thumbprint);
             ctx::ToString(cert.GetThumbprint256(), thumbprint256);
 
@@ -258,7 +254,7 @@ public:
 
         WriteStartElement(L"ExtendedKeyUsage");
         {
-            for each (ObjectIdentifier oid in oids)
+            for (const ObjectIdentifier& oid : oids)
             {
                 WriteObjectIdentifier(L"ObjectIdentifier", oid);
             }
@@ -283,7 +279,7 @@ public:
 
         // Now have an array of AnyType
         const std::vector<AttributeValue>& attrValues = attr.GetAttrValues();
-        for each (const AttributeValue& value in attrValues)
+        for (const AttributeValue& value : attrValues)
         {
             // Don't know what these will be, so just convert to hex
             // See how often we encounter them, develop better parsers if these are common
@@ -407,7 +403,7 @@ public:
 
     void WriteGeneralNames(const GeneralNames& names)
     {
-        for each (const GeneralName& name in names.GetNames())
+        for (const GeneralName& name : names.GetNames())
         {
             WriteGeneralName(name);
         }
@@ -503,7 +499,7 @@ public:
 
         WriteStartElement(L"CRLDistributionPoints");
         {
-            for each (const DistributionPoint& point in distPointVector)
+            for (const DistributionPoint& point : distPointVector)
             {
                 WriteDistributionPoint(point);
             }
@@ -520,7 +516,7 @@ public:
 
         WriteStartElement(L"AuthorityInfoAccess");
         {
-            for each (const AccessDescription& accessDesc in accessVector)
+            for (const AccessDescription& accessDesc : accessVector)
             {
                 WriteStartElement(L"AccessDescription");
                 {
@@ -557,12 +553,12 @@ public:
         {
             const std::vector<KeyPurposes>& keyPurposes = appPolicies.GetCertPolicies();
 
-            for each (const KeyPurposes& purpose in keyPurposes)
+            for (const KeyPurposes& purpose : keyPurposes)
             {
                 WriteStartElement(L"KeyPurposes");
                 const std::vector<ObjectIdentifier>& oidVector = purpose.GetKeyPurposes();
                 // Unsure why these are nested vectors, suspect that this one will only have one element
-                for each (const ObjectIdentifier& oid in oidVector)
+                for (const ObjectIdentifier& oid : oidVector)
                 {
                     WriteObjectIdentifier(L"KeyPurpose", oid);
                 }
@@ -580,7 +576,7 @@ public:
         const std::vector<PolicyInformation>& policyInfos = certPolicies.GetPolicyInformationVector();
 
         WriteStartElement(L"CertificatePolicies");
-        for each (const PolicyInformation& policyInfo in policyInfos)
+        for (const PolicyInformation& policyInfo : policyInfos)
         {
             const CertPolicyId& certPolicyId = policyInfo.GetPolicyIdentifier();
             const std::vector<PolicyQualifierInfo>& policyQualifiers = policyInfo.GetPolicyQualifiers();
@@ -589,7 +585,7 @@ public:
             {
                 WriteObjectIdentifier(L"CertPolicyId", certPolicyId);
 
-                for each (const PolicyQualifierInfo& qualifierInfo in policyQualifiers)
+                for (const PolicyQualifierInfo& qualifierInfo : policyQualifiers)
                 {
                     const PolicyQualifierId& policyQualifierId = qualifierInfo.GetPolicyQualifierId();
                     const AnyType& qualifier = qualifierInfo.GetQualifier();
@@ -776,7 +772,7 @@ public:
 
         WriteStartElement(L"FreshestCRL");
         {
-            for each (const DistributionPoint& point in distPointVector)
+            for (const DistributionPoint& point : distPointVector)
             {
                 WriteDistributionPoint(point);
             }
@@ -1075,7 +1071,7 @@ private:
         const std::vector<AttributeTypeAndValue>& attrs = rdn.GetAttributeVector();
 
         WriteStartElement(L"RelativeDistinguishedName");
-        for each (const AttributeTypeAndValue& type in attrs)
+        for (const AttributeTypeAndValue& type : attrs)
         {
             WriteAttributeTypeAndValue(type);
         }
@@ -1092,7 +1088,7 @@ private:
         WriteStartElement(wzElementName);
         {
             // Now a sequence of RelativeDistinguishedName elements
-            for each (const RelativeDistinguishedName& rdn in rdnVector)
+            for (const RelativeDistinguishedName& rdn : rdnVector)
             {
                 WriteRelativeDistinguishedName(rdn);
             }

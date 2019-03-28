@@ -1666,13 +1666,9 @@ class BMPString final : public DerBase
 public:
 	friend std::ostream& operator<<(std::ostream& os, const BMPString& str)
 	{
-		//setup converter
-		using convert_type = std::codecvt_utf8<wchar_t>;
-		std::wstring_convert<convert_type, wchar_t> converter;
+		std::string converted_str;
 
-		//use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
-		std::string converted_str = converter.to_bytes(str.value);
-
+		ConvertWstringToString(str.value, converted_str);
 		os << converted_str;
 		return os;
 	}

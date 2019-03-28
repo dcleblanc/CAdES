@@ -1,4 +1,5 @@
-#include "Common.h"
+#include "../CAdESLib/Common.h"
+#include "CertToXml.h"
 
 std::ostream& ctx::operator<<(std::ostream& os, const std::vector<unsigned char>& data)
 {

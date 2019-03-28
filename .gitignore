@@ -6,3 +6,10 @@ Debug/
 CAdES/x64/
 x64/Release
 TestCerts/
+*.obj
+*.log
+*.pdb
+*.lastbuildstate
+*.tlog
+*.user
+*.filters

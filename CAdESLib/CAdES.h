@@ -176,7 +176,7 @@ public:
     {
         std::string tmp;
 
-        for each (AttributeTypeAndValue attr in attrs)
+        for (const AttributeTypeAndValue& attr : attrs)
         {
             const char* szLabel = attr.GetTypeLabel();
             std::string s;
@@ -259,7 +259,7 @@ public:
     {
         std::string tmp;
 
-        for each (RelativeDistinguishedName rdn in name)
+        for (const RelativeDistinguishedName& rdn : name)
         {
             std::string s;
             if (rdn.ToString(s))
@@ -431,7 +431,7 @@ public:
 
     // The OctetString is really some number of sub-structures, which are defined by which extnID we have
 
-    bool GetRawExtension(std::vector<unsigned char>& out)
+    bool GetRawExtension(std::vector<unsigned char>& out) const
     {
         const std::vector<unsigned char>& extnData = extnValue.GetValue();
 
@@ -2186,7 +2186,7 @@ public:
     {
         bool hasKeyUsage = false;
 
-        for each (Extension ext in extensions)
+        for (const Extension& ext : extensions)
         {
             size_t oidIndex = ext.GetOidIndex();
             const char* oidString = oidIndex == ~static_cast<size_t>(0) ? nullptr : GetOidString(oidIndex);

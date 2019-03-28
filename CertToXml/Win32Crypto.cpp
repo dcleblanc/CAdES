@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <bcrypt.h>
-#include "Common.h"
+#include "../CAdESLib/Common.h"
 
 #pragma comment(lib, "bcrypt.lib")
 

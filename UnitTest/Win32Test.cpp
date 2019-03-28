@@ -4,7 +4,7 @@
 #ifdef _WIN32
 
 #include <Windows.h>
-#include "Common.h"
+#include "../CAdESLib/Common.h"
 #include <wincrypt.h>
 #include <stdio.h>
 
@@ -19,11 +19,10 @@
 const DWORD encodingType = X509_ASN_ENCODING;
 
 /*
- Primary object types - 
- X509_OCTET_STRING
- X509_UNICODE_NAME
- PKCS_UTC_TIME
-
+	 Primary object types - 
+	 X509_OCTET_STRING
+	 X509_UNICODE_NAME
+	 PKCS_UTC_TIME
 */
 
 bool DecodeObject(LPCSTR lpszStructType, const unsigned char* encoded, unsigned long cbEncoded, void* out, unsigned long& cbOut)
