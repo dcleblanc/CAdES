@@ -223,6 +223,8 @@ public:
         return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbUsed, out);
     }
 
+	size_t GetcbData() const { return cbData; }
+
 protected:
 	virtual size_t SetDataSize() = 0;
 
@@ -374,7 +376,7 @@ public:
         cbUsed += prefixSize;
     }
 
-    DecodeResult Init(const unsigned char * pIn, size_t cbIn)
+    DecodeResult Init(const unsigned char * pIn, size_t cbIn, size_t& _dataSize)
     {
         // This checks internally to see if the data size is within bounds of cbIn
         if (!DerBase::DecodeSequence(pIn, cbIn, cbUsed, dataSize, isNull))
@@ -387,6 +389,7 @@ public:
             return DecodeResult::EmptySequence;
 
         prefixSize = cbUsed;
+		_dataSize = dataSize;
         cbUsed = 0; // Let cbUsed now track just the amount of remaining data
         return DecodeResult::Success;
     }
@@ -429,13 +432,7 @@ class EncodeHelper
 {
 public:
     EncodeHelper(size_t& _cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed){}
-
-    ~EncodeHelper()
-    {
-        Update();
-        CheckExit();
-        cbUsed = offset;
-    }
+	~EncodeHelper() {}
 
     void Init(size_t _cbNeeded, unsigned char* pOut, size_t cbOut, unsigned char type, size_t cbData)
     { 
@@ -450,6 +447,16 @@ public:
         EncodeSize(cbData, DataPtr(pOut), DataSize(), CurrentSize());
         Update();
     }
+
+	// This MUST be called before going out of scope
+	// the method may throw, and if the throw were to happen in the destructor
+	// it can't be caught, and debugging becomes difficult
+	void Finalize()
+	{
+		Update();
+		CheckExit();
+		cbUsed = offset;
+	}
 
     void Update()
     {
@@ -605,7 +612,13 @@ class ContextSpecificHolder <T, type, OptionType::Implicit>
 public:
     ContextSpecificHolder() : hasData(false) {}
 
-    size_t EncodedSize() { return innerType.EncodedSize(); }
+    size_t EncodedSize() 
+	{
+		if (innerType.GetcbData() == 0)
+			return 0;
+
+		return innerType.EncodedSize(); 
+	}
 
     bool IsPresent(unsigned char t) const { return t == type; }
 
@@ -840,7 +853,7 @@ public:
         SequenceHelper sh(cbUsed);
         const unsigned char* pIn = value.GetBuffer();
 
-        switch (sh.Init(pIn, value.GetBufferSize()))
+        switch (sh.Init(pIn, value.GetBufferSize(), this->cbData))
         {
         case DecodeResult::Failed:
             return false;

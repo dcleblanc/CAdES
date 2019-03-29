@@ -14,11 +14,13 @@ void OidTest() {}
 
 struct options
 {
-	options() : dumpDebug(false), parseTest(false)
+	options() : dumpDebug(false), parseTest(false), oidTest(false), encodeSizeTest(false)
 	{}
 
 	bool dumpDebug;
 	bool parseTest;
+	bool oidTest;
+	bool encodeSizeTest;
 };
 
 options opts;
@@ -234,16 +236,13 @@ void DebugDump(const char* szFile, const unsigned char* pData, size_t cbData)
 		{
 			std::cout << "Cannot create debug file for: " << szFile << " error= " << oops.what() << std::endl;
 		}
+
+		std::cout << "Debug file created: " << dbgFile << std::endl;
 	}
 	else
 	{
 		std::cout << "Cannot open dmp file: " << dbgFile << std::endl;
 	}
-}
-
-void TestCertificate(Certificate& cert)
-{
-	cert;
 }
 
 void ParseTest(const char * szFile)
@@ -273,18 +272,30 @@ void ParseTest(const char * szFile)
 		if (fDecode)
 		{
 			std::cout << "SUCCESS: " << szFile << std::endl;
-			TestCertificate(cert);
+		}
+		else
+		{
+			std::cout << "Decode failed: " << szFile << std::endl;
+			DebugDump(szFile, &contents[0], contents.size());
+			return;
 		}
 
-		if (opts.dumpDebug)
-			DebugDump(szFile, &contents[0], contents.size());
-
 		// Now let's see if we can round-trip the file
-		cert.Encode(&outBuf[0], outBuf.size(), cbOut);
+		try
+		{
+			cert.Encode(&outBuf[0], outBuf.size(), cbOut);
+		}
+		catch (...)
+		{
+			std::cout << "Exception in Encode" << std::endl;
+		}
 
 		if (cbUsed != cbOut)
 		{
 			std::cout << "Output size mismatch" << std::endl;
+
+			if (opts.dumpDebug)
+				DebugDump(szFile, &contents[0], contents.size());
 		}
 		else
 		{
@@ -333,11 +344,6 @@ int main(int argc, char* argv[])
 	bool fPrintUsage = false;
 	const char* szFile = nullptr;
 
-	// Ensure that the core elements of the library actually function
-	// PrintOids is needed if you need to regenerate the OID table else it is a noop
-	// PrintOids();
-	// TestOidTable();
-
 	// Last argument, if present, has to be the file name
 	for (int i = 1; i < argc - 1; ++i)
 	{
@@ -351,6 +357,12 @@ int main(int argc, char* argv[])
 			case 'p':
 				opts.parseTest = true;
 				break;
+			case 'o':
+				opts.oidTest = true;
+				break;
+			case 'e':
+				opts.encodeSizeTest = true;
+				break;
 			default:
 				std::cout << argv[i] << " unsupported option" << std::endl;
 				fPrintUsage = true;
@@ -359,7 +371,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if (argc >= 2 && !fPrintUsage)
+	if (argc >= 2 && opts.parseTest)
 	{
 		szFile = argv[argc - 1];
 	}
@@ -369,14 +381,25 @@ int main(int argc, char* argv[])
 		std::cout << "Currently supported options are:" << std::endl;
 		std::cout << "\t-d - Create debug dump of input file" << std::endl;
 		std::cout << "\t-p - Run parse test on input file" << std::endl;
+		std::cout << "\t-o - Run OID test" << std::endl;
+		std::cout << "\t-e - Run size encoding test" << std::endl;
 		return -1;
 	}
 
-	if (opts.parseTest)
+	// TODO - make these switches
+	// Ensure that the core elements of the library actually function
+	// PrintOids is needed if you need to regenerate the OID table else it is a noop
+	// PrintOids();
+	// TestOidTable();
+
+	if (szFile != nullptr && opts.parseTest)
 		ParseTest(szFile);
 
-	OidTest();
-	EncodeSizeTest();
+	if(opts.oidTest)
+		OidTest();
+
+	if(opts.encodeSizeTest)
+		EncodeSizeTest();
 
 	return 0;
 }

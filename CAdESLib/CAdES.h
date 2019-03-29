@@ -225,13 +225,15 @@ public:
             name[item].Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
             eh.Update();
         }
+
+		eh.Finalize();
 	}
 
 	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
 	{
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -710,6 +712,7 @@ public:
 
         eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
         EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
 
     const std::vector<ObjectIdentifier>& GetEkus() const { return ekus; }
@@ -1035,14 +1038,14 @@ public:
         eh.Update();
             
         nameRelativeToCRLIssuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
-        eh.Update();
+		eh.Finalize();
     }
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1101,13 +1104,14 @@ public:
         eh.Update();
 
         cRLIssuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1245,13 +1249,14 @@ public:
         eh.Update();
 
         authorityCertSerialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1330,13 +1335,14 @@ public:
         eh.Update();
 
         accessLocation.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1523,13 +1529,14 @@ public:
         eh.Update();
 
         minorVersion.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
     
     bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1622,13 +1629,14 @@ public:
         eh.Update();
 
         pathLenConstraint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
     }
 
     bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     {
         SequenceHelper sh(cbUsed);
 
-        switch (sh.Init(pIn, cbIn))
+        switch (sh.Init(pIn, cbIn, this->cbData))
         {
         case DecodeResult::Failed:
             return false;

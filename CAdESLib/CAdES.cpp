@@ -32,13 +32,14 @@ void Accuracy::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
     eh.Update();
 
 	micros.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Accuracy::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -72,14 +73,14 @@ void AlgorithmIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cb
     eh.Update();
 
 	parameters.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
-    eh.Update();
+	eh.Finalize();
 }
 
 bool AlgorithmIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -109,13 +110,14 @@ void Attribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Attribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -147,13 +149,14 @@ void EncapsulatedContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t 
     eh.Update();
 
 	eContent.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool EncapsulatedContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -186,13 +189,14 @@ void IssuerSerial::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	issuerUID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool IssuerSerial::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -232,13 +236,14 @@ void ObjectDigestInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUse
     eh.Update();
 
 	objectDigest.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool ObjectDigestInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -279,13 +284,14 @@ void Holder::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	objectDigestInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Holder::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -319,13 +325,14 @@ void OtherHashAlgAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & c
     eh.Update();
 
 	hashValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherHashAlgAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -358,13 +365,14 @@ void V2Form::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	objectDigestInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool V2Form::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -398,13 +406,14 @@ void AttCertValidityPeriod::Encode(unsigned char * pOut, size_t cbOut, size_t & 
     eh.Update();
 
 	notAfterTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool AttCertValidityPeriod::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -455,13 +464,14 @@ void AttributeCertificateInfo::Encode(unsigned char * pOut, size_t cbOut, size_t
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool AttributeCertificateInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -526,13 +536,14 @@ void AttributeCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & c
     eh.Update();
 
 	signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool AttributeCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -572,13 +583,14 @@ void CertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -616,13 +628,14 @@ void RevokedInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	revocationReason.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool RevokedInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -661,13 +674,14 @@ void SingleResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	singleExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SingleResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -712,13 +726,14 @@ void PKIStatusInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	failInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool PKIStatusInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -752,13 +767,14 @@ void ContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	content.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool ContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -791,13 +807,14 @@ void CrlIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	crlNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CrlIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -831,13 +848,14 @@ void CrlValidatedID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	crlIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CrlValidatedID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -867,13 +885,14 @@ void MessageImprint::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	hashedMessage.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool MessageImprint::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -903,13 +922,14 @@ void UserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	explicitText.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool UserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -939,13 +959,14 @@ void NoticeReference::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool NoticeReference::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -975,13 +996,14 @@ void OcspIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	producedAt.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OcspIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1014,13 +1036,14 @@ void CrlOcspRef::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	otherRev.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CrlOcspRef::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1054,13 +1077,14 @@ void OtherRevRefs::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	otherRevRefs.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherRevRefs::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1098,13 +1122,14 @@ void RevocationValues::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUse
     eh.Update();
 
 	otherRevVals.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool RevocationValues::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1138,13 +1163,14 @@ void OtherRevVals::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	otherRevVals.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherRevVals::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1180,13 +1206,14 @@ void BasicOCSPResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool BasicOCSPResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1233,13 +1260,14 @@ void ResponseData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool ResponseData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1281,13 +1309,14 @@ void SigningCertificateV2::Encode(unsigned char * pOut, size_t cbOut, size_t & c
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SigningCertificateV2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1317,13 +1346,14 @@ void SubjectPublicKeyInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & c
     eh.Update();
 
 	subjectPublicKey.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SubjectPublicKeyInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1356,13 +1386,14 @@ void Certificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Certificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1420,13 +1451,14 @@ void TBSCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool TBSCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1510,13 +1542,14 @@ void CertificateList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     eh.Update();
 
 	signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CertificateList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1565,13 +1598,14 @@ void TBSCertList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 	
 	crlExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1621,13 +1655,14 @@ void PolicyInformation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1660,13 +1695,14 @@ void ESSCertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool ESSCertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1696,13 +1732,14 @@ void SigningCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbU
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SigningCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1735,13 +1772,14 @@ void ESSCertIDv2::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool ESSCertIDv2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1775,13 +1813,14 @@ void PolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cb
     eh.Update();
 
 	qualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool PolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1811,13 +1850,14 @@ void IssuerAndSerialNumber::Encode(unsigned char * pOut, size_t cbOut, size_t & 
     eh.Update();
 
 	serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool IssuerAndSerialNumber::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1854,13 +1894,14 @@ void Extension::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	}
 
 	extnValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Extension::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1895,13 +1936,14 @@ void CertStatus::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
 
     revoked.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CertStatus::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1968,13 +2010,14 @@ void SignerInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SignerInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2024,13 +2067,14 @@ void OtherCertificateFormat::Encode(unsigned char * pOut, size_t cbOut, size_t &
     eh.Update();
 
 	otherCert.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherCertificateFormat::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2060,13 +2104,14 @@ void EDIPartyName::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	partyName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool EDIPartyName::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2099,13 +2144,14 @@ void RevocationEntry::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     eh.Update();
 
 	crlEntryExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2139,13 +2185,14 @@ void OtherRevocationInfoFormat::Encode(unsigned char * pOut, size_t cbOut, size_
     eh.Update();
 
 	otherRevInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherRevocationInfoFormat::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2184,13 +2231,14 @@ void SignedData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SignedData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2236,13 +2284,14 @@ void SigPolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t &
     eh.Update();
 
 	sigQualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SigPolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2275,13 +2324,14 @@ void SignaturePolicyId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SignaturePolicyId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2315,13 +2365,14 @@ void SPUserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	explicitText.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SPUserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2351,13 +2402,14 @@ void CommitmentTypeQualifier::Encode(unsigned char * pOut, size_t cbOut, size_t 
     eh.Update();
 
 	qualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CommitmentTypeQualifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2387,13 +2439,14 @@ void CommitmentTypeIndication::Encode(unsigned char * pOut, size_t cbOut, size_t
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool CommitmentTypeIndication::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2426,13 +2479,14 @@ void SignerLocation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SignerLocation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2466,13 +2520,14 @@ void SignerAttribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     eh.Update();
 
 	certifiedAttributes.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool SignerAttribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2514,13 +2569,14 @@ void TimeStampReq::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool TimeStampReq::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2566,13 +2622,14 @@ void TimeStampResp::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	timeStampToken.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool TimeStampResp::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2626,13 +2683,14 @@ void TSTInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool TSTInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2694,13 +2752,14 @@ void OtherCertId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OtherCertId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2730,13 +2789,14 @@ void OcspResponsesID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
     eh.Update();
 
 	ocspRepHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool OcspResponsesID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2766,13 +2826,14 @@ void Validity::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
     eh.Update();
 
 	notAfter.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool Validity::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2802,13 +2863,14 @@ void AttributeTypeAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & 
     eh.Update();
 
 	value.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+	eh.Finalize();
 }
 
 bool AttributeTypeAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn))
+    switch (sh.Init(pIn, cbIn, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
