@@ -202,25 +202,42 @@ class DerBase
 public:
 	DerBase() : cbData(0) {}
 
-	virtual size_t EncodedSize()
+	virtual size_t EncodedSize() const
 	{
-		SetDataSize();
+		// No longer calling SetDataSize here
+		// If the object is already fully loaded, then we know cbData, and don't need to 
+		// take the perf hit of recalculating it.
+		// If it has been set some other way, say we're building the object 
+		// directly, then call SetDataSize when you're done.
 		return 1 + GetSizeBytes(cbData) + cbData;
 	}
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) = 0;
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) = 0;
 
+	template <typename T>
+	static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	{
+		size_t cbPrefix = 0;
+		size_t cbSize = 0;
+		bool ret = DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbPrefix, cbSize, out);
+
+		if (ret)
+			cbUsed = cbPrefix + cbSize;
+
+		return ret;
+	}
+
     template <typename T>
-    static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+    static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
     {
-        return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbUsed, out);
+        return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbPrefix, cbSize, out);
     }
 
     template <typename T>
-    static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+    static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
     {
-        return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbUsed, out);
+        return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbPrefix, cbSize, out);
     }
 
 	size_t GetcbData() const { return cbData; }
@@ -269,29 +286,29 @@ protected:
 	}
 
 	template <typename T>
-	static bool DecodeSetOrSequenceOf(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSetOrSequenceOf(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
 	{
 		bool isNull = false;
 		size_t offset = 0;
-		size_t size = 0;
-		size_t cbPrefix;
 
 		out.clear();
 
-		if (!DecodeSequenceOrSet(type, pIn, cbIn, cbPrefix, size, isNull))
+		if (!DecodeSequenceOrSet(type, pIn, cbIn, cbPrefix, cbSize, isNull))
 		{
-			cbUsed = 0;
+			cbPrefix = 0;
+			cbSize = 0;
 			return false;
 		}
 
 		if (isNull)
 		{
-			cbUsed = 2;
+			cbPrefix = 2;
+			cbSize = 0;
 			return true;
 		}
 
 		offset = cbPrefix;
-        cbIn = cbPrefix + size;
+        cbIn = cbPrefix + cbSize;
 
 		for (;;)
 		{
@@ -309,16 +326,14 @@ protected:
 
 			// Exit conditions - should have used all of our
 			// incoming data, as long as everything is polite
-			if (offset == size + cbPrefix)
+			if (offset == cbSize + cbPrefix)
 			{
-				cbUsed = size + cbPrefix;
 				return true;
 			}
 		}
 	}
 
 	// Check for types that have a vector or a type of string
-
 	static bool DecodeNull(const unsigned char* pIn, size_t cbIn, size_t& cbUsed)
 	{
 		if (cbIn >= 2 && pIn[0] == static_cast<unsigned char>(DerType::Null) && pIn[1] == 0)
@@ -332,7 +347,7 @@ protected:
 	}
 
 	template <typename T>
-	static bool Decode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
+	bool Decode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -347,6 +362,7 @@ protected:
 
 		cbUsed = cbPrefix + static_cast<size_t>(size);
 		value.insert(value.begin(), pIn + cbPrefix, pIn + cbUsed);
+		cbData = value.size();
 		return true;
 	}
 

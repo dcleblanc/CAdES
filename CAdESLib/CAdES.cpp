@@ -1679,10 +1679,17 @@ bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
     if (sh.IsAllUsed()) // policy qualifiers are optional
         return true;
 
-	if (!DecodeSequenceOf(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), policyQualifiers))
-		return false;
+	size_t cbSize = 0;
+	size_t cbPrefix = 0;
+	bool ret = DecodeSequenceOf(sh.DataPtr(pIn), sh.DataSize(), cbPrefix, cbSize, policyQualifiers);
 
-	return true;
+	if (ret)
+	{
+		cbData = cbSize;
+		sh.CurrentSize() = cbSize + cbPrefix;
+	}
+
+	return ret;
 }
 
 void ESSCertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)

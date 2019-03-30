@@ -328,7 +328,7 @@ public:
         return rdnSequence.Decode(pIn, cbIn, cbUsed);
 	}
 
-    virtual size_t EncodedSize() override
+    virtual size_t EncodedSize() const override
     {
         return rdnSequence.EncodedSize();
     }
@@ -701,9 +701,19 @@ public:
 
     // Also TODO - need to capture all the EKU OIDs
     // in the samples, be able to translate the most common to a friendly name
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
-    {
-        return DecodeSequenceOf<ObjectIdentifier>(pIn, cbIn, cbUsed, ekus);
+	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+	{
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf<ObjectIdentifier>(pIn, cbIn, cbPrefix, cbSize, ekus);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
@@ -1007,7 +1017,17 @@ public:
 
     virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, names);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf<GeneralName>(pIn, cbIn, cbPrefix, cbSize, names);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<GeneralName>& GetNames() const { return names; }
@@ -1200,7 +1220,17 @@ public:
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, cRLDistributionPoints);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, cRLDistributionPoints);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<DistributionPoint>& GetDistributionPoints() const { return cRLDistributionPoints; }
@@ -1387,7 +1417,17 @@ public:
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, accessDescriptions);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, accessDescriptions);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<AccessDescription>& GetAccessDescriptions() const { return accessDescriptions; }
@@ -1459,7 +1499,17 @@ public:
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, keyPurposes);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, keyPurposes);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<ObjectIdentifier>& GetKeyPurposes() const { return keyPurposes; }
@@ -1485,7 +1535,17 @@ public:
 
     virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, certPolicies);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, certPolicies);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<KeyPurposes>& GetCertPolicies() { return certPolicies; }
@@ -2166,8 +2226,17 @@ public:
 	{
 		// This is actually a SEQUENCE, oddly, seems it should be a set
 		// Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, values);
 
-		return DecodeSequenceOf(pIn, cbIn, cbUsed, values);
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
 	}
 
     size_t Count() const { return values.size(); }
@@ -3108,7 +3177,17 @@ public:
 
     virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
     {
-        return DecodeSequenceOf(pIn, cbIn, cbUsed, certificatePolicies);
+		size_t cbSize = 0;
+		size_t cbPrefix = 0;
+		bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, certificatePolicies);
+
+		if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
     }
 
     const std::vector<PolicyInformation>& GetPolicyInformationVector() const { return certificatePolicies; }
