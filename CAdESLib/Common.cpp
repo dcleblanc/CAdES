@@ -17,8 +17,21 @@ int get_version() { return lib_version; }
 
 std::wstring utf8ToUtf16(const std::string& utf8Str)
 {
+	// We don't expect any really interesting utf8 characters
+	// Try doing this cheaply
+	std::wstring out;
+	out.reserve(utf8Str.length());
+
+	for (char c : utf8Str)
+	{
+		out += (static_cast<wchar_t>(c));
+	}
+
+	return out;
+	/*
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
 	return conv.from_bytes(utf8Str);
+	*/
 }
 
 void ConvertWstringToString(const std::wstring& in, std::string& out)

@@ -1841,6 +1841,13 @@ private:
     BMPString certType;
 };
 
+class MicrosoftCertFriendlyName : public RawExtension
+{
+	// Note - this is very rare, and is just a wchar_t string - not ASN.1
+	// Could fairly easily decode/encode, but don't see a need to create these
+	MicrosoftCertFriendlyName() : RawExtension(id_microsoft_certFriendlyName) {}
+};
+
 // Contains the sha1 hash of the previous version of the CA certificate
 
 class MicrosoftPreviousCertHash : public ExtensionBase

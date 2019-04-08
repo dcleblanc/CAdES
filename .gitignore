@@ -13,3 +13,4 @@ TestCerts/
 *.tlog
 *.user
 *.filters
+x64/*

@@ -784,10 +784,15 @@ public:
     {
         AnyType any;
         std::string str;
+		std::stringstream strstm;
 
-        // This will typically end up encoding to the hex value of the extension
-        DecodeExtension(any, extensionBytes);
-        ctx::ToString(any, str);
+		// We don't understand what this is, and it might not even be ASN.1
+		for (size_t pos = 0; pos < extensionBytes.size(); ++pos)
+		{
+			strstm << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)extensionBytes[pos];
+		}
+
+		str = strstm.str();
         WriteSimpleElement(L"UnknownExtension", str);
     }
 

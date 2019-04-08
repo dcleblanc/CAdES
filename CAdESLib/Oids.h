@@ -283,7 +283,13 @@ const char id_google_certTransparancy[] = "1.3.6.1.4.1.11129.2.4.2"; // Google c
     Microsoft enterprise extensions
     {iso(1) identified-organization(3) dod(6) internet(1) private(4) enterprise(1) 311
     These are documented here - https://support.microsoft.com/en-us/help/287547/object-ids-associated-with-microsoft-cryptography
+
+	Note - there are a number of OIDs that may not be in the OID reference sites, but are in wincrypt.h
+	Search for this section - 
+	#define szOID_CERT_PROP_ID_PREFIX           "1.3.6.1.4.1.311.10.11."
 */
+
+const char id_microsoft_certFriendlyName[] = "1.3.6.1.4.1.311.10.11.11"; // CERT_FRIENDLY_NAME_PROP_ID
 const char id_microsoft_enrollCertType[]   = "1.3.6.1.4.1.311.20.2"; // Microsoft szOID_ENROLL_CERTTYPE_EXTENSION
 const char id_microsoft_certsrvCAVersion[] = "1.3.6.1.4.1.311.21.1"; // Microsoft szOID_CERTSRV_CA_VERSION
 const char id_microsoft_certsrvPrevHash[]  = "1.3.6.1.4.1.311.21.2"; // Microsoft szOID_CERTSRV_PREVIOUS_CERT_HASH
@@ -395,6 +401,7 @@ enum class ExtensionId
     SMIMECapabilities,
     MicrosoftCertSrvCAVersion,
     MicrosoftEnrollCertType,
+	MicrosoftCertFriendlyName,
     MicrosoftCertSrvPrevHash,
     ApplePushDev,
     ApplePushProd,

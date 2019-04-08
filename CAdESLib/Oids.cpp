@@ -139,6 +139,7 @@ OidAndPtr knownOids[] =
     { id_apple_custom6, "id_apple_custom6" },
     { id_sha1WithRSASignature, "id_sha1WithRSASignature" },
     { id_google_certTransparancy, "id_google_certTransparancy" },
+	{ id_microsoft_certFriendlyName, "id_microsoft_certFriendlyName" },
     { id_microsoft_enrollCertType, "id_microsoft_enrollCertType" },
     { id_microsoft_certsrvCAVersion, "id_microsoft_certsrvCAVersion" },
     { id_microsoft_jurisdictionOfIncorporationCountryName, "id_microsoft_jurisdictionOfIncorporationCountryName" },
@@ -287,6 +288,7 @@ namespace
         { { 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x02, 0x00, 0x00, 0x00, 0x08 }, id_ecdsa_with_SHA256, "ecdsa_with_SHA256" },
         { { 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x03, 0x00, 0x00, 0x00, 0x08 }, id_ecdsa_with_SHA384, "ecdsa_with_SHA384" },
         { { 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04, 0x03, 0x04, 0x00, 0x00, 0x00, 0x08 }, id_ecdsa_with_SHA512, "ecdsa_with_SHA512" },
+		{ { 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x0a, 0x0b, 0x0b, 0x00, 0x0a }, id_microsoft_certFriendlyName, "microsoft_certFriendlyName" },
         { { 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x14, 0x02, 0x00, 0x00, 0x09 }, id_microsoft_enrollCertType, "microsoft_enrollCertType" },
         { { 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x15, 0x01, 0x00, 0x00, 0x09 }, id_microsoft_certsrvCAVersion, "microsoft_certsrvCAVersion" },
         { { 0x2b, 0x06, 0x01, 0x04, 0x01, 0x82, 0x37, 0x15, 0x02, 0x00, 0x00, 0x09 }, id_microsoft_certsrvPrevHash, "id_microsoft_certsrvPrevHash" },
@@ -489,7 +491,10 @@ ExtensionId OidToExtensionId(const char* szOidTag)
     if (szOidTag == id_microsoft_enrollCertType)
         return ExtensionId::MicrosoftEnrollCertType;
 
-    if (szOidTag == id_microsoft_certsrvPrevHash)
+	if (szOidTag == id_microsoft_certFriendlyName)
+		return ExtensionId::MicrosoftCertFriendlyName;
+
+	if (szOidTag == id_microsoft_certsrvPrevHash)
         return ExtensionId::MicrosoftCertSrvPrevHash;
 
     if (szOidTag == id_apple_pushDev)

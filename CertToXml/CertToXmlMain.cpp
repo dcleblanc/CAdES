@@ -76,6 +76,7 @@ int main(int argc, char* argv[])
 	catch (...)
 	{
 		// TODO - more about the exception here
+		std::cout << "Exception parsing: " << szFile << std::endl;
 		ret = -1;
 	}
 
