@@ -228,6 +228,57 @@ bool ObjectIdentifier::ToString(std::string & out) const
 	return true;
 }
 
+bool ObjectIdentifier::ToString(std::wstring & out) const
+{
+	// If possible, just look it up in our table
+	const char* szOid = this->GetOidString();
+
+	if (szOid != nullptr)
+		out = utf8ToUtf16(szOid);
+
+	std::wstring tmp;
+	size_t cbRead = 0;
+	size_t pos = 0;
+	unsigned long node = 0;
+
+	if (value.size() < 1)
+		return false;
+
+	if (value[0] < 40)
+	{
+		tmp = L"0";
+		tmp += L"." + std::to_wstring(value[0]);
+		cbRead = 1;
+	}
+	else if (value[0] < 80)
+	{
+		tmp = L"1";
+		tmp += L"." + std::to_wstring(value[0] - 40);
+		cbRead = 1;
+	}
+	else
+	{
+		if (!DecodeLong(&value[0], value.size(), node, cbRead) || node < 80)
+			return false;
+
+		tmp = L"2";
+		tmp += L"." + std::to_wstring(node - 80);
+	}
+
+	pos = cbRead;
+
+	for (; pos < value.size(); pos += cbRead)
+	{
+		if (!DecodeLong(&value[pos], value.size(), node, cbRead))
+			return false;
+
+		tmp += L"." + std::to_wstring(node);
+	}
+
+	out.swap(tmp);
+	return true;
+}
+
 void ObjectIdentifier::SetValue(const char * szOid)
 {
 	/*
@@ -783,6 +834,45 @@ bool AnyType::ToString(std::string & out) const
     return false;
 }
 
+bool AnyType::ToString(std::wstring & out) const
+{
+	out.clear();
+
+	switch (GetDerType())
+	{
+	case DerType::Null:
+		out = L"";
+		break;
+
+	case DerType::IA5String:
+	case DerType::GeneralString:
+	case DerType::PrintableString:
+	case DerType::T61String:
+	case DerType::UTF8String:
+	case DerType::VisibleString:
+	{
+		size_t valueSize = 0;
+		size_t cbRead = 0;
+		if (DecodeSize(&encodedValue[1], encodedValue.size() - 1, valueSize, cbRead))
+		{
+			// This could be a non-null terminated character string
+			const char* sz = reinterpret_cast<const char*>(&encodedValue[1 + cbRead]);
+			std::string s;
+			s.append(sz, valueSize);
+
+			out = utf8ToUtf16(s);
+			return true;
+		}
+		return false;
+	}
+
+	default:
+		return false;
+	}
+
+	return false;
+}
+
 std::ostream& AnyType::Output(std::ostream& os, const AnyType& o)
 {
     DerType type = o.GetDerType();
@@ -869,5 +959,93 @@ std::ostream& AnyType::Output(std::ostream& os, const AnyType& o)
     }
 
     return os;
+}
+
+std::wostream& AnyType::Output(std::wostream& os, const AnyType& o)
+{
+	DerType type = o.GetDerType();
+	bool fConverted = true;
+
+	switch (type)
+	{
+	case DerType::Boolean:
+		fConverted = o.OutputFromType<Boolean>(os);
+		break;
+
+	case DerType::Integer:
+		fConverted = o.OutputFromType<Integer>(os);
+		break;
+
+	case DerType::BitString:
+		fConverted = o.OutputFromType<BitString>(os);
+		break;
+
+	case DerType::OctetString:
+		fConverted = o.OutputFromType<OctetString>(os);
+		break;
+
+	case DerType::Null:
+		os << L"null";
+		fConverted = true;
+		break;
+
+	case DerType::ObjectIdentifier:
+		fConverted = o.OutputFromType<ObjectIdentifier>(os);
+		break;
+
+	case DerType::UTF8String:
+		fConverted = o.OutputFromType<UTF8String>(os);
+		break;
+
+	case DerType::PrintableString:
+		fConverted = o.OutputFromType<PrintableString>(os);
+		break;
+
+	case DerType::T61String: // aka TeletexString
+		fConverted = o.OutputFromType<T61String>(os);
+		break;
+
+	case DerType::IA5String:
+		fConverted = o.OutputFromType<IA5String>(os);
+		break;
+
+	case DerType::VisibleString:
+		fConverted = o.OutputFromType<VisibleString>(os);
+		break;
+
+	case DerType::GeneralString:
+		fConverted = o.OutputFromType<GeneralString>(os);
+		break;
+
+	case DerType::BMPString:
+		fConverted = o.OutputFromType<BMPString>(os);
+		break;
+
+	case DerType::ObjectDescriptor:
+	case DerType::External:
+	case DerType::Real:
+	case DerType::Enumerated:
+	case DerType::EmbeddedPDV:
+	case DerType::RelativeOid:
+	case DerType::Reserved1:
+	case DerType::Reserved2:
+	case DerType::NumericString:
+	case DerType::GraphicString:
+	case DerType::CharacterString:
+	case DerType::UniversalString:
+	default:
+		fConverted = false;
+		break;
+	}
+
+	if (!fConverted)
+	{
+		for (size_t pos = 0; pos < o.encodedValue.size(); ++pos)
+		{
+			os << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)o.encodedValue[pos];
+		}
+	}
+
+	return os;
 }
 

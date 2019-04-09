@@ -66,13 +66,13 @@ public:
     {
         WriteStartElement(L"Metadata");
         {
-            std::string thumbprint;
-            std::string thumbprint256;
+            std::wstring thumbprint;
+            std::wstring thumbprint256;
 
             ctx::ToString(cert.GetThumbprint(), thumbprint);
             ctx::ToString(cert.GetThumbprint256(), thumbprint256);
 
-            WriteSimpleElement(L"FileName", cert.GetFileName());
+            WriteSimpleElement(L"FileName", utf8ToUtf16(cert.GetFileName()));
             WriteSimpleElement(L"Thumbprint", thumbprint);
             WriteSimpleElement(L"Thumbprint256", thumbprint256);
         }
@@ -93,22 +93,22 @@ public:
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
         const Integer& version = tbsCert.GetVersionAsInteger();
-        std::string szVersion;
+        std::wstring wzVersion;
 
-        ctx::ToString(version, szVersion);
+        ctx::ToString(version, wzVersion);
 
         // This will happen if the version is missing, which indicates a v1 cert
-        if (szVersion.size() == 0)
-            szVersion = "0";
+        if (wzVersion.size() == 0)
+			wzVersion = L"0";
 
-        WriteSimpleElement(L"Version", szVersion);
+        WriteSimpleElement(L"Version", wzVersion);
     }
 
     void WriteSerialNumber()
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
         const Integer& serial = tbsCert.GetSerialNumber();
-        std::string hexSerial;
+        std::wstring hexSerial;
 
         ctx::ToString(serial, hexSerial);
         WriteSimpleElement(L"SerialNumber", hexSerial);
@@ -156,7 +156,7 @@ public:
     {
         const TBSCertificate& tbsCert = cert.GetTBSCertificate();
         const BitString& publicKey = tbsCert.GetSubjectPublicKeyInfo().GetSubjectPublicKey();
-        std::string hexKey;
+        std::wstring hexKey;
 
         ctx::ToString(publicKey, hexKey);
 
@@ -183,7 +183,7 @@ public:
             if (innerUID.ValueSize() == 0)
                 return;
 
-            std::string uid;
+            std::wstring uid;
             ctx::ToString(innerUID, uid);
 
             WriteSimpleElement(L"IssuerUniqueID", uid);
@@ -202,7 +202,7 @@ public:
             if (innerUID.ValueSize() == 0)
                 return;
 
-            std::string uid;
+            std::wstring uid;
             ctx::ToString(innerUID, uid);
 
             WriteSimpleElement(L"SubjectUniqueID", uid);
@@ -227,7 +227,7 @@ public:
         KeyUsage ku;
         DecodeExtension(ku, extensionBytes);
         const BitString& bits = ku.GetBitString();
-        std::string str;
+        std::wstring str;
 
         ctx::ToString(bits, str);
 
@@ -266,7 +266,7 @@ public:
     {
         SubjectKeyIdentifier keyId;
         DecodeExtension(keyId, extensionBytes);
-        std::string hexKeyId;
+        std::wstring hexKeyId;
 
         ctx::ToString(keyId.GetKeyIdentifer(), hexKeyId);
         WriteSimpleElement(L"SubjectKeyIdentifier", hexKeyId);
@@ -283,7 +283,7 @@ public:
         {
             // Don't know what these will be, so just convert to hex
             // See how often we encounter them, develop better parsers if these are common
-            std::string data;
+            std::wstring data;
             value.ToString(data);
             WriteSimpleElement(L"AttributeValue", data);
         }
@@ -308,7 +308,7 @@ public:
             if (type == GeneralNameType::rfc822Name)
             {
                 IA5String rfc822Name;
-                std::string str;
+                std::wstring str;
 
                 name.GetRFC822Name(rfc822Name);
                 ctx::ToString(rfc822Name, str);
@@ -318,7 +318,7 @@ public:
             if (type == GeneralNameType::dNSName)
             {
                 IA5String dnsName;
-                std::string str;
+                std::wstring str;
 
                 name.GetDNSName(dnsName);
                 ctx::ToString(dnsName, str);
@@ -328,7 +328,7 @@ public:
             if (type == GeneralNameType::x400Address)
             {
                 ORAddress oraddr;
-                std::string str;
+                std::wstring str;
 
                 name.GetX400Address(oraddr);
                 ctx::ToString(oraddr, str);
@@ -353,7 +353,7 @@ public:
                 {
                     const DirectoryString& nameAssigner = partyName.GetNameAssigner();
                     const DirectoryString& partyNameStr = partyName.GetPartyName();
-                    std::string str;
+                    std::wstring str;
 
                     const AnyType& any = nameAssigner.GetValue();
                     ctx::ToString(any, str);
@@ -372,7 +372,7 @@ public:
             if (type == GeneralNameType::uniformResourceIdentifier)
             {
                 IA5String uri;
-                std::string str;
+                std::wstring str;
 
                 name.GetURI(uri);
                 ctx::ToString(uri, str);
@@ -382,7 +382,7 @@ public:
             if (type == GeneralNameType::iPAddress)
             {
                 OctetString ipAddr;
-                std::string str;
+                std::wstring str;
 
                 name.GetIpAddress(ipAddr);
                 ctx::ToString(ipAddr, str);
@@ -423,7 +423,7 @@ public:
 
             if (aki.HasKeyIdentifier())
             {
-                std::string hexValue;
+                std::wstring hexValue;
                 ctx::ToString(keyIdentifier, hexValue);
                 WriteSimpleElement(L"KeyIdentifier", hexValue);
             }
@@ -437,7 +437,7 @@ public:
 
             if (aki.HasCertificateSerialNumber())
             {
-                std::string hexValue;
+                std::wstring hexValue;
                 ctx::ToString(certSerialNumber, hexValue);
                 WriteSimpleElement(L"CertificateSerialNumber", hexValue);
             }
@@ -473,7 +473,7 @@ public:
             if (point.HasReasonFlags())
             {
                 const ReasonFlags& flags = point.GetReasonFlags();
-                std::string str;
+                std::wstring str;
 
                 ctx::ToString(flags, str);
                 WriteSimpleElement(L"ReasonFlags", str);
@@ -592,7 +592,7 @@ public:
 
                     WriteObjectIdentifier(L"PolicyQualifierId", policyQualifierId);
 
-                    std::string str;
+                    std::wstring str;
                     ctx::ToString(qualifier, str);
                     WriteSimpleElement(L"Qualifier", str);
                 }
@@ -609,8 +609,8 @@ public:
 
         WriteStartElement(L"CertTemplate");
         {
-            std::string minor;
-            std::string major;
+            std::wstring minor;
+            std::wstring major;
 
             WriteObjectIdentifier(L"ObjectIdentifier", certTemplate.GetObjectIdentifier());
 
@@ -624,7 +624,7 @@ public:
 
     void WriteRawExtension(const wchar_t* wzName, const AnyType& anyType)
     {
-        std::string str;
+        std::wstring str;
         ctx::ToString(anyType, str);
 
         WriteStartElement(wzName);
@@ -647,8 +647,8 @@ public:
 
         WriteStartElement(L"BasicConstraints");
         {
-            std::string isCa = basicConstraints.GetIsCA() ? "true" : "false";
-            std::string pathLen;
+            std::wstring isCa = basicConstraints.GetIsCA() ? L"true" : L"false";
+            std::wstring pathLen;
 
             if (basicConstraints.HasPathLength())
             {
@@ -668,7 +668,7 @@ public:
 
                    So, use a magic value that amounts to infinity
                 */
-                pathLen = "ffffffff";
+                pathLen = L"ffffffff";
             }
 
             WriteSimpleElement(L"CA", isCa);
@@ -697,7 +697,7 @@ public:
         DecodeExtension(caVersion, extensionBytes);
 
         const Integer& version = caVersion.GetVersion();
-        std::string str;
+        std::wstring str;
 
         ctx::ToString(version, str);
         WriteSimpleElement(L"MicrosoftCAVersion", str);
@@ -708,7 +708,7 @@ public:
         MicrosoftEnrollCertType enrollCertType;
         DecodeExtension(enrollCertType, extensionBytes);
 
-        std::string str;
+        std::wstring str;
         ctx::ToString(enrollCertType.GetCertType(), str);
         WriteSimpleElement(L"MicrosoftEnrollCertType", str);
     }
@@ -718,7 +718,7 @@ public:
         MicrosoftPreviousCertHash prevCertHash;
         DecodeExtension(prevCertHash, extensionBytes);
 
-        std::string str;
+        std::wstring str;
         ctx::ToString(prevCertHash.GetPrevCertHash(), str);
         WriteSimpleElement(L"MicrosoftPreviousCertHash", str);
     }
@@ -783,13 +783,13 @@ public:
     void WriteUnknownExtension(const std::vector<unsigned char>& extensionBytes)
     {
         AnyType any;
-        std::string str;
-		std::stringstream strstm;
+        std::wstring str;
+		std::wstringstream strstm;
 
 		// We don't understand what this is, and it might not even be ASN.1
 		for (size_t pos = 0; pos < extensionBytes.size(); ++pos)
 		{
-			strstm << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)extensionBytes[pos];
+			strstm << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)extensionBytes[pos];
 		}
 
 		str = strstm.str();
@@ -872,15 +872,15 @@ public:
                return;
 
            case ExtensionId::ApplePushDev:
-               WriteSimpleElement(L"ApplePushDev", "");
+               WriteSimpleElement(L"ApplePushDev", L"");
                return;
 
            case ExtensionId::ApplePushProd:
-               WriteSimpleElement(L"ApplePushProd", "");
+               WriteSimpleElement(L"ApplePushProd", L"");
                return;
 
            case ExtensionId::AppleCustom6:
-               WriteSimpleElement(L"AppleCustom6", "");
+               WriteSimpleElement(L"AppleCustom6", L"");
                return;
 
            case ExtensionId::EntrustVersionInfo:
@@ -924,7 +924,7 @@ public:
             bool fCritical = ext.IsCritical();
             if (fCritical)
             {
-                WriteSimpleElement(L"Critical", "true");
+                WriteSimpleElement(L"Critical", L"true");
             }
 
             // Now need to go figure out what this element is
@@ -982,7 +982,7 @@ public:
     void WriteSignatureValue()
     {
         const BitString& signatureValue = cert.GetSignatureValue();
-        std::string sigValue;
+        std::wstring sigValue;
 
         ctx::ToString(signatureValue, sigValue);
         WriteStartElement(L"SignatureValue");
@@ -1009,21 +1009,19 @@ private:
         WriteElementString(ws.c_str());
     }
 
-    void WriteElementString(const char* sz)
-    {
-        std::wstring ws = utf8ToUtf16(sz);
-        WriteElementString(ws.c_str());
-    }
+	void WriteElementString(const std::wstring str)
+	{
+		WriteElementString(str.c_str());
+	}
 
-    void WriteElementString(const wchar_t* wz)
+	void WriteElementString(const wchar_t* wz)
     {
         CheckSuccess(pWriter->WriteString(wz));
     }
 
-    void WriteRawElementString(const std::string str)
+    void WriteRawElementString(const std::wstring str)
     {
-        std::wstring ws = utf8ToUtf16(str);
-        WriteRawElementString(ws.c_str());
+        WriteRawElementString(str.c_str());
     }
 
     void WriteRawElementString(const char* sz)
@@ -1038,7 +1036,7 @@ private:
         CheckSuccess(pWriter->WriteRaw(wz));
     }
 
-    void WriteSimpleElement(const wchar_t* wzElement, const std::string& content)
+    void WriteSimpleElement(const wchar_t* wzElement, const std::wstring& content)
     {
         WriteStartElement(wzElement);
         WriteElementString(content);
@@ -1058,7 +1056,7 @@ private:
 
     void WriteAttributeTypeAndValue(const AttributeTypeAndValue& type)
     {
-        std::string value;
+        std::wstring value;
         ctx::ToString(type.GetValue(), value);
 
         WriteStartElement(L"AttributeTypeAndValue");

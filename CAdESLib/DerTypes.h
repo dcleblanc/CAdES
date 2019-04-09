@@ -782,13 +782,20 @@ public:
 	virtual size_t SetDataSize() override;
 
     static std::ostream& Output(std::ostream& os, const AnyType& o);
+	static std::wostream& Output(std::wostream& os, const AnyType& o);
 
 	friend std::ostream& operator<<(std::ostream& os, const AnyType& o)
 	{
         return Output(os, o);
 	}
 
-    bool ToString(std::string& out) const;
+	friend std::wostream& operator<<(std::wostream& os, const AnyType& o)
+	{
+		return Output(os, o);
+	}
+
+	bool ToString(std::string& out) const;
+	bool ToString(std::wstring& out) const;
 
     DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
 
@@ -812,6 +819,17 @@ public:
 
         return fConverted;
     }
+
+	template <typename T>
+	bool OutputFromType(std::wostream& os) const
+	{
+		T t;
+		bool fConverted = ConvertToType(t);
+		if (fConverted)
+			os << t;
+
+		return fConverted;
+	}
 
 private:
 	std::vector<unsigned char> encodedValue;
@@ -926,6 +944,12 @@ public:
 		return os;
 	}
 
+	friend std::wostream& operator<<(std::wostream& os, const Boolean& b)
+	{
+		os << (b.b == 0 ? L"false" : L"true");
+		return os;
+	}
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
@@ -998,7 +1022,17 @@ public:
 		return os;
 	}
 
-    size_t ByteCount() const { return value.size(); }
+	friend std::wostream& operator<<(std::wostream& os, const Integer& o)
+	{
+		for (size_t pos = 0; pos < o.value.size(); ++pos)
+		{
+			os << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)o.value[pos];
+		}
+
+		return os;
+	}
+
+	size_t ByteCount() const { return value.size(); }
 
     bool GetValue(unsigned long& data) const
     {
@@ -1102,7 +1136,26 @@ public:
 		return os;
 	}
 
-    const std::vector<unsigned char>& GetBits() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const BitString& o)
+	{
+		const unsigned long linelength = 80;
+		const unsigned char* pData = &o.value[0];
+		std::wostringstream osTmp;
+
+		for (size_t pos = 0; pos < o.value.size(); ++pos)
+		{
+			if (pos > 0 && (pos % linelength) == 0)
+				osTmp << std::endl;
+
+			// This is done byte by byte
+			osTmp << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)pData[pos];
+		}
+
+		os << osTmp.str();
+		return os;
+	}
+
+	const std::vector<unsigned char>& GetBits() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1152,6 +1205,17 @@ public:
 		os << std::setfill(' ');
 		return os;
 	}
+	
+	friend std::wostream& operator<<(std::wostream& os, const OctetString& o)
+	{
+		for (size_t pos = 0; pos < o.value.size(); ++pos)
+		{
+			os << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)o.value[pos];
+		}
+
+		os << std::setfill(L' ');
+		return os;
+	}
 
     const std::vector<unsigned char>& GetValue() const { return value; }
 
@@ -1193,6 +1257,12 @@ public:
 		return os;
 	}
 
+	friend std::wostream& operator<<(std::wostream& os, const Enumerated& e)
+	{
+		os << e.value;
+		return os;
+	}
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
@@ -1212,6 +1282,8 @@ public:
     static const size_t OidIndexUnknown = ~static_cast<size_t>(0);
 
 	bool ToString(std::string& out) const;
+	bool ToString(std::wstring& out) const;
+
 	void SetValue(const char* szOid);
 
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
@@ -1235,7 +1307,16 @@ public:
 		return os;
 	}
 
-    const char* GetOidLabel() const 
+	friend std::wostream& operator<<(std::wostream& os, const ObjectIdentifier& obj)
+	{
+		std::wstring s;
+		obj.ToString(s);
+
+		os << s;
+		return os;
+	}
+	
+	const char* GetOidLabel() const
     {
         // This will internally ignore invalid values to return null
         return ::GetOidLabel(oidIndex);
@@ -1322,6 +1403,12 @@ public:
 		return os;
 	}
 
+	friend std::wostream& operator<<(std::wostream& os, const UTCTime& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
@@ -1368,6 +1455,12 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const GeneralizedTime& str)
 	{
 		os << str.value;
+		return os;
+	}
+
+	friend std::wostream& operator<<(std::wostream& os, const GeneralizedTime& str)
+	{
+		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
@@ -1433,9 +1526,17 @@ public:
 		return os;
 	}
 
-    bool ToString(std::string& out) const;
+	friend std::wostream& operator<<(std::wostream& os, const Time& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	bool ToString(std::string& out) const;
     const std::string& GetValue() const { return value; }
-    TimeType GetType() const { return type; }
+	const std::wstring GetValueW() const { return utf8ToUtf16(value); }
+
+	TimeType GetType() const { return type; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1486,7 +1587,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const IA5String& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1519,7 +1626,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const GeneralString& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1548,7 +1661,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const PrintableString& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 
@@ -1582,7 +1701,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const T61String& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1619,7 +1744,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const UTF8String& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1652,7 +1783,13 @@ public:
 		return os;
 	}
 
-    const std::string& ToString() const { return value; }
+	friend std::wostream& operator<<(std::wostream& os, const VisibleString& str)
+	{
+		os << utf8ToUtf16(str.value);
+		return os;
+	}
+
+	const std::string& ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1693,12 +1830,19 @@ private:
 class BMPString final : public DerBase
 {
 public:
+
 	friend std::ostream& operator<<(std::ostream& os, const BMPString& str)
 	{
 		std::string converted_str;
 
 		ConvertWstringToString(str.value, converted_str);
 		os << converted_str;
+		return os;
+	}
+
+	friend std::wostream& operator<<(std::wostream& os, const BMPString& str)
+	{
+		os << str.value;
 		return os;
 	}
 
@@ -1731,6 +1875,12 @@ public:
 	friend std::ostream& operator<<(std::ostream& os, const Null& )
 	{
 		os << "Null";
+		return os;
+	}
+
+	friend std::wostream& operator<<(std::wostream& os, const Null&)
+	{
+		os << L"Null";
 		return os;
 	}
 

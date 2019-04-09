@@ -103,6 +103,9 @@ bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRe
 	return true;
 }
 
+/*
+	Used only in debugging, doesn't need a wchar_t output
+*/
 class BasicDerType
 {
 public:

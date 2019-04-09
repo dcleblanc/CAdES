@@ -9,17 +9,17 @@
 
 namespace ctx
 {
-    std::ostream& operator<<(std::ostream& os, const std::vector<unsigned char>& data);
+    std::wostream& operator<<(std::wostream& os, const std::vector<unsigned char>& data);
 
     template <typename T>
-    void ToString(const T& t, std::string& out)
+    void ToString(const T& t, std::wstring& out)
     {
-        std::stringstream strstm;
+        std::wstringstream strstm;
         strstm << t;
         out = strstm.str();
     }
 
-    class xAnyType
+	class xAnyType
     {
     public:
         void Convert(const AnyType& a)
@@ -27,7 +27,7 @@ namespace ctx
             ToString(a, hexValue);
         }
 
-        std::string hexValue;
+        std::wstring hexValue;
     };
 
     class xOctetString
@@ -39,7 +39,7 @@ namespace ctx
             ToString(o, str);
         }
 
-        std::string str;
+        std::wstring str;
     };
 
     class xCertificateSerialNumber
@@ -51,7 +51,7 @@ namespace ctx
             ToString(csn, str);
         }
 
-        std::string str;
+        std::wstring str;
     };
 
     class xObjectIdentifier
@@ -64,11 +64,11 @@ namespace ctx
             const char* oidLabel = oi.GetOidLabel();
 
             ctx::ToString(oi, oid);
-            tag = oidLabel == nullptr ? "unknown" : oidLabel;
+            tag = oidLabel == nullptr ? L"unknown" : utf8ToUtf16(oidLabel);
         }
 
-        std::string oid;
-        std::string tag;
+        std::wstring oid;
+        std::wstring tag;
     };
 
     class xAlgorithmIdentifier
@@ -111,11 +111,11 @@ namespace ctx
             ConvertTime(v.GetNotAfter(), notAfter);
         }
 
-        std::string notBefore;
-        std::string notAfter;
+        std::wstring notBefore;
+        std::wstring notAfter;
 
     private:
-        void ConvertTime(const Time& t, std::string& out);
+        void ConvertTime(const Time& t, std::wstring& out);
     };
 
     class xSubjectPublicKeyInfo
@@ -128,7 +128,7 @@ namespace ctx
         }
 
         xAlgorithmIdentifier algId;
-        std::string subjectPublicKey;
+        std::wstring subjectPublicKey;
     };
 
     class xKeyUsage
@@ -156,7 +156,7 @@ namespace ctx
             ToString(ski.GetKeyIdentifer(), subjectKeyIdentifier);
         }
 
-        std::string subjectKeyIdentifier;
+        std::wstring subjectKeyIdentifier;
     };
 
     class xDirectoryString
@@ -164,7 +164,7 @@ namespace ctx
     public:
         void Convert(const DirectoryString& ds);
 
-        std::string directoryString;
+        std::wstring directoryString;
     };
 
     class xEDIPartyName

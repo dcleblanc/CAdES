@@ -1,17 +1,17 @@
 #include "../CAdESLib/Common.h"
 #include "CertToXml.h"
 
-std::ostream& ctx::operator<<(std::ostream& os, const std::vector<unsigned char>& data)
+std::wostream& ctx::operator<<(std::wostream& os, const std::vector<unsigned char>& data)
 {
     for (size_t pos = 0; pos < data.size(); ++pos)
     {
-        os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)data[pos];
+        os << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)data[pos];
     }
 
     return os;
 }
 
-void ctx::xValidity::ConvertTime(const Time & t, std::string & out)
+void ctx::xValidity::ConvertTime(const Time & t, std::wstring & out)
 {
     // The incoming data will be in the form of either:
     // YYYYMMDDHHMMSSZ - 15 chars, GeneralizedTime (unusual)
@@ -20,7 +20,7 @@ void ctx::xValidity::ConvertTime(const Time & t, std::string & out)
     // The dateTime is specified in the following form "YYYY-MM-DDThh:mm:ss" where:
 
     TimeType type = t.GetType();
-    const std::string& time = t.GetValue();
+    const std::wstring& time = t.GetValueW();
 
     out.clear();
     size_t pos = 0;
@@ -29,25 +29,25 @@ void ctx::xValidity::ConvertTime(const Time & t, std::string & out)
     {
         // 4 character year
         out = time.substr(pos, 4);
-        out += '-';
+        out += L'-';
         pos = 4;
     }
     else if (type == TimeType::UTCTime)
     {
-        std::string yy = time.substr(pos, 2);
-        char decade = yy[0];
+        std::wstring yy = time.substr(pos, 2);
+        wchar_t decade = yy[0];
 
-        if (decade >= '5' && decade <= '9')
+        if (decade >= L'5' && decade <= L'9')
         {
-            out = "19";
+            out = L"19";
         }
         else
         {
-            out = "20";
+            out = L"20";
         }
 
         out += yy;
-        out += '-';
+        out += L'-';
         pos = 2;
     }
     else
@@ -59,23 +59,23 @@ void ctx::xValidity::ConvertTime(const Time & t, std::string & out)
     // Now that the year is sorted out, get the rest
     // Month
     out += time.substr(pos, 2);
-    out += '-';
+    out += L'-';
     pos += 2;
     // Day
     out += time.substr(pos, 2);
-    out += 'T';
+    out += L'T';
     pos += 2;
     // Hours
     out += time.substr(pos, 2);
-    out += ':';
+    out += L':';
     pos += 2;
     // Minutes
     out += time.substr(pos, 2);
-    out += ':';
+    out += L':';
     pos += 2;
     // Seconds
     out += time.substr(pos, 2);
-    out += 'Z';
+    out += L'Z';
 }
 
 void ctx::xDirectoryString::Convert(const DirectoryString & ds)
