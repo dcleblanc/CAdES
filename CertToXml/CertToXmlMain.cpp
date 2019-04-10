@@ -53,20 +53,8 @@ void DumpCertProperties(const char* szFile)
 void PrintOids();
 void TestOidTable();
 
-int main(int argc, char* argv[])
+int DumpXML(const char* szFile)
 {
-	const char* szFile = nullptr;
-
-	if (argc >= 2)
-	{
-		szFile = argv[argc - 1];
-	}
-	else
-	{
-		std::cout << "Usage is " << argv[0] << "[Certificate file]" << std::endl;
-		return -1;
-	}
-
 	int ret;
 	try
 	{
@@ -78,6 +66,62 @@ int main(int argc, char* argv[])
 		// TODO - more about the exception here
 		std::cout << "Exception parsing: " << szFile << std::endl;
 		ret = -1;
+	}
+	return ret;
+}
+
+int main(int argc, char* argv[])
+{
+	const char* szFile = nullptr;
+	bool fMultiPass = false;
+
+	switch (argc)
+	{
+	case 2:
+		szFile = argv[argc - 1];
+		break;
+	case 3:
+		if (strcmp(argv[1], "-f") == 0)
+		{
+			szFile = argv[argc - 1];
+			fMultiPass = true;
+			break;
+		}
+		__fallthrough;
+	case 1:
+	default:
+		std::cout << "Usage is " << argv[0] << "[Certificate file]" << std::endl;
+		std::cout << "Or -f [file with list of certs" << std::endl;
+		return -1;
+	}
+
+	int ret = 0;
+
+	if (fMultiPass)
+	{
+		std::vector<std::string> fileList;
+		std::ifstream in(szFile);
+
+		if (!in)
+		{
+			std::cout << "Cannot open certificate file " << szFile << std::endl;
+			return -1;
+		}
+
+		std::string tmp;
+		while (std::getline(in, tmp))
+		{
+			fileList.push_back(tmp);
+		}
+
+		for (const std::string& s : fileList)
+		{
+			ret = DumpXML(s.c_str());
+		}
+	}
+	else
+	{
+		ret = DumpXML(szFile);
 	}
 
 	return ret;

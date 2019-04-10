@@ -1201,9 +1201,10 @@ private:
     ULONG refcount;
 };
 
+static CoInit init;
+
 bool CertificateToXml(const Certificate& cert, const char* szXmlFile)
 {
-    CoInit init;
     ComPtr<IXmlWriter> pWriter;
     IStreamVector stm(1024);
 

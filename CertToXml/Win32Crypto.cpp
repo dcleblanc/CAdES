@@ -93,13 +93,9 @@ private:
     AlgHandle& algHandle;
 };
 
-bool HashVector(LPCWSTR algId, const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
+bool HashVector(AlgHandle& algHandle, const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
 {
-    AlgHandle algHandle;
     HashHandle hashHandle(algHandle);
-
-    if (!algHandle.Open(algId))
-        return false;
 
     if (!hashHandle.Create())
         return false;
@@ -110,13 +106,31 @@ bool HashVector(LPCWSTR algId, const std::vector<unsigned char>& data, std::vect
     return hashHandle.Finish(out);
 }
 
+static AlgHandle algHandleSha1;
+static AlgHandle algHandleSha256;
+
 bool HashVectorSha256(const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
 {
-    return HashVector(BCRYPT_SHA256_ALGORITHM, data, out);
+	// Warning, not thread safe, but we're currently single-threaded,
+	// so open this just once.
+
+	if (algHandleSha256 == nullptr)
+	{
+		if (!algHandleSha256.Open(BCRYPT_SHA256_ALGORITHM))
+			return false;
+	}
+
+    return HashVector(algHandleSha256, data, out);
 }
 
 bool HashVectorSha1(const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
 {
-    return HashVector(BCRYPT_SHA1_ALGORITHM, data, out);
+	if (algHandleSha1 == nullptr)
+	{
+		if (!algHandleSha1.Open(BCRYPT_SHA1_ALGORITHM))
+			return false;
+	}
+
+	return HashVector(algHandleSha1, data, out);
 }
 
