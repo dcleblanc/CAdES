@@ -556,7 +556,7 @@ void Boolean::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 		return;
 	}
 
-	throw std::exception("Encode Buffer Overrun");
+	throw std::exception(); // Encode Buffer Overrun
 }
 
 bool Boolean::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
@@ -570,7 +570,7 @@ bool Boolean::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 
 	// Now check specifics for this type
 	if (cbPrefix + size != 3)
-		throw std::exception("Incorrect decode");
+		throw std::exception(); // Incorrect decode
 
 	b = pIn[2] ? 0xff : 0;
 	cbUsed = 3;
@@ -792,7 +792,7 @@ size_t AnyType::SetDataSize()
 	size_t cbRead = 0;
 
 	if (!::DecodeSize(&encodedValue[1], encodedValue.size() - 1, tmp, cbRead))
-		throw std::exception("Error in DecodeSize");
+		throw std::exception(); // Error in DecodeSize
 
 	cbData = static_cast<size_t>(tmp);
 	return cbData;

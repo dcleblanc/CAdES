@@ -238,6 +238,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -1070,6 +1071,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -1136,6 +1138,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -1291,6 +1294,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -1377,6 +1381,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -1601,6 +1606,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -2336,7 +2342,7 @@ public:
         if (!hasKeyUsage)
         {
             // Special case - if there is no key usage, all bits set
-            memset(&keyUsageValue, 0xff, sizeof(keyUsageValue));
+            std::memset(&keyUsageValue, 0xff, sizeof(keyUsageValue));
         }
     
 

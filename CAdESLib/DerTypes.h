@@ -381,7 +381,7 @@ enum class DecodeResult
 class SequenceHelper
 {
 public:
-    SequenceHelper(size_t& _cbUsed) : dataSize(0), prefixSize(0), isNull(false), cbUsed(_cbUsed), cbCurrent(0) {}
+    SequenceHelper(size_t& _cbUsed) : dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed), isNull(false) {}
 
     // Note - because CheckExit throws, the destructor must also be marked as throwing
     // or we will land in terminate and not the catch block.
@@ -892,6 +892,7 @@ public:
         case DecodeResult::Failed:
             return false;
         case DecodeResult::Null:
+		case DecodeResult::EmptySequence:
             return true;
         case DecodeResult::Success:
             break;
@@ -964,7 +965,7 @@ public:
 	template <typename T>
 	void SetValue(T in)
 	{
-		static_assert(std::is_integral<T>::value);
+		static_assert(std::is_integral<T>::value, "Expected integer type");
 
 		bool fAddLeadingZero = false;
 
@@ -979,7 +980,7 @@ public:
 
 		if (std::is_unsigned<T>::value)
 		{
-			T testBit = value >> (sizeof(T) * 8) - 1;
+			T testBit = in >> ((sizeof(T) * 8) - 1);
 
 			if (testBit > 0)
 				fAddLeadingZero = true;
@@ -1335,6 +1336,7 @@ public:
     {
         value = rhs.value;
         oidIndex = rhs.oidIndex;
+		return *this;
     }
 
     size_t GetOidIndex() const { return oidIndex; }

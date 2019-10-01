@@ -44,6 +44,7 @@ bool Accuracy::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -85,6 +86,7 @@ bool AlgorithmIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t 
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -122,6 +124,7 @@ bool Attribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -161,6 +164,7 @@ bool EncapsulatedContentInfo::Decode(const unsigned char * pIn, size_t cbIn, siz
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -201,6 +205,7 @@ bool IssuerSerial::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -248,6 +253,7 @@ bool ObjectDigestInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & c
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -296,6 +302,7 @@ bool Holder::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -337,6 +344,7 @@ bool OtherHashAlgAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -377,6 +385,7 @@ bool V2Form::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -418,6 +427,7 @@ bool AttCertValidityPeriod::Decode(const unsigned char * pIn, size_t cbIn, size_
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -476,6 +486,7 @@ bool AttributeCertificateInfo::Decode(const unsigned char * pIn, size_t cbIn, si
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -548,6 +559,7 @@ bool AttributeCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -595,6 +607,7 @@ bool CertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -640,6 +653,7 @@ bool RevokedInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -686,6 +700,7 @@ bool SingleResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -738,6 +753,7 @@ bool PKIStatusInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -779,6 +795,7 @@ bool ContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -819,6 +836,7 @@ bool CrlIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -860,6 +878,7 @@ bool CrlValidatedID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -897,6 +916,7 @@ bool MessageImprint::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -934,6 +954,7 @@ bool UserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -971,6 +992,7 @@ bool NoticeReference::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1008,6 +1030,7 @@ bool OcspIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1048,6 +1071,7 @@ bool CrlOcspRef::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1089,6 +1113,7 @@ bool OtherRevRefs::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1134,6 +1159,7 @@ bool RevocationValues::Decode(const unsigned char * pIn, size_t cbIn, size_t & c
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1175,6 +1201,7 @@ bool OtherRevVals::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1218,6 +1245,7 @@ bool BasicOCSPResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1272,6 +1300,7 @@ bool ResponseData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1321,6 +1350,7 @@ bool SigningCertificateV2::Decode(const unsigned char * pIn, size_t cbIn, size_t
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1358,6 +1388,7 @@ bool SubjectPublicKeyInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1398,6 +1429,7 @@ bool Certificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1463,6 +1495,7 @@ bool TBSCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1554,6 +1587,7 @@ bool CertificateList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1610,6 +1644,7 @@ bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1667,6 +1702,7 @@ bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1714,6 +1750,7 @@ bool ESSCertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1751,6 +1788,7 @@ bool SigningCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t &
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1791,6 +1829,7 @@ bool ESSCertIDv2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1832,6 +1871,7 @@ bool PolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t 
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1869,6 +1909,7 @@ bool IssuerAndSerialNumber::Decode(const unsigned char * pIn, size_t cbIn, size_
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1913,6 +1954,7 @@ bool Extension::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -1955,6 +1997,7 @@ bool CertStatus::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2029,6 +2072,7 @@ bool SignerInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2086,6 +2130,7 @@ bool OtherCertificateFormat::Decode(const unsigned char * pIn, size_t cbIn, size
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2123,6 +2168,7 @@ bool EDIPartyName::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2163,6 +2209,7 @@ bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2204,6 +2251,7 @@ bool OtherRevocationInfoFormat::Decode(const unsigned char * pIn, size_t cbIn, s
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2250,6 +2298,7 @@ bool SignedData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2303,6 +2352,7 @@ bool SigPolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2343,6 +2393,7 @@ bool SignaturePolicyId::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2384,6 +2435,7 @@ bool SPUserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2421,6 +2473,7 @@ bool CommitmentTypeQualifier::Decode(const unsigned char * pIn, size_t cbIn, siz
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2458,6 +2511,7 @@ bool CommitmentTypeIndication::Decode(const unsigned char * pIn, size_t cbIn, si
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2498,6 +2552,7 @@ bool SignerLocation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2539,6 +2594,7 @@ bool SignerAttribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2588,6 +2644,7 @@ bool TimeStampReq::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2641,6 +2698,7 @@ bool TimeStampResp::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2702,6 +2760,7 @@ bool TSTInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2771,6 +2830,7 @@ bool OtherCertId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2808,6 +2868,7 @@ bool OcspResponsesID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2845,6 +2906,7 @@ bool Validity::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;
@@ -2882,6 +2944,7 @@ bool AttributeTypeAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_
     case DecodeResult::Failed:
         return false;
     case DecodeResult::Null:
+    case DecodeResult::EmptySequence:
         return true;
     case DecodeResult::Success:
         break;

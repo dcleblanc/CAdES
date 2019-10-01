@@ -48,4 +48,47 @@ void ConvertWstringToString(const std::wstring& in, std::string& out)
 	out = converter.to_bytes(in);
 }
 
+int memcpy_s( void *dest, size_t destSize, const void *src, size_t count )
+{
+	if( destSize < count )
+		return ERANGE;
 
+	memcpy(dest, src, count);
+	return 0;
+}
+
+int gmtime_s( struct tm* tmDest, const std::time_t* sourceTime )
+{
+	if( tmDest == nullptr )
+		return EINVAL;
+
+	if( sourceTime == nullptr || *sourceTime < 0 )
+	{
+		std::memset(tmDest, 0xff, sizeof(tm));
+		return EINVAL;
+	}
+
+	tmDest = gmtime( sourceTime );
+	return 0;
+}
+
+int sprintf_s( char *buffer, size_t sizeOfBuffer, const char *format, ... )
+{
+    int retval;
+    va_list ap;
+
+	if( buffer == nullptr || format == nullptr)
+	{
+		errno = EINVAL;
+		return -1;
+	}
+
+    va_start(ap, format);
+    retval = vsnprintf(buffer, sizeOfBuffer, format, ap);
+    va_end(ap);
+
+	if( retval < 0 || static_cast<size_t>(retval) >= sizeOfBuffer )
+		retval = -1;
+
+    return retval;
+}

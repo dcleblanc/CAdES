@@ -112,7 +112,7 @@ public:
 	BasicDerType(const unsigned char * pIn, size_t cbIn) : pType(pIn), cb(cbIn) 
 	{
 		if (cb < 2)
-			throw std::exception("Type too small");
+			throw std::exception(); // "Type too small"
 	}
 
 	BasicDerType() = delete;
@@ -157,7 +157,7 @@ public:
 		{
 			Boolean x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 			break;
@@ -166,7 +166,7 @@ public:
 		{
 			Integer x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 			break;
@@ -175,7 +175,7 @@ public:
 		{
 			BitString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -184,7 +184,7 @@ public:
 		{
 			OctetString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -193,7 +193,7 @@ public:
 		{
 			Null x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -202,7 +202,7 @@ public:
 		{
 			ObjectIdentifier x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -211,7 +211,7 @@ public:
 		{
 			Enumerated x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -220,7 +220,7 @@ public:
 		{
 			UTF8String x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -229,7 +229,7 @@ public:
 		{
 			PrintableString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -238,7 +238,7 @@ public:
 		{
 			T61String x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -247,7 +247,7 @@ public:
 		{
 			IA5String x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -256,7 +256,7 @@ public:
 		{
 			UTCTime x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -265,7 +265,7 @@ public:
 		{
 			GeneralizedTime x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -274,7 +274,7 @@ public:
 		{
 			VisibleString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -283,7 +283,7 @@ public:
 		{
 			GeneralString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -292,7 +292,7 @@ public:
 		{
 			BMPString x;
 			if (!x.Decode(type.pType, type.cb, cbUsed))
-				throw std::exception("Decode error");
+				throw std::exception(); // Decode error
 			os << x;
 		}
 		break;
@@ -309,7 +309,7 @@ public:
 void DebugDer(std::ostream& outFile, const unsigned char * pIn, size_t cbIn, unsigned long level)
 {
 	if (cbIn < 2)
-		throw std::exception("Corrupt input");
+		throw std::exception(); // Corrupt input
 
 	size_t size = 0;
 	size_t cbRead = 0;
@@ -323,7 +323,7 @@ void DebugDer(std::ostream& outFile, const unsigned char * pIn, size_t cbIn, uns
 
 		offset += 1;
 		if (!DecodeSize(pIn + offset, cbIn - offset, size, cbRead))
-			throw std::exception("Corrupt input");
+			throw std::exception(); // Corrupt input
 
 		offset += cbRead;
 

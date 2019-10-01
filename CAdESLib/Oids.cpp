@@ -209,7 +209,7 @@ void PrintOids()
         keybuf[sizeof(keybuf) - 1] = static_cast<unsigned char>(key.size());
 
         printf("\t{ { 0x%02x, ", (unsigned char)keybuf[0]);
-        for (int i = 1; i < sizeof(keybuf) - 1; ++i)
+        for (unsigned int i = 1; i < sizeof(keybuf) - 1; ++i)
         {
             printf("0x%02x, ", (unsigned char)keybuf[i]);
         }

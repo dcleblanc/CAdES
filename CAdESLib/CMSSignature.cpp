@@ -34,7 +34,8 @@ void MessageDigestAttribute::SetDigest(const unsigned char* pDigest, size_t cbDi
 void CounterSignatureAttribute::SetSignedData(const SignedData & /*signedData*/)
 {
 
-	throw std::exception("Not implemented");
+	// Not implemented
+	throw std::bad_function_call();
 	/*
 	size_t cbUsed = 0;
 	TBD, SignedData::EncodedSize not coded yet
