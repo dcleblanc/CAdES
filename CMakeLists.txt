@@ -1,0 +1,5 @@
+cmake_minimum_required (VERSION 2.6)
+PROJECT( CAdES )
+ADD_SUBDIRECTORY(CAdESLib)
+ADD_SUBDIRECTORY(get_crl)
+
