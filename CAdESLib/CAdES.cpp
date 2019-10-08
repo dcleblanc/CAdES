@@ -96,6 +96,10 @@ bool AlgorithmIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t 
 		return false;
 
     sh.Update();
+
+    if(sh.IsAllUsed())
+        return true;
+
 	if (!parameters.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
 		return false;
 
@@ -1650,10 +1654,15 @@ bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
         break;
     }
 
-	if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
-		return false;
+    // Version is optional
+    if( *sh.DataPtr(pIn) == static_cast<unsigned char>( DerType::Integer ) )
+    {
+        if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            return false;
 
-    sh.Update();
+        sh.Update();
+    }
+
 	if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
 		return false;
 
@@ -1666,14 +1675,20 @@ bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 		return false;
 
     sh.Update();
-	if (!nextUpdate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
-		return false;
 
-    sh.Update();
-	if (!revokedCertificates.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
-		return false;
+    // This is also optional, and may not be present
+	if ( nextUpdate.Decode( sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize() ) )
+    {
+        sh.Update();
+    }
 
-    sh.Update();
+    // These are optional, and may not be present
+	if ( revokedCertificates.Decode( sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize() ) )
+        sh.Update();
+
+    if( sh.IsAllUsed() ) // extensions are optional
+        return true;
+
 	if (!crlExtensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
 		return false;
 
@@ -2215,6 +2230,16 @@ bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
         break;
     }
 
+    // We have an optional sequence of RevocationEntry object
+    // and won't know if there really is a RevocationEntry until
+    // we get here
+    if ( *sh.DataPtr(pIn) != static_cast<unsigned char>(DerType::Integer) )
+    {
+        cbUsed = 0;
+        sh.Reset(); // This keeps us from throwing
+        return false;
+    }
+
     if (!userCertificate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
 		return false;
 
@@ -2223,6 +2248,10 @@ bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 		return false;
 
     sh.Update();
+    
+    if (sh.IsAllUsed()) // crlEntryExtensions are optional
+        return true;
+
 	if (!crlEntryExtensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
 		return false;
 

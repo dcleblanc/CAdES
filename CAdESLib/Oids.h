@@ -289,12 +289,13 @@ const char id_google_certTransparancy[] = "1.3.6.1.4.1.11129.2.4.2"; // Google c
 	#define szOID_CERT_PROP_ID_PREFIX           "1.3.6.1.4.1.311.10.11."
 */
 
-const char id_microsoft_certFriendlyName[] = "1.3.6.1.4.1.311.10.11.11"; // CERT_FRIENDLY_NAME_PROP_ID
-const char id_microsoft_enrollCertType[]   = "1.3.6.1.4.1.311.20.2"; // Microsoft szOID_ENROLL_CERTTYPE_EXTENSION
-const char id_microsoft_certsrvCAVersion[] = "1.3.6.1.4.1.311.21.1"; // Microsoft szOID_CERTSRV_CA_VERSION
-const char id_microsoft_certsrvPrevHash[]  = "1.3.6.1.4.1.311.21.2"; // Microsoft szOID_CERTSRV_PREVIOUS_CERT_HASH
-const char id_microsoft_certTemplate[]     = "1.3.6.1.4.1.311.21.7"; // Microsoft szOID_CERTIFICATE_TEMPLATE
-const char id_microsoft_appCertPolicies[]  = "1.3.6.1.4.1.311.21.10"; // Microsoft szOID_APPLICATION_CERT_POLICIES
+const char id_microsoft_certFriendlyName[]     = "1.3.6.1.4.1.311.10.11.11"; // CERT_FRIENDLY_NAME_PROP_ID
+const char id_microsoft_enrollCertType[]       = "1.3.6.1.4.1.311.20.2"; // Microsoft szOID_ENROLL_CERTTYPE_EXTENSION
+const char id_microsoft_certsrvCAVersion[]     = "1.3.6.1.4.1.311.21.1"; // Microsoft szOID_CERTSRV_CA_VERSION
+const char id_microsoft_certsrvPrevHash[]      = "1.3.6.1.4.1.311.21.2"; // Microsoft szOID_CERTSRV_PREVIOUS_CERT_HASH
+const char id_microsoft_certsrvnNextPublish[]  = "1.3.6.1.4.1.311.21.4"; // Microsoft szOID_CRL_NEXT_PUBLISH
+const char id_microsoft_certTemplate[]         = "1.3.6.1.4.1.311.21.7"; // Microsoft szOID_CERTIFICATE_TEMPLATE
+const char id_microsoft_appCertPolicies[]      = "1.3.6.1.4.1.311.21.10"; // Microsoft szOID_APPLICATION_CERT_POLICIES
 const char id_microsoft_jurisdictionOfIncorporationCountryName[] = "1.3.6.1.4.1.311.60.2.1.3"; // Microsoft jurisdictionOfIncorporationCountryName
 
 // Netscape - {joint-iso-itu-t(2) country(16) us(840) organization(1) netscape(113730) cert-ext(1) cert-type(1)}

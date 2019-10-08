@@ -319,7 +319,16 @@ protected:
 				throw std::overflow_error("Integer overflow");
 
 			if (!t.Decode(pIn + offset, cbIn - offset, cbElement))
+			{
+				// Accomodate the case where we have to decode into the 
+				// sequence to see if the element is optional
+				if( cbElement == 0 )
+				{
+					cbPrefix = 0;
+					cbSize = 0;
+				}
 				return false;
+			}
 
 			offset += cbElement;
 			out.push_back(t);
@@ -387,7 +396,7 @@ public:
     // or we will land in terminate and not the catch block.
     ~SequenceHelper() noexcept(false)
     {
-        Update();
+       	Update();
         CheckExit();
         cbUsed += prefixSize;
     }
@@ -435,6 +444,15 @@ public:
 
     size_t& CurrentSize() { return cbCurrent; }
     bool IsAllUsed() const { return cbUsed == dataSize; }
+
+	// Used to help work with optional cases
+	// where we don't know that it was optional until we decode into it
+	void Reset() 
+	{ 
+		dataSize = 0;
+		prefixSize = 0;
+		cbCurrent = 0;
+	}
 
 private:
     size_t dataSize;
@@ -1237,7 +1255,7 @@ public:
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
-		if (!CheckDecode(pIn, cbIn, DerType::Boolean, size, cbPrefix))
+		if (!CheckDecode(pIn, cbIn, DerType::Enumerated, size, cbPrefix))
 		{
 			cbUsed = 0;
 			return false;
@@ -1263,6 +1281,8 @@ public:
 		os << e.value;
 		return os;
 	}
+
+	unsigned char GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }

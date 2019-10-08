@@ -2849,13 +2849,26 @@ class RevokedCertificates final : public DerBase
 public:
 	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
 	{
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, entries, pOut, cbOut, cbUsed);
+        EncodeSetOrSequenceOf(DerType::ConstructedSequence, entries, pOut, cbOut, cbUsed);
 	}
 
 	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
 	{
-		return DecodeSet(pIn, cbIn, cbUsed, entries);
+        size_t cbPrefix = 0;
+        size_t cbSize = 0;
+        bool ret = DecodeSequenceOf(pIn, cbIn, cbPrefix, cbSize, entries);
+
+        if (ret)
+		{
+			cbData = cbSize;
+			cbUsed = cbSize + cbPrefix;
+		}
+
+		return ret;
 	}
+
+    size_t GetCount() const { return entries.size(); }
+    const RevocationEntry& GetRevocationEntry( size_t index ) const { return entries[index]; }
 
 protected:
 	virtual size_t SetDataSize() override
@@ -2898,7 +2911,7 @@ public:
 	Time thisUpdate;
 	Time nextUpdate; // optional
 	RevokedCertificates revokedCertificates;
-	CrlExtensions crlExtensions; // optional
+    ContextSpecificHolder<CrlExtensions, 0xA0, OptionType::Explicit> crlExtensions;
 };
 
 class CertificateList final : public DerBase
@@ -3993,6 +4006,55 @@ class CRLReason : public Enumerated
 {
 public:
 	CRLReason(CRLReasonValue v = CRLReasonValue::unspecified) : Enumerated(static_cast<unsigned char>(v)) {}
+
+    void ToString( std::string& str )
+    {
+        switch( static_cast<CRLReasonValue>( this->GetValue() ) )
+        {
+            case CRLReasonValue::unspecified:
+                str = "unspecified";
+                break;
+
+            case CRLReasonValue::keyCompromise:
+                str = "keyCompromise";
+                break;
+            
+            case CRLReasonValue::cACompromise:
+                str = "cACompromise";
+                break;
+
+            case CRLReasonValue::affiliationChanged:
+                str = "affiliationChanged";
+                break;
+
+            case CRLReasonValue::superseded:
+                str = "superseded";
+                break;
+            case CRLReasonValue::cessationOfOperation:
+                str = "cessationOfOperation";
+                break;
+
+            case CRLReasonValue::certificateHold:
+                str = "certificateHold";
+                break;
+
+            case CRLReasonValue::removeFromCRL:
+                str = "removeFromCRL";
+                break;
+                
+            case CRLReasonValue::privilegeWithdrawn:
+                str = "privilegeWithdrawn";
+                break;
+
+            case CRLReasonValue::aACompromise:
+                str = "aACompromise";
+                break;
+
+            default:
+                str = "unknown revocation reason";
+                break;
+        }
+    }
 };
 
 class RevokedInfo final : public DerBase
