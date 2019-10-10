@@ -177,7 +177,13 @@ void WriteCRLDistributionPoints(const std::vector<unsigned char>& extensionBytes
     }
 }
 
-void PrintCRL(const CertificateList& crl)
+struct crl_options
+{
+    bool common_name;
+    bool revoked;
+};
+
+void PrintCRL( const CertificateList& crl, const crl_options& opts )
 {
     // Not interested in the signature or algorithm for the moment
     const TBSCertList& tbs_cert_list = crl.tbsCertList;
@@ -186,7 +192,7 @@ void PrintCRL(const CertificateList& crl)
     unsigned long ulversion = 0;
     if(!version.GetValue(ulversion))
     {
-        std::cout << "Failure getting version" << std::endl;
+        std::cout << "Version: v1" << std::endl;
     }
     else
     {
@@ -216,8 +222,48 @@ void PrintCRL(const CertificateList& crl)
 
         if( label != nullptr )
         {
-            std::cout << "Extension Label: " << label << std::endl;
-            std::cout << "Extension Oid: " << ext.ExtensionIdOidString() << std::endl;
+            const std::vector<unsigned char>& extensionBytes = ext.GetExtensionValue().GetValue();
+
+            if( strcmp(label, "authorityKeyIdentifier") == 0 )
+            {
+                AuthorityKeyIdentifier aki;
+                DecodeExtension(aki, extensionBytes);
+
+                if (aki.HasKeyIdentifier())
+                {
+                    const OctetString& keyIdentifier = aki.GetKeyIdentifier();
+                    std::cout << "KeyIdentifier: " << keyIdentifier << std::endl;
+                }
+                continue;
+            }
+            else if( strcmp(label, "cRLNumber") == 0 )
+            {
+                Integer number;
+                DecodeExtension( number, extensionBytes );
+                std::cout << "CRL Number: " << number << std::endl;
+                continue;
+            }
+            else if( strcmp(label, "issuingDistributionPoint") == 0 )
+            {
+                IssuingDistributionPoint distPoint;
+                DecodeExtension(distPoint, extensionBytes);
+
+            }
+            else if( strcmp(label, "microsoft_certsrvCAVersion") == 0 )
+            {
+                // Ignore
+                continue;
+            }
+            else if( strcmp(label, "microsoft_certsrvnNextPublish") == 0 )
+            {
+                // Ignore
+                continue;
+            }
+            else
+            {
+                std::cout << "Entry Extension Label: " << label << std::endl;
+                std::cout << "Entry Extension Oid: " << ext.ExtensionIdOidString() << std::endl;
+            }
         }
         else
         {
@@ -229,6 +275,9 @@ void PrintCRL(const CertificateList& crl)
             std::cout << "Extension Oid: " << oid_string << std::endl;
         }
     }
+
+    if( opts.revoked == false )
+        return;
 
     // Now the individual records
     const RevokedCertificates& revoked_certs = tbs_cert_list.revokedCertificates;
@@ -264,27 +313,42 @@ void PrintCRL(const CertificateList& crl)
 int main(int argc, char* argv[])
 {
     const char* szFile = nullptr;
-    bool is_cert = false;
+    bool is_cert = true;
+    crl_options opts = {};
+    bool badarg = false;
 
-    switch(argc)
+    if( argc > 1 )
     {
-        case 2:
-            szFile = argv[1];
-            is_cert = true;
-            break;
-        case 3:
-            if(strcmp(argv[1], "-crl") == 0)
-            {
-                szFile = argv[2];
-                break;
-            }
-            // fallthrough
-        default:
+        szFile = argv[argc-1];
+    }
+
+    for( int i = 1; i < argc - 1; ++i )
+    {
+        if( strcmp("-crl", argv[i]) == 0 )
+        {
+            is_cert = false;
+            continue;
+        }
+        else if( strcmp("-cn", argv[i]) == 0 )
+        {
+            opts.common_name = true;
+        }
+        else if( strcmp("-revoked", argv[i]) == 0 )
+        {
+            opts.revoked = true;
+        }
+        else
+        {
+            badarg = true;
+        }
+    }
+
+    if( argc == 1 || badarg )
+    {
         std::cout << "Usage is get_crl [path to cert]" << std::endl;
         std::cout << "Usage is get_crl -crl [path to crl]" << std::endl;
         std::cout << "Certificate must be DER encoded, PEM not supported yet" << std::endl;
         return -1;
-
     }
 
     if( is_cert )
@@ -317,7 +381,7 @@ int main(int argc, char* argv[])
         CertificateList crl;
         if(LoadCRLFromFile(szFile, crl))
         {
-            PrintCRL(crl);
+            PrintCRL(crl, opts);
         }
     }
     

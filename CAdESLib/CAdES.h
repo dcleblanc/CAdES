@@ -1248,6 +1248,165 @@ private:
 
 };
 
+class IssuingDistributionPoint : public ExtensionBase
+{
+
+/*
+    RFC 5280, 5.2.5.  Issuing Distribution Point
+
+       IssuingDistributionPoint ::= SEQUENCE {
+        distributionPoint          [0] DistributionPointName OPTIONAL,
+        onlyContainsUserCerts      [1] BOOLEAN DEFAULT FALSE,
+        onlyContainsCACerts        [2] BOOLEAN DEFAULT FALSE,
+        onlySomeReasons            [3] ReasonFlags OPTIONAL,
+        indirectCRL                [4] BOOLEAN DEFAULT FALSE,
+        onlyContainsAttributeCerts [5] BOOLEAN DEFAULT FALSE }
+
+        -- at most one of onlyContainsUserCerts, onlyContainsCACerts,
+        -- and onlyContainsAttributeCerts may be set to TRUE.
+
+*/
+public:
+    IssuingDistributionPoint() : ExtensionBase(id_ce_issuingDistributionPoint) {}
+
+    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    {
+        SequenceHelper sh(cbUsed);
+
+        switch (sh.Init(pIn, cbIn, this->cbData))
+        {
+        case DecodeResult::Failed:
+            return false;
+        case DecodeResult::Null:
+        case DecodeResult::EmptySequence:
+            return true;
+        case DecodeResult::Success:
+            break;
+        }
+
+        // Everything is optional, but it can't be empty.
+        /*
+            Conforming CRLs issuers MUST NOT issue CRLs where the DER encoding of
+            the issuing distribution point extension is an empty sequence.  That
+            is, if onlyContainsUserCerts, onlyContainsCACerts, indirectCRL, and
+            onlyContainsAttributeCerts are all FALSE, then either the
+            distributionPoint field or the onlySomeReasons field MUST be present.
+        */
+        if (distributionPoint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        if (sh.IsAllUsed())
+            return true;
+
+        if (onlyContainsUserCerts.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        if (sh.IsAllUsed())
+            return true;
+
+        if (onlyContainsCACerts.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        if (sh.IsAllUsed())
+            return true;
+
+        if (onlySomeReasons.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        if (sh.IsAllUsed())
+            return true;
+
+        if (indirectCRL.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        if (sh.IsAllUsed())
+            return true;
+
+        if (onlyContainsAttributeCerts.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+            sh.Update();
+
+        return true;
+    }
+
+    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    {
+        EncodeHelper eh(cbUsed);
+
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        
+        distributionPoint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        onlyContainsUserCerts.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        onlyContainsCACerts.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        onlySomeReasons.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        indirectCRL.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        eh.Update();
+
+        onlyContainsAttributeCerts.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+		eh.Finalize();
+    }
+
+    const DistributionPointName& GetDistributionPoint() const { return distributionPoint.GetInnerType(); }
+    const bool OnlyContainsUserCerts() const 
+    {
+        if( onlyContainsUserCerts.HasData() ) 
+            return onlyContainsUserCerts.GetInnerType().GetValue();
+
+        return false; // default 
+    }
+
+    const bool OnlyContainsCACerts() const
+    {
+        if( onlyContainsCACerts.HasData() ) 
+            return onlyContainsCACerts.GetInnerType().GetValue();
+
+        return false; // default 
+    }
+
+    bool HasOnlySomeReasons() const { return onlySomeReasons.HasData(); }
+    const ReasonFlags& OnlySomeReasons() const { return onlySomeReasons.GetInnerType(); }
+    
+    const bool IndirectCRL() const
+    {
+        if( indirectCRL.HasData() ) 
+            return indirectCRL.GetInnerType().GetValue();
+
+        return false; // default 
+    }
+
+    const bool OnlyContainsAttributeCerts() const
+    {
+        if( onlyContainsAttributeCerts.HasData() ) 
+            return onlyContainsAttributeCerts.GetInnerType().GetValue();
+
+        return false; // default 
+    }
+
+private:
+    virtual size_t SetDataSize()
+    {
+        return cbData = distributionPoint.EncodedSize() 
+                      + onlyContainsUserCerts.EncodedSize() 
+                      + onlyContainsCACerts.EncodedSize()
+                      + onlySomeReasons.EncodedSize()
+                      + indirectCRL.EncodedSize()
+                      + onlyContainsAttributeCerts.EncodedSize();
+    }
+
+    ContextSpecificHolder<DistributionPointName, 0xA0, OptionType::Implicit> distributionPoint;
+    ContextSpecificHolder<Boolean, 0xA1, OptionType::Implicit> onlyContainsUserCerts;
+    ContextSpecificHolder<Boolean, 0xA2, OptionType::Implicit> onlyContainsCACerts;
+    ContextSpecificHolder<ReasonFlags, 0xA3, OptionType::Implicit> onlySomeReasons;
+    ContextSpecificHolder<Boolean, 0xA4, OptionType::Implicit> indirectCRL;
+    ContextSpecificHolder<Boolean, 0xA5, OptionType::Implicit> onlyContainsAttributeCerts;
+};
 /*
 -- authority key identifier OID and syntax
 
