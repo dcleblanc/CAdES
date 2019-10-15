@@ -1,0 +1,54 @@
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+cmake_minimum_required(VERSION 3.5.1)
+if(POLICY CMP0042)
+  cmake_policy(SET CMP0042 NEW) # use MACOSX_RPATH
+endif()
+
+project(DumpTlsCerts VERSION 0.1.0)
+
+IF( NOT CMAKE_BUILD_TYPE )
+   SET( CMAKE_BUILD_TYPE Release )
+ENDIF()
+
+# Reconfigure final output directory
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries/${PROJECT_NAME})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries/${PROJECT_NAME})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/Binaries/${PROJECT_NAME})
+
+# Sources
+file( GLOB_RECURSE ${PROJECT_NAME}_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}
+  "./*.cs"
+  "./*.csproj"
+  "./*.json"
+)
+
+# Configuration
+file( GLOB_RECURSE ${PROJECT_NAME}_SETTINGS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  "./*.json"
+)
+
+foreach( SETTINGS_FILE IN LISTS ${PROJECT_NAME}_SETTINGS )
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/${SETTINGS_FILE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${SETTINGS_FILE} COPYONLY )
+endforeach()
+
+if( CDPX_BUILD )
+  add_custom_command(
+    OUTPUT  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}
+    DEPENDS ${${PROJECT_NAME}_SOURCE}
+    COMMAND ${CMAKE_COMMAND} -E env DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true dotnet publish --no-restore --verbosity quiet --output ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} --configuration ${CMAKE_BUILD_TYPE} --self-contained -r ubuntu.16.04-x64
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+else()
+  add_custom_command(
+      OUTPUT  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}
+      DEPENDS ${${PROJECT_NAME}_SOURCE}
+      COMMAND ${CMAKE_COMMAND} -E env DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true dotnet publish --verbosity quiet --output ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} --configuration ${CMAKE_BUILD_TYPE} --self-contained -r ubuntu.16.04-x64
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
+add_custom_target( ${PROJECT_NAME}
+  ALL
+  DEPENDS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}
+)
+
