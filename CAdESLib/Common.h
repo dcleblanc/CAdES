@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cstddef>
 #include <algorithm>
+#include <functional>
 
 // Utilities implemented in Common.cpp
 // This may involve deprecated functionality

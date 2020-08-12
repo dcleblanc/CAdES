@@ -48,6 +48,7 @@ void ConvertWstringToString(const std::wstring& in, std::string& out)
 	out = converter.to_bytes(in);
 }
 
+#ifndef _WIN32
 int memcpy_s( void *dest, size_t destSize, const void *src, size_t count )
 {
 	if( destSize < count )
@@ -92,3 +93,4 @@ int sprintf_s( char *buffer, size_t sizeOfBuffer, const char *format, ... )
 
     return retval;
 }
+#endif
