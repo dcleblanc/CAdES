@@ -211,7 +211,7 @@ public:
     }
 
     template <typename T>
-    void DecodeExtension(T& t, const std::vector<unsigned char>& extensionBytes)
+    void DecodeExtension(T& t, const std::vector<uint8_t>& extensionBytes)
     {
         size_t cbExtension = extensionBytes.size();
         size_t cbUsed = 0;
@@ -222,7 +222,7 @@ public:
         throw std::exception("Malformed extension");
     }
 
-    void WriteKeyUsage(const std::vector<unsigned char>& extensionBytes)
+    void WriteKeyUsage(const std::vector<uint8_t>& extensionBytes)
     {
         KeyUsage ku;
         DecodeExtension(ku, extensionBytes);
@@ -245,7 +245,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteExtendedKeyUsage(const std::vector<unsigned char>& extensionBytes)
+    void WriteExtendedKeyUsage(const std::vector<uint8_t>& extensionBytes)
     {
         ExtendedKeyUsage eku;
         DecodeExtension(eku, extensionBytes);
@@ -262,7 +262,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteSubjectKeyIdentifier(const std::vector<unsigned char>& extensionBytes)
+    void WriteSubjectKeyIdentifier(const std::vector<uint8_t>& extensionBytes)
     {
         SubjectKeyIdentifier keyId;
         DecodeExtension(keyId, extensionBytes);
@@ -409,7 +409,7 @@ public:
         }
     }
         
-    void WriteAuthorityKeyIdentifier(const std::vector<unsigned char>& extensionBytes)
+    void WriteAuthorityKeyIdentifier(const std::vector<uint8_t>& extensionBytes)
     {
         AuthorityKeyIdentifier aki;
         DecodeExtension(aki, extensionBytes);
@@ -490,7 +490,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteCRLDistributionPoints(const std::vector<unsigned char>& extensionBytes)
+    void WriteCRLDistributionPoints(const std::vector<uint8_t>& extensionBytes)
     {
         CrlDistributionPoints distPoints;
         DecodeExtension(distPoints, extensionBytes);
@@ -507,7 +507,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteAuthorityInfoAccess(const std::vector<unsigned char>& extensionBytes)
+    void WriteAuthorityInfoAccess(const std::vector<uint8_t>& extensionBytes)
     {
         AuthorityInfoAccess aia;
         DecodeExtension(aia, extensionBytes);
@@ -534,7 +534,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteSubjectAltName(const std::vector<unsigned char>& extensionBytes)
+    void WriteSubjectAltName(const std::vector<uint8_t>& extensionBytes)
     {
         SubjectAltName altName;
         DecodeExtension(altName, extensionBytes);
@@ -544,7 +544,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteMicrosoftAppCertPolicies(const std::vector<unsigned char>& extensionBytes)
+    void WriteMicrosoftAppCertPolicies(const std::vector<uint8_t>& extensionBytes)
     {
         ApplicationCertPolicies appPolicies;
         DecodeExtension(appPolicies, extensionBytes);
@@ -568,7 +568,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteCertificatePolicies(const std::vector<unsigned char>& extensionBytes)
+    void WriteCertificatePolicies(const std::vector<uint8_t>& extensionBytes)
     {
         CertificatePolicies certPolicies;
         DecodeExtension(certPolicies, extensionBytes);
@@ -602,7 +602,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteCertTemplate(const std::vector<unsigned char>& extensionBytes)
+    void WriteCertTemplate(const std::vector<uint8_t>& extensionBytes)
     {
         CertTemplate certTemplate;
         DecodeExtension(certTemplate, extensionBytes);
@@ -632,7 +632,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteAuthorityKeyIdentifierOld(const std::vector<unsigned char>& extensionBytes)
+    void WriteAuthorityKeyIdentifierOld(const std::vector<uint8_t>& extensionBytes)
     {
         KeyIdentifierObsolete keyId;
         DecodeExtension(keyId, extensionBytes);
@@ -640,7 +640,7 @@ public:
         WriteRawExtension(L"AuthorityKeyIdentifierOld", keyId.GetRawExtensionData());
     }
 
-    void WriteBasicConstraints(const std::vector<unsigned char>& extensionBytes)
+    void WriteBasicConstraints(const std::vector<uint8_t>& extensionBytes)
     {
         BasicConstraints basicConstraints;
         DecodeExtension(basicConstraints, extensionBytes);
@@ -677,21 +677,21 @@ public:
         WriteEndElement();
     }
 
-    void WriteGoogleCertTransparancy(const std::vector<unsigned char>& extensionBytes)
+    void WriteGoogleCertTransparancy(const std::vector<uint8_t>& extensionBytes)
     {
         GoogleCertTransparency certTransparancy;
         DecodeExtension(certTransparancy, extensionBytes);
         WriteRawExtension(L"GoogleCertTransparency", certTransparancy.GetRawExtensionData());
     }
 
-    void WriteSMIMECapabilities(const std::vector<unsigned char>& extensionBytes)
+    void WriteSMIMECapabilities(const std::vector<uint8_t>& extensionBytes)
     {
         SmimeCapabilities capabilities;
         DecodeExtension(capabilities, extensionBytes);
         WriteRawExtension(L"SMIMECapabilities", capabilities.GetRawExtensionData());
     }
 
-    void WriteMicrosoftCertSrvCAVersion(const std::vector<unsigned char>& extensionBytes)
+    void WriteMicrosoftCertSrvCAVersion(const std::vector<uint8_t>& extensionBytes)
     {
         MicrosoftCAVersion caVersion;
         DecodeExtension(caVersion, extensionBytes);
@@ -703,7 +703,7 @@ public:
         WriteSimpleElement(L"MicrosoftCAVersion", str);
     }
 
-    void WriteMicrosoftEnrollCertType(const std::vector<unsigned char>& extensionBytes)
+    void WriteMicrosoftEnrollCertType(const std::vector<uint8_t>& extensionBytes)
     {
         MicrosoftEnrollCertType enrollCertType;
         DecodeExtension(enrollCertType, extensionBytes);
@@ -713,7 +713,7 @@ public:
         WriteSimpleElement(L"MicrosoftEnrollCertType", str);
     }
 
-    void WriteMicrosoftCertSrvPrevHash(const std::vector<unsigned char>& extensionBytes)
+    void WriteMicrosoftCertSrvPrevHash(const std::vector<uint8_t>& extensionBytes)
     {
         MicrosoftPreviousCertHash prevCertHash;
         DecodeExtension(prevCertHash, extensionBytes);
@@ -723,14 +723,14 @@ public:
         WriteSimpleElement(L"MicrosoftPreviousCertHash", str);
     }
 
-    void WriteEntrustVersionInfo(const std::vector<unsigned char>& extensionBytes)
+    void WriteEntrustVersionInfo(const std::vector<uint8_t>& extensionBytes)
     {
         EntrustVersion entrustVersion;
         DecodeExtension(entrustVersion, extensionBytes);
         WriteRawExtension(L"EntrustVersion", entrustVersion.GetRawExtensionData());
     }
     
-    void WriteIssuerAltName(const std::vector<unsigned char>& extensionBytes)
+    void WriteIssuerAltName(const std::vector<uint8_t>& extensionBytes)
     {
         IssuerAltNames altNames;
         DecodeExtension(altNames, extensionBytes);
@@ -741,28 +741,28 @@ public:
         WriteEndElement();
     }
 
-    void WriteNetscapeCertExt(const std::vector<unsigned char>& extensionBytes)
+    void WriteNetscapeCertExt(const std::vector<uint8_t>& extensionBytes)
     {
         NetscapeCertExt certExt;
         DecodeExtension(certExt, extensionBytes);
         WriteRawExtension(L"NetscapeCertExt", certExt.GetRawExtensionData());
     }
 
-    void WritePrivateKeyUsagePeriod(const std::vector<unsigned char>& extensionBytes)
+    void WritePrivateKeyUsagePeriod(const std::vector<uint8_t>& extensionBytes)
     {
         PrivateKeyUsagePeriod usagePeriod;
         DecodeExtension(usagePeriod, extensionBytes);
         WriteRawExtension(L"PrivateKeyUsagePeriod", usagePeriod.GetRawExtensionData());
     }
 
-    void WriteKeyUsageRestriction(const std::vector<unsigned char>& extensionBytes)
+    void WriteKeyUsageRestriction(const std::vector<uint8_t>& extensionBytes)
     {
         KeyUsageRestriction usageRestriction;
         DecodeExtension(usageRestriction, extensionBytes);
         WriteRawExtension(L"KeyUsageRestriction", usageRestriction.GetRawExtensionData());
     }
 
-    void WriteFreshestCRL(const std::vector<unsigned char>& extensionBytes)
+    void WriteFreshestCRL(const std::vector<uint8_t>& extensionBytes)
     {
         FreshestCRL freshestCRL;
         DecodeExtension(freshestCRL, extensionBytes);
@@ -780,7 +780,7 @@ public:
         WriteEndElement();
     }
 
-    void WriteUnknownExtension(const std::vector<unsigned char>& extensionBytes)
+    void WriteUnknownExtension(const std::vector<uint8_t>& extensionBytes)
     {
         AnyType any;
         std::wstring str;
@@ -798,7 +798,7 @@ public:
 
     void WriteExtensionData(const Extension& ext)
     {
-        const std::vector<unsigned char>& extensionBytes = ext.GetExtensionValue().GetValue();
+        const std::vector<uint8_t>& extensionBytes = ext.GetExtensionValue().GetValue();
         const ObjectIdentifier& oid = ext.GetOid();
 
         switch (OidToExtensionId(oid.GetOidString()))
@@ -1155,7 +1155,7 @@ public:
             return S_FALSE;
         }
 
-        unsigned char* pCurrent = &data[pos];
+        uint8_t* pCurrent = &data[pos];
         size_t remaining = data.size() - pos;
 
         ULONG bytes = cb < remaining ? cb : static_cast<ULONG>(remaining);
@@ -1183,7 +1183,7 @@ public:
             return S_FALSE;
         }
 
-        data.insert(data.begin() + pos, static_cast<const unsigned char*>(pv), static_cast<const unsigned char*>(pv) + cb);
+        data.insert(data.begin() + pos, static_cast<const uint8_t*>(pv), static_cast<const uint8_t*>(pv) + cb);
         pos += cb;
 
         if (pcbWritten != nullptr)
@@ -1192,12 +1192,12 @@ public:
         return S_OK;
     }
 
-    const std::vector<unsigned char>& GetData() const { return data; }
+    const std::vector<uint8_t>& GetData() const { return data; }
     size_t GetPos() const { return pos; }
 
 private:
     size_t pos;
-    std::vector<unsigned char> data;
+    std::vector<uint8_t> data;
     ULONG refcount;
 };
 
@@ -1239,7 +1239,7 @@ bool CertificateToXml(const Certificate& cert, const char* szXmlFile)
         return false;
     }
 
-    const std::vector<unsigned char>& stmData = stm.GetData();
+    const std::vector<uint8_t>& stmData = stm.GetData();
 
     ostm.write(reinterpret_cast<const char*>(&stmData[0]), stm.GetPos());
     ostm.flush();

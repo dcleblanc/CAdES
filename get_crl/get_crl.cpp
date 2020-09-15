@@ -12,7 +12,7 @@ template <typename T>
 LoadResult LoadObjectFromFile(const char* szFile, T& obj)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
@@ -91,7 +91,7 @@ bool LoadCRLFromFile(const char* szFile, CertificateList& crl)
 }
 
 template <typename T>
-void DecodeExtension(T& t, const std::vector<unsigned char>& extensionBytes)
+void DecodeExtension(T& t, const std::vector<uint8_t>& extensionBytes)
 {
     size_t cbExtension = extensionBytes.size();
     size_t cbUsed = 0;
@@ -164,7 +164,7 @@ void WriteDistributionPoint(const DistributionPoint& point)
         // if (point.HasCRLIssuer())
 }
 
-void WriteCRLDistributionPoints(const std::vector<unsigned char>& extensionBytes)
+void WriteCRLDistributionPoints(const std::vector<uint8_t>& extensionBytes)
 {
     CrlDistributionPoints distPoints;
     DecodeExtension(distPoints, extensionBytes);
@@ -189,7 +189,7 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
     const TBSCertList& tbs_cert_list = crl.tbsCertList;
 
     const Integer& version = tbs_cert_list.version;
-    unsigned long ulversion = 0;
+    uint32_t ulversion = 0;
     if(!version.GetValue(ulversion))
     {
         std::cout << "Version: v1" << std::endl;
@@ -222,7 +222,7 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
 
         if( label != nullptr )
         {
-            const std::vector<unsigned char>& extensionBytes = ext.GetExtensionValue().GetValue();
+            const std::vector<uint8_t>& extensionBytes = ext.GetExtensionValue().GetValue();
 
             if( strcmp(label, "authorityKeyIdentifier") == 0 )
             {
@@ -310,7 +310,7 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
     }
 }
 
-int main(int argc, char* argv[])
+int32_t main(int32_t argc, char* argv[])
 {
     const char* szFile = nullptr;
     bool is_cert = true;
@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
         szFile = argv[argc-1];
     }
 
-    for( int i = 1; i < argc - 1; ++i )
+    for( int32_t i = 1; i < argc - 1; ++i )
     {
         if( strcmp("-crl", argv[i]) == 0 )
         {
@@ -366,7 +366,7 @@ int main(int argc, char* argv[])
 
                 if( strcmp(id_ce_cRLDistributionPoints, ext.ExtensionIdOidString()) == 0 )
                 {
-                    const std::vector<unsigned char>& extensionBytes = ext.GetExtensionValue().GetValue();
+                    const std::vector<uint8_t>& extensionBytes = ext.GetExtensionValue().GetValue();
                     WriteCRLDistributionPoints(extensionBytes);
                 }
             }

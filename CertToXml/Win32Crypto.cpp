@@ -24,17 +24,17 @@ public:
         return BCryptOpenAlgorithmProvider(&algHandle, algId, nullptr, 0) == ERROR_SUCCESS;
     }
 
-    unsigned long GetHashLength()
+    uint32_t GetHashLength()
     {
         return GetHashProperty(BCRYPT_HASH_LENGTH);
     }
 
-    unsigned long GetHashObjectLength()
+    uint32_t GetHashObjectLength()
     {
         return GetHashProperty(BCRYPT_OBJECT_LENGTH);
     }
 
-    unsigned long GetHashProperty(LPCWSTR propertyName)
+    uint32_t GetHashProperty(LPCWSTR propertyName)
     {
         DWORD dwSize = 0;
         ULONG dwCopied = 0;
@@ -71,13 +71,13 @@ public:
         return (stat == ERROR_SUCCESS);
     }
 
-    bool HashData(const unsigned char* pIn, unsigned long cbIn)
+    bool HashData(const uint8_t* pIn, uint32_t cbIn)
     {
         NTSTATUS stat = BCryptHashData(hHash, const_cast<PUCHAR>(pIn), cbIn, 0);
         return (stat == ERROR_SUCCESS);
     }
 
-    bool Finish(std::vector<unsigned char>& hashValue)
+    bool Finish(std::vector<uint8_t>& hashValue)
     {
         hashValue.clear();
         hashValue.resize(algHandle.GetHashLength());
@@ -87,20 +87,20 @@ public:
     }
 
 private:
-    unsigned long sha256Size;
-    std::vector<unsigned char> hashObj;
+    uint32_t sha256Size;
+    std::vector<uint8_t> hashObj;
     BCRYPT_HASH_HANDLE hHash;
     AlgHandle& algHandle;
 };
 
-bool HashVector(AlgHandle& algHandle, const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
+bool HashVector(AlgHandle& algHandle, const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
 {
     HashHandle hashHandle(algHandle);
 
     if (!hashHandle.Create())
         return false;
 
-    if (!hashHandle.HashData(&data[0], static_cast<unsigned long>(data.size())))
+    if (!hashHandle.HashData(&data[0], static_cast<uint32_t>(data.size())))
         return false;
 
     return hashHandle.Finish(out);
@@ -109,7 +109,7 @@ bool HashVector(AlgHandle& algHandle, const std::vector<unsigned char>& data, st
 static AlgHandle algHandleSha1;
 static AlgHandle algHandleSha256;
 
-bool HashVectorSha256(const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
+bool HashVectorSha256(const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
 {
 	// Warning, not thread safe, but we're currently single-threaded,
 	// so open this just once.
@@ -123,7 +123,7 @@ bool HashVectorSha256(const std::vector<unsigned char>& data, std::vector<unsign
     return HashVector(algHandleSha256, data, out);
 }
 
-bool HashVectorSha1(const std::vector<unsigned char>& data, std::vector<unsigned char>& out)
+bool HashVectorSha1(const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
 {
 	if (algHandleSha1 == nullptr)
 	{

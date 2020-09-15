@@ -19,11 +19,11 @@ AlgorithmIdentifier::AlgorithmIdentifier(HashAlgorithm alg) : algorithm(hashOids
 	parameters.SetNull();
 }
 
-void Accuracy::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void Accuracy::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
 	seconds.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -35,7 +35,7 @@ void Accuracy::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 	eh.Finalize();
 }
 
-bool Accuracy::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Accuracy::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -64,11 +64,11 @@ bool Accuracy::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void AlgorithmIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void AlgorithmIdentifier::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     algorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -77,7 +77,7 @@ void AlgorithmIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cb
 	eh.Finalize();
 }
 
-bool AlgorithmIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool AlgorithmIdentifier::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -106,11 +106,11 @@ bool AlgorithmIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t 
 	return true;
 }
 
-void Attribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void Attribute::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     attrType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -119,7 +119,7 @@ void Attribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool Attribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Attribute::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -146,11 +146,11 @@ bool Attribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return false;
 }
 
-void EncapsulatedContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void EncapsulatedContentInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     eContentType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -159,7 +159,7 @@ void EncapsulatedContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t 
 	eh.Finalize();
 }
 
-bool EncapsulatedContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool EncapsulatedContentInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -184,11 +184,11 @@ bool EncapsulatedContentInfo::Decode(const unsigned char * pIn, size_t cbIn, siz
 	return true;
 }
 
-void IssuerSerial::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void IssuerSerial::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -200,7 +200,7 @@ void IssuerSerial::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool IssuerSerial::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool IssuerSerial::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -229,11 +229,11 @@ bool IssuerSerial::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void ObjectDigestInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void ObjectDigestInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     digestedObjectType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -248,7 +248,7 @@ void ObjectDigestInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUse
 	eh.Finalize();
 }
 
-bool ObjectDigestInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool ObjectDigestInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -281,11 +281,11 @@ bool ObjectDigestInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & c
 	return true;
 }
 
-void Holder::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void Holder::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     baseCertificateID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -297,7 +297,7 @@ void Holder::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool Holder::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Holder::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -326,11 +326,11 @@ bool Holder::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void OtherHashAlgAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherHashAlgAndValue::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
 	hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -339,7 +339,7 @@ void OtherHashAlgAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & c
 	eh.Finalize();
 }
 
-bool OtherHashAlgAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherHashAlgAndValue::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -364,11 +364,11 @@ bool OtherHashAlgAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t
 	return true;
 }
 
-void V2Form::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void V2Form::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     issuerName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -380,7 +380,7 @@ void V2Form::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool V2Form::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool V2Form::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -409,11 +409,11 @@ bool V2Form::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void AttCertValidityPeriod::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void AttCertValidityPeriod::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     notBeforeTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -422,7 +422,7 @@ void AttCertValidityPeriod::Encode(unsigned char * pOut, size_t cbOut, size_t & 
 	eh.Finalize();
 }
 
-bool AttCertValidityPeriod::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool AttCertValidityPeriod::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -447,11 +447,11 @@ bool AttCertValidityPeriod::Decode(const unsigned char * pIn, size_t cbIn, size_
 	return true;
 }
 
-void AttributeCertificateInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void AttributeCertificateInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -481,7 +481,7 @@ void AttributeCertificateInfo::Encode(unsigned char * pOut, size_t cbOut, size_t
 	eh.Finalize();
 }
 
-bool AttributeCertificateInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool AttributeCertificateInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -538,11 +538,11 @@ bool AttributeCertificateInfo::Decode(const unsigned char * pIn, size_t cbIn, si
 	return true;
 }
 
-void AttributeCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void AttributeCertificate::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
 	acinfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -554,7 +554,7 @@ void AttributeCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & c
 	eh.Finalize();
 }
 
-bool AttributeCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool AttributeCertificate::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -583,11 +583,11 @@ bool AttributeCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t
 	return true;
 }
 
-void CertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CertID::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -602,7 +602,7 @@ void CertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool CertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CertID::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -635,11 +635,11 @@ bool CertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void RevokedInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void RevokedInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     revocationTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -648,7 +648,7 @@ void RevokedInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool RevokedInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool RevokedInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -673,11 +673,11 @@ bool RevokedInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void SingleResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SingleResponse::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     certID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -695,7 +695,7 @@ void SingleResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool SingleResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SingleResponse::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -732,11 +732,11 @@ bool SingleResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void PKIStatusInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void PKIStatusInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
 	status.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -748,7 +748,7 @@ void PKIStatusInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool PKIStatusInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool PKIStatusInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -777,11 +777,11 @@ bool PKIStatusInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
 	return true;
 }
 
-void ContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void ContentInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     contentType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -790,7 +790,7 @@ void ContentInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool ContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool ContentInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -815,11 +815,11 @@ bool ContentInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void CrlIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CrlIdentifier::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     crlissuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -831,7 +831,7 @@ void CrlIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool CrlIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CrlIdentifier::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -860,11 +860,11 @@ bool CrlIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
 	return true;
 }
 
-void CrlValidatedID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CrlValidatedID::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     crlHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -873,7 +873,7 @@ void CrlValidatedID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool CrlValidatedID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CrlValidatedID::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -898,11 +898,11 @@ bool CrlValidatedID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void MessageImprint::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void MessageImprint::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -911,7 +911,7 @@ void MessageImprint::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool MessageImprint::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool MessageImprint::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -936,11 +936,11 @@ bool MessageImprint::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void UserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void UserNotice::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
     
     noticeRef.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -949,7 +949,7 @@ void UserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool UserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool UserNotice::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -974,11 +974,11 @@ bool UserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void NoticeReference::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void NoticeReference::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     organization.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -987,7 +987,7 @@ void NoticeReference::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 	eh.Finalize();
 }
 
-bool NoticeReference::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool NoticeReference::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1012,11 +1012,11 @@ bool NoticeReference::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 	return true;
 }
 
-void OcspIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OcspIdentifier::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     ocspResponderID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1025,7 +1025,7 @@ void OcspIdentifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool OcspIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OcspIdentifier::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1050,11 +1050,11 @@ bool OcspIdentifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void CrlOcspRef::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CrlOcspRef::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1066,7 +1066,7 @@ void CrlOcspRef::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool CrlOcspRef::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CrlOcspRef::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1095,11 +1095,11 @@ bool CrlOcspRef::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void OtherRevRefs::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherRevRefs::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     otherRevRefType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1108,7 +1108,7 @@ void OtherRevRefs::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool OtherRevRefs::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherRevRefs::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1133,16 +1133,16 @@ bool OtherRevRefs::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void OcspListID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OcspListID::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, pOut, cbOut, cbUsed);
 }
 
-void RevocationValues::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void RevocationValues::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1154,7 +1154,7 @@ void RevocationValues::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUse
 	eh.Finalize();
 }
 
-bool RevocationValues::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool RevocationValues::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1183,11 +1183,11 @@ bool RevocationValues::Decode(const unsigned char * pIn, size_t cbIn, size_t & c
 	return true;
 }
 
-void OtherRevVals::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherRevVals::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     otherRevValType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1196,7 +1196,7 @@ void OtherRevVals::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool OtherRevVals::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherRevVals::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1221,11 +1221,11 @@ bool OtherRevVals::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void BasicOCSPResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void BasicOCSPResponse::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     tbsResponseData.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1240,7 +1240,7 @@ void BasicOCSPResponse::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
 	eh.Finalize();
 }
 
-bool BasicOCSPResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool BasicOCSPResponse::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1273,11 +1273,11 @@ bool BasicOCSPResponse::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
 	return true;
 }
 
-void ResponseData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void ResponseData::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1295,7 +1295,7 @@ void ResponseData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool ResponseData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool ResponseData::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1332,11 +1332,11 @@ bool ResponseData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void SigningCertificateV2::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SigningCertificateV2::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1345,7 +1345,7 @@ void SigningCertificateV2::Encode(unsigned char * pOut, size_t cbOut, size_t & c
 	eh.Finalize();
 }
 
-bool SigningCertificateV2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SigningCertificateV2::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1370,11 +1370,11 @@ bool SigningCertificateV2::Decode(const unsigned char * pIn, size_t cbIn, size_t
 	return true;
 }
 
-void SubjectPublicKeyInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SubjectPublicKeyInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     algorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1383,7 +1383,7 @@ void SubjectPublicKeyInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & c
 	eh.Finalize();
 }
 
-bool SubjectPublicKeyInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SubjectPublicKeyInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1408,11 +1408,11 @@ bool SubjectPublicKeyInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t
 	return true;
 }
 
-void Certificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void Certificate::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     tbsCertificate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1424,7 +1424,7 @@ void Certificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool Certificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Certificate::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1453,11 +1453,11 @@ bool Certificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void TBSCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void TBSCertificate::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
     
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1490,7 +1490,7 @@ void TBSCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool TBSCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool TBSCertificate::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1566,11 +1566,11 @@ bool TBSCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void CertificateList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CertificateList::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     tbsCertList.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1582,7 +1582,7 @@ void CertificateList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 	eh.Finalize();
 }
 
-bool CertificateList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CertificateList::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1611,11 +1611,11 @@ bool CertificateList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 	return true;
 }
 
-void TBSCertList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void TBSCertList::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1639,7 +1639,7 @@ void TBSCertList::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool TBSCertList::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1655,7 +1655,7 @@ bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
     }
 
     // Version is optional
-    if( *sh.DataPtr(pIn) == static_cast<unsigned char>( DerType::Integer ) )
+    if( *sh.DataPtr(pIn) == static_cast<uint8_t>( DerType::Integer ) )
     {
         if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
             return false;
@@ -1695,11 +1695,11 @@ bool TBSCertList::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void PolicyInformation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void PolicyInformation::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     policyIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1708,7 +1708,7 @@ void PolicyInformation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
 	eh.Finalize();
 }
 
-bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool PolicyInformation::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1743,11 +1743,11 @@ bool PolicyInformation::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
 	return ret;
 }
 
-void ESSCertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void ESSCertID::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     certHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1756,7 +1756,7 @@ void ESSCertID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool ESSCertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool ESSCertID::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1781,11 +1781,11 @@ bool ESSCertID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void SigningCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SigningCertificate::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1794,7 +1794,7 @@ void SigningCertificate::Encode(unsigned char * pOut, size_t cbOut, size_t & cbU
 	eh.Finalize();
 }
 
-bool SigningCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SigningCertificate::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1819,11 +1819,11 @@ bool SigningCertificate::Decode(const unsigned char * pIn, size_t cbIn, size_t &
 	return true;
 }
 
-void ESSCertIDv2::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void ESSCertIDv2::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1835,7 +1835,7 @@ void ESSCertIDv2::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool ESSCertIDv2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool ESSCertIDv2::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1864,11 +1864,11 @@ bool ESSCertIDv2::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void PolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void PolicyQualifierInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     policyQualifierId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1877,7 +1877,7 @@ void PolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cb
 	eh.Finalize();
 }
 
-bool PolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool PolicyQualifierInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1902,11 +1902,11 @@ bool PolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t 
 	return true;
 }
 
-void IssuerAndSerialNumber::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void IssuerAndSerialNumber::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1915,7 +1915,7 @@ void IssuerAndSerialNumber::Encode(unsigned char * pOut, size_t cbOut, size_t & 
 	eh.Finalize();
 }
 
-bool IssuerAndSerialNumber::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool IssuerAndSerialNumber::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1941,11 +1941,11 @@ bool IssuerAndSerialNumber::Decode(const unsigned char * pIn, size_t cbIn, size_
 	return true;
 }
 
-void Extension::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void Extension::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     extnID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -1960,7 +1960,7 @@ void Extension::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool Extension::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Extension::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -1993,17 +1993,17 @@ bool Extension::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void CertStatus::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CertStatus::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     revoked.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 	eh.Finalize();
 }
 
-bool CertStatus::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CertStatus::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2024,7 +2024,7 @@ bool CertStatus::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-bool DisplayText::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool DisplayText::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
 	if (cbIn < 2)
 		return false;
@@ -2050,11 +2050,11 @@ bool DisplayText::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return value.Decode(pIn, cbIn, cbUsed);
 }
 
-void SignerInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SignerInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2078,7 +2078,7 @@ void SignerInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool SignerInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SignerInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2123,11 +2123,11 @@ bool SignerInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void OtherCertificateFormat::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherCertificateFormat::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     otherCertFormat.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2136,7 +2136,7 @@ void OtherCertificateFormat::Encode(unsigned char * pOut, size_t cbOut, size_t &
 	eh.Finalize();
 }
 
-bool OtherCertificateFormat::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherCertificateFormat::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2161,11 +2161,11 @@ bool OtherCertificateFormat::Decode(const unsigned char * pIn, size_t cbIn, size
 	return true;
 }
 
-void EDIPartyName::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void EDIPartyName::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     nameAssigner.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2174,7 +2174,7 @@ void EDIPartyName::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool EDIPartyName::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool EDIPartyName::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2199,11 +2199,11 @@ bool EDIPartyName::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void RevocationEntry::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void RevocationEntry::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     userCertificate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2215,7 +2215,7 @@ void RevocationEntry::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 	eh.Finalize();
 }
 
-bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool RevocationEntry::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2233,7 +2233,7 @@ bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
     // We have an optional sequence of RevocationEntry object
     // and won't know if there really is a RevocationEntry until
     // we get here
-    if ( *sh.DataPtr(pIn) != static_cast<unsigned char>(DerType::Integer) )
+    if ( *sh.DataPtr(pIn) != static_cast<uint8_t>(DerType::Integer) )
     {
         cbUsed = 0;
         sh.Reset(); // This keeps us from throwing
@@ -2258,11 +2258,11 @@ bool RevocationEntry::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 	return true;
 }
 
-void OtherRevocationInfoFormat::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherRevocationInfoFormat::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
     
     otherRevInfoFormat.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2271,7 +2271,7 @@ void OtherRevocationInfoFormat::Encode(unsigned char * pOut, size_t cbOut, size_
 	eh.Finalize();
 }
 
-bool OtherRevocationInfoFormat::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherRevocationInfoFormat::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2296,11 +2296,11 @@ bool OtherRevocationInfoFormat::Decode(const unsigned char * pIn, size_t cbIn, s
 	return true;
 }
 
-void SignedData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SignedData::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2318,7 +2318,7 @@ void SignedData::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool SignedData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SignedData::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2359,11 +2359,11 @@ bool SignedData::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void SigPolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SigPolicyQualifierInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     sigPolicyQualifierId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2372,7 +2372,7 @@ void SigPolicyQualifierInfo::Encode(unsigned char * pOut, size_t cbOut, size_t &
 	eh.Finalize();
 }
 
-bool SigPolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SigPolicyQualifierInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2397,11 +2397,11 @@ bool SigPolicyQualifierInfo::Decode(const unsigned char * pIn, size_t cbIn, size
 	return true;
 }
 
-void SignaturePolicyId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SignaturePolicyId::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     sigPolicyId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2413,7 +2413,7 @@ void SignaturePolicyId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUs
 	eh.Finalize();
 }
 
-bool SignaturePolicyId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SignaturePolicyId::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2442,11 +2442,11 @@ bool SignaturePolicyId::Decode(const unsigned char * pIn, size_t cbIn, size_t & 
 	return true;
 }
 
-void SPUserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SPUserNotice::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     noticeRef.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2455,7 +2455,7 @@ void SPUserNotice::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool SPUserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SPUserNotice::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2480,11 +2480,11 @@ bool SPUserNotice::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void CommitmentTypeQualifier::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CommitmentTypeQualifier::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     commitmentTypeIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2493,7 +2493,7 @@ void CommitmentTypeQualifier::Encode(unsigned char * pOut, size_t cbOut, size_t 
 	eh.Finalize();
 }
 
-bool CommitmentTypeQualifier::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CommitmentTypeQualifier::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2518,11 +2518,11 @@ bool CommitmentTypeQualifier::Decode(const unsigned char * pIn, size_t cbIn, siz
 	return true;
 }
 
-void CommitmentTypeIndication::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void CommitmentTypeIndication::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     commitmentTypeId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2531,7 +2531,7 @@ void CommitmentTypeIndication::Encode(unsigned char * pOut, size_t cbOut, size_t
 	eh.Finalize();
 }
 
-bool CommitmentTypeIndication::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool CommitmentTypeIndication::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2556,11 +2556,11 @@ bool CommitmentTypeIndication::Decode(const unsigned char * pIn, size_t cbIn, si
 	return true;
 }
 
-void SignerLocation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SignerLocation::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     countryName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2572,7 +2572,7 @@ void SignerLocation::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool SignerLocation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SignerLocation::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2601,11 +2601,11 @@ bool SignerLocation::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbU
 	return true;
 }
 
-void SignerAttribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void SignerAttribute::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2614,7 +2614,7 @@ void SignerAttribute::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 	eh.Finalize();
 }
 
-bool SignerAttribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool SignerAttribute::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2639,11 +2639,11 @@ bool SignerAttribute::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 	return true;
 }
 
-void TimeStampReq::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void TimeStampReq::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2664,7 +2664,7 @@ void TimeStampReq::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool TimeStampReq::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool TimeStampReq::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2705,11 +2705,11 @@ bool TimeStampReq::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUse
 	return true;
 }
 
-void TimeStampResp::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void TimeStampResp::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     status.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2718,7 +2718,7 @@ void TimeStampResp::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool TimeStampResp::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool TimeStampResp::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2743,11 +2743,11 @@ bool TimeStampResp::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUs
 	return true;
 }
 
-void TSTInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void TSTInfo::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2780,7 +2780,7 @@ void TSTInfo::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool TSTInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool TSTInfo::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2837,11 +2837,11 @@ bool TSTInfo::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void OtherCertId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OtherCertId::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     otherCertHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2850,7 +2850,7 @@ void OtherCertId::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool OtherCertId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OtherCertId::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2875,11 +2875,11 @@ bool OtherCertId::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed
 	return true;
 }
 
-void OcspResponsesID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void OcspResponsesID::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     ocspIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2888,7 +2888,7 @@ void OcspResponsesID::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed
 	eh.Finalize();
 }
 
-bool OcspResponsesID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool OcspResponsesID::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2913,11 +2913,11 @@ bool OcspResponsesID::Decode(const unsigned char * pIn, size_t cbIn, size_t & cb
 	return true;
 }
 
-void Validity::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void Validity::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     notBefore.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2926,7 +2926,7 @@ void Validity::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
 	eh.Finalize();
 }
 
-bool Validity::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Validity::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
@@ -2951,11 +2951,11 @@ bool Validity::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void AttributeTypeAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void AttributeTypeAndValue::Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
     type.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
     eh.Update();
@@ -2964,7 +2964,7 @@ void AttributeTypeAndValue::Encode(unsigned char * pOut, size_t cbOut, size_t & 
 	eh.Finalize();
 }
 
-bool AttributeTypeAndValue::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool AttributeTypeAndValue::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
     SequenceHelper sh(cbUsed);
 

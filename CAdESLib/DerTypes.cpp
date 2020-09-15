@@ -24,7 +24,7 @@ std::ostream& operator<<(std::ostream& os, const DerTypeContainer& type)
 
 	if (type._class != DerClass::Universal)
 	{
-		os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)static_cast<unsigned char>(type.type);
+		os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)static_cast<uint8_t>(type.type);
 		os << std::setfill(' ');
 		return os;
 	}
@@ -156,14 +156,14 @@ std::ostream& operator<<(std::ostream& os, const DerTypeContainer& type)
 		break;
 
 	default:
-		os << "Unknown type " << static_cast<unsigned char>(type.type);
+		os << "Unknown type " << static_cast<uint8_t>(type.type);
 		break;
 	}
 
 	return os;
 }
 
-void BitString::SetValue(unsigned char unusedBits, const unsigned char * data, size_t cb)
+void BitString::SetValue(uint8_t unusedBits, const uint8_t * data, size_t cb)
 {
 	// Behavior here is interesting - first char specifies how many trailing
 	// bits aren't used
@@ -188,7 +188,7 @@ bool ObjectIdentifier::ToString(std::string & out) const
 	std::string tmp;
 	size_t cbRead = 0;
 	size_t pos = 0;
-	unsigned long node = 0;
+	uint32_t node = 0;
 
 	if (value.size() < 1)
 		return false;
@@ -239,7 +239,7 @@ bool ObjectIdentifier::ToString(std::wstring & out) const
 	std::wstring tmp;
 	size_t cbRead = 0;
 	size_t pos = 0;
-	unsigned long node = 0;
+	uint32_t node = 0;
 
 	if (value.size() < 1)
 		return false;
@@ -300,9 +300,9 @@ void ObjectIdentifier::SetValue(const char * szOid)
 
 	// This is going to require a substantial parser
 	const char* tmp = szOid;
-	unsigned long first, second;
+	uint32_t first, second;
 	const char* next = nullptr;
-	unsigned char buf[8];
+	uint8_t buf[8];
 	size_t cbUsed = 0;
 
 	// The first two are special
@@ -330,7 +330,7 @@ void ObjectIdentifier::SetValue(const char * szOid)
     SetOidIndex();
 }
 
-void ObjectIdentifier::EncodeLong(unsigned long in, unsigned char * out, size_t cbOut, size_t & cbUsed)
+void ObjectIdentifier::EncodeLong(uint32_t in, uint8_t * out, size_t cbOut, size_t & cbUsed)
 {
 	// Need to encode the bytes to base 128
 	// any byte after the first needs to have high bit set
@@ -341,21 +341,21 @@ void ObjectIdentifier::EncodeLong(unsigned long in, unsigned char * out, size_t 
 			throw std::invalid_argument("Output buffer too small");
 
 		cbUsed = 1;
-		out[0] = static_cast<unsigned char>(in);
+		out[0] = static_cast<uint8_t>(in);
 		return;
 	}
 
-	unsigned char buf[8];
+	uint8_t buf[8];
 	// We know we need the last byte
-	buf[7] = static_cast<unsigned char>(in & 0x7f);
+	buf[7] = static_cast<uint8_t>(in & 0x7f);
 	in >>= 7;
 	cbUsed = 1;
 
-	int i;
+	int32_t i;
 
 	for (i = sizeof(buf) - 2; i >= 0; --i)
 	{
-		buf[i] = static_cast<unsigned char>((in & 0x7f) | 0x80);
+		buf[i] = static_cast<uint8_t>((in & 0x7f) | 0x80);
 		in >>= 7;
 		cbUsed++;
 
@@ -366,16 +366,16 @@ void ObjectIdentifier::EncodeLong(unsigned long in, unsigned char * out, size_t 
 	if (cbOut < cbUsed)
 		throw std::invalid_argument("Output buffer too small");
 
-	unsigned char* data = buf + (sizeof(buf) - cbUsed);
+	uint8_t* data = buf + (sizeof(buf) - cbUsed);
 	memcpy_s(out, cbOut, data, cbUsed);
 	return;
 }
 
-bool ObjectIdentifier::DecodeLong(const unsigned char * in, size_t cbIn, unsigned long & out, size_t & cbRead) const
+bool ObjectIdentifier::DecodeLong(const uint8_t * in, size_t cbIn, uint32_t & out, size_t & cbRead) const
 {
-	unsigned long long tmp = 0;
+	uint64_t tmp = 0;
 
-	unsigned int i;
+	uint32_t i;
 	for (i = 0; i < cbIn && i < 6; ++i)
 	{
 		// we can't possibly overflow a 64-bit value with only 42 bits of input
@@ -393,15 +393,15 @@ bool ObjectIdentifier::DecodeLong(const unsigned char * in, size_t cbIn, unsigne
 		return false;
 	}
 
-	out = static_cast<unsigned long>(tmp);
+	out = static_cast<uint32_t>(tmp);
 	cbRead = i + 1;
 	return true;
 }
 
-void ObjectIdentifier::GetNextLong(const char * start, const char *& next, unsigned long & out)
+void ObjectIdentifier::GetNextLong(const char * start, const char *& next, uint32_t & out)
 {
 	char* end = nullptr;
-	unsigned long tmp = strtoul(start, &end, 10);
+	uint32_t tmp = strtoul(start, &end, 10);
 
 	// If end is an invalid character, then fail
 	switch (*end)
@@ -460,7 +460,7 @@ bool PrintableString::SetValue(const char * str)
 
 namespace 
 {
-	void EncodeVector(DerType type, const std::vector<unsigned char>& in, unsigned char* out, size_t cbOut, size_t& cbUsed)
+	void EncodeVector(DerType type, const std::vector<uint8_t>& in, uint8_t* out, size_t cbOut, size_t& cbUsed)
 	{
 		// If it is empty, encode as Null
 		if (in.size() == 0)
@@ -468,7 +468,7 @@ namespace
 			if (cbOut < 2)
 				throw std::overflow_error("Overflow in EncodeVector");
 
-			out[0] = static_cast<unsigned char>(DerType::Null);
+			out[0] = static_cast<uint8_t>(DerType::Null);
 			out[1] = 0;
 			cbUsed = 2;
 			return;
@@ -476,20 +476,20 @@ namespace
 
 		size_t cbUsedSize = 0;
 		size_t cbNeeded = in.size() + 1; // Data, plus tag
-		unsigned char encodedSize[sizeof(long long)];
+		uint8_t encodedSize[sizeof(int64_t)];
 
 		if (!EncodeSize(in.size(), encodedSize, sizeof(encodedSize), cbUsedSize))
 		{
 			throw std::overflow_error("Overflow in EncodeVector");
 		}
 
-		// Note - cbUsedSize guaranteed to be <= 8, int overflow not possible
+		// Note - cbUsedSize guaranteed to be <= 8, int32_t overflow not possible
 		cbNeeded += cbUsedSize;
 
 		if (cbNeeded > cbOut)
 			throw std::length_error("Insufficient Buffer");
 
-		out[0] = static_cast<unsigned char>(type);
+		out[0] = static_cast<uint8_t>(type);
 		size_t offset = 1;
 		memcpy_s(out + offset, cbOut - offset, encodedSize, cbUsedSize);
 		offset += cbUsedSize;
@@ -500,7 +500,7 @@ namespace
 	}
 
 	template <typename T>
-	void EncodeString(DerType type, const std::basic_string<T>& in, unsigned char* out, size_t cbOut, size_t& cbUsed)
+	void EncodeString(DerType type, const std::basic_string<T>& in, uint8_t* out, size_t cbOut, size_t& cbUsed)
 	{
 		// If it is empty, encode as Null
 		if (in.size() == 0)
@@ -508,7 +508,7 @@ namespace
 			if (cbOut < 2)
 				throw std::overflow_error("Overflow in EncodeString");
 
-			out[0] = static_cast<unsigned char>(DerType::Null);
+			out[0] = static_cast<uint8_t>(DerType::Null);
 			out[1] = 0;
 			cbUsed = 2;
 			return;
@@ -517,20 +517,20 @@ namespace
 		const size_t charSize = sizeof(T);
 		size_t cbUsedSize = 0;
 		size_t cbNeeded = (in.size() + 1) * charSize; // Data, plus tag
-		unsigned char encodedSize[sizeof(long long)];
+		uint8_t encodedSize[sizeof(int64_t)];
 
 		if (!EncodeSize(in.size() * charSize, encodedSize, sizeof(encodedSize), cbUsedSize))
 		{
 			throw std::overflow_error("Overflow in EncodeString");
 		}
 
-		// Note - cbUsedSize guaranteed to be <= 8, int overflow not possible
+		// Note - cbUsedSize guaranteed to be <= 8, int32_t overflow not possible
 		cbNeeded += cbUsedSize;
 
 		if (cbNeeded > cbOut)
 			throw std::length_error("Insufficient Buffer");
 
-		out[0] = static_cast<unsigned char>(type);
+		out[0] = static_cast<uint8_t>(type);
 		size_t offset = 1;
 		memcpy_s(out + offset, cbOut - offset, encodedSize, cbUsedSize);
 		offset += cbUsedSize;
@@ -541,11 +541,11 @@ namespace
 	}
 }
 
-void Boolean::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void Boolean::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
-	unsigned char buf[3];
+	uint8_t buf[3];
 
-	buf[0] = static_cast<unsigned char>(DerType::Boolean);
+	buf[0] = static_cast<uint8_t>(DerType::Boolean);
 	buf[1] = 1;
 	buf[2] = b ? 0xff : 0;
 
@@ -559,7 +559,7 @@ void Boolean::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 	throw std::exception(); // Encode Buffer Overrun
 }
 
-bool Boolean::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Boolean::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
 	size_t size = 0;
 	size_t cbPrefix = 0;
@@ -577,55 +577,55 @@ bool Boolean::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
 	return true;
 }
 
-void Integer::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void Integer::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::Integer, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void BitString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void BitString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::BitString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void OctetString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void OctetString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::OctetString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void Enumerated::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void Enumerated::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	if (cbOut < 3)
 		throw std::overflow_error("Overflow in Enumerated::Encode");
 
-	pOut[0] = static_cast<unsigned char>(DerType::Enumerated);
+	pOut[0] = static_cast<uint8_t>(DerType::Enumerated);
 	pOut[1] = 1;
 	pOut[2] = value;
 	cbUsed = 3;
     CheckOutputSize(cbUsed);
 }
 
-void ObjectIdentifier::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void ObjectIdentifier::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeVector(DerType::ObjectIdentifier, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void UTCTime::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void UTCTime::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::UTCTime, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void GeneralizedTime::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void GeneralizedTime::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::GeneralizedTime, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void Time::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void Time::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	if(cbOut < 2)
 		throw std::overflow_error("Overflow in EncodeString");
@@ -636,13 +636,13 @@ void Time::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
 		EncodeString<char>(DerType::UTCTime, value, pOut, cbOut, cbUsed);
 	else
 	{
-		pOut[0] = static_cast<unsigned char>(DerType::Null);
+		pOut[0] = static_cast<uint8_t>(DerType::Null);
 		pOut[1] = 0;
 	}
     CheckOutputSize(cbUsed);
 }
 
-bool Time::Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+bool Time::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
 	// Sort out which of the two we have
 	if (cbIn < 2)
@@ -733,49 +733,49 @@ bool Time::ToString(std::string & out) const
     return true;
 }
 
-void IA5String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void IA5String::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::IA5String, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void GeneralString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void GeneralString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::GeneralString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void PrintableString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void PrintableString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::PrintableString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void T61String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void T61String::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::T61String, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void UTF8String::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void UTF8String::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::UTF8String, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void VisibleString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void VisibleString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char>(DerType::VisibleString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void UniversalString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void UniversalString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<char32_t>(DerType::UniversalString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);
 }
 
-void BMPString::Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+void BMPString::Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 {
 	EncodeString<wchar_t>(DerType::BMPString, value, pOut, cbOut, cbUsed);
     CheckOutputSize(cbUsed);

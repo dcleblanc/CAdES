@@ -1,7 +1,7 @@
 #include "../CAdESLib/Common.h"
 #include "CertToXml.h"
 
-std::wostream& ctx::operator<<(std::wostream& os, const std::vector<unsigned char>& data)
+std::wostream& ctx::operator<<(std::wostream& os, const std::vector<uint8_t>& data)
 {
     for (size_t pos = 0; pos < data.size(); ++pos)
     {

@@ -159,7 +159,7 @@ void EncodeSizeTest()
 		{ 0xffffffffffffff + 1, false }*/
 	};
 
-	unsigned char buf[sizeof(unsigned long long)];
+	uint8_t buf[sizeof(uint64_t)];
 	size_t cbUsed;
 	size_t result;
 	size_t cbRead;
@@ -190,7 +190,7 @@ void EncodeSizeTest()
 
 }
 
-bool ParseDer(const unsigned char* pIn, size_t cbIn)
+bool ParseDer(const uint8_t* pIn, size_t cbIn)
 {
 	size_t pos = 0;
 	while (pos < cbIn)
@@ -222,7 +222,7 @@ bool ParseDer(const unsigned char* pIn, size_t cbIn)
 	return true;
 }
 
-void DebugDump(const char* szFile, const unsigned char* pData, size_t cbData)
+void DebugDump(const char* szFile, const uint8_t* pData, size_t cbData)
 {
 	std::string dbgFile(szFile);
 	dbgFile += ".dmp";
@@ -248,7 +248,7 @@ void DebugDump(const char* szFile, const unsigned char* pData, size_t cbData)
 void ParseTest(const char * szFile)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
@@ -264,7 +264,7 @@ void ParseTest(const char * szFile)
 	bool fEncode = false;
 	bool fDecode = false;
 	size_t cbBuffer = (contents.size() + (4096 - 1)) & ~(4096 - 1);
-	std::vector<unsigned char> outBuf(cbBuffer);
+	std::vector<uint8_t> outBuf(cbBuffer);
 
 	try
 	{
@@ -308,7 +308,7 @@ void ParseTest(const char * szFile)
 		{
 			if (contents[pos] != outBuf[pos])
 			{
-				std::cout << "Mismatch at offset " << pos << " Input = " << (int)contents[pos] << " Output = " << (int)outBuf[pos] << std::endl;
+				std::cout << "Mismatch at offset " << pos << " Input = " << (int32_t)contents[pos] << " Output = " << (int32_t)outBuf[pos] << std::endl;
 				fEncode = false;
 			}
 		}
@@ -339,13 +339,13 @@ void ParseTest(const char * szFile)
 void PrintOids();
 void TestOidTable();
 
-int main(int argc, char* argv[])
+int32_t main(int32_t argc, char* argv[])
 {
 	bool fPrintUsage = false;
 	const char* szFile = nullptr;
 
 	// Last argument, if present, has to be the file name
-	for (int i = 1; i < argc - 1; ++i)
+	for (int32_t i = 1; i < argc - 1; ++i)
 	{
 		if (argv[i][0] == '-')
 		{

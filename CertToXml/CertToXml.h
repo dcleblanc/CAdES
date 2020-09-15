@@ -9,7 +9,7 @@
 
 namespace ctx
 {
-    std::wostream& operator<<(std::wostream& os, const std::vector<unsigned char>& data);
+    std::wostream& operator<<(std::wostream& os, const std::vector<uint8_t>& data);
 
     template <typename T>
     void ToString(const T& t, std::wstring& out)

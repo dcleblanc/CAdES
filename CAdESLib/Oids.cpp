@@ -158,7 +158,7 @@ class OidHelper
 {
 public:
     const char* oid;
-    const unsigned char* encodedOid; // ASN.1 encoding
+    const uint8_t* encodedOid; // ASN.1 encoding
     const char* textOid; // Friendly name
     const char* varName;
 };
@@ -169,10 +169,10 @@ void PrintOids()
 {
     // This is all terribly inefficient, but is only used
     // to create the structure definition we need
-    typedef std::vector<unsigned char> oidBytes;
+    typedef std::vector<uint8_t> oidBytes;
     std::map<oidBytes, OidHelper> oidMap;
     size_t maxKeylen = 0;
-    unsigned char keybuf[12];
+    uint8_t keybuf[12];
 
     for (size_t i = 0; i < _countof(knownOids); ++i)
     {
@@ -206,14 +206,14 @@ void PrintOids()
 
         memset(keybuf, 0, sizeof(keybuf));
         memcpy_s(keybuf, sizeof(keybuf), &key[0], key.size());
-        keybuf[sizeof(keybuf) - 1] = static_cast<unsigned char>(key.size());
+        keybuf[sizeof(keybuf) - 1] = static_cast<uint8_t>(key.size());
 
-        printf("\t{ { 0x%02x, ", (unsigned char)keybuf[0]);
-        for (unsigned int i = 1; i < sizeof(keybuf) - 1; ++i)
+        printf("\t{ { 0x%02x, ", (uint8_t)keybuf[0]);
+        for (uint32_t i = 1; i < sizeof(keybuf) - 1; ++i)
         {
-            printf("0x%02x, ", (unsigned char)keybuf[i]);
+            printf("0x%02x, ", (uint8_t)keybuf[i]);
         }
-        printf("0x%02x }, ", (unsigned char)keybuf[sizeof(keybuf) - 1]);
+        printf("0x%02x }, ", (uint8_t)keybuf[sizeof(keybuf) - 1]);
         printf("%s, ", oh.varName);
         printf("\"\" },\n");
 
@@ -231,7 +231,7 @@ namespace
 {
     struct OidInfo
     {
-        unsigned char encodedOid[12];
+        uint8_t encodedOid[12];
         const char* szOid;
         const char* szOidLabel;
     };
@@ -382,7 +382,7 @@ namespace
 
     bool OidLessThan(const OidInfo& p1, const OidInfo& p2)
     {
-        int ret = memcmp(p1.encodedOid, p2.encodedOid, sizeof(p1.encodedOid));
+        int32_t ret = memcmp(p1.encodedOid, p2.encodedOid, sizeof(p1.encodedOid));
         
         if (ret < 0)
             return true;
@@ -392,7 +392,7 @@ namespace
 
     bool OidEquals(OidInfo& p1, OidInfo& p2)
     {
-        int ret = memcmp(p1.encodedOid, p2.encodedOid, sizeof(p1.encodedOid));
+        int32_t ret = memcmp(p1.encodedOid, p2.encodedOid, sizeof(p1.encodedOid));
 
         if (ret == 0)
             return true;
@@ -402,7 +402,7 @@ namespace
 
 } // local namespace
 
-bool GetOidInfoIndex(const std::vector<unsigned char>& value, size_t& index)
+bool GetOidInfoIndex(const std::vector<uint8_t>& value, size_t& index)
 {
     OidInfo* pRet = nullptr;
     OidInfo* pLast = oidTable + _countof(oidTable);
@@ -413,7 +413,7 @@ bool GetOidInfoIndex(const std::vector<unsigned char>& value, size_t& index)
         return false;
 
     memcpy_s(oiTest.encodedOid, sizeof(oiTest.encodedOid), &value[0], value.size());
-    oiTest.encodedOid[sizeof(oiTest.encodedOid) - 1] = static_cast<unsigned char>(value.size());
+    oiTest.encodedOid[sizeof(oiTest.encodedOid) - 1] = static_cast<uint8_t>(value.size());
 
     pRet = std::lower_bound(oidTable, oidTable + _countof(oidTable), oiTest, OidLessThan);
     // The return will be either the exact match, or will be one greater, so need to check
@@ -585,7 +585,7 @@ const char* testOids[] =
 
 void CheckOids()
 {
-    for (int i = 0; i < _countof(testOids); ++i)
+    for (int32_t i = 0; i < _countof(testOids); ++i)
     {
         ObjectIdentifier oi;
 

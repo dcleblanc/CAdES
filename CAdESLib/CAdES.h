@@ -44,8 +44,8 @@ enum class CertVersionValue
 class EncapsulatedContentInfo final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -76,8 +76,8 @@ public:
 		attrValues.insert(attrValues.begin(), rhs.attrValues.begin(), rhs.attrValues.end());
 	}
 
-	virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	void AddAttributeValue(const AttributeValue& value)
 	{
@@ -115,8 +115,8 @@ typedef ObjectIdentifier AttributeType;
 class AttributeTypeAndValue : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const char* GetTypeLabel() const { return type.GetOidLabel(); }
 
@@ -158,12 +158,12 @@ class RelativeDistinguishedName final : public DerBase
 	// Defined in https://www.ietf.org/rfc/rfc5280.txt
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
         EncodeSetOrSequenceOf(DerType::ConstructedSet, attrs, pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
 	{
 		return DecodeSet(pIn, cbIn, cbUsed, attrs);
 	}
@@ -213,11 +213,11 @@ class RDNSequence final : public DerBase
 {
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         // This is a sequence of sets of AttributeTypeAndValue
         for (size_t item = 0; item < name.size(); ++item)
@@ -229,7 +229,7 @@ public:
 		eh.Finalize();
 	}
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
 	{
         SequenceHelper sh(cbUsed);
 
@@ -318,12 +318,12 @@ class Name final : public DerBase
 public:
 	// This is a CHOICE, but there is only one choice,
 	// And oddly, it is a sequence that is a sequence of only one type
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		rdnSequence.Encode(pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
 	{
         // A Name is a CHOICE, but there's only one possible type, which is an rdnSequence
         return rdnSequence.Decode(pIn, cbIn, cbUsed);
@@ -356,8 +356,8 @@ typedef Integer CertificateSerialNumber;
 class IssuerAndSerialNumber final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -425,8 +425,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const char* ExtensionIdLabel() const { return extnID.GetOidLabel(); }
     const char* ExtensionIdOidString() const { return extnID.GetOidString(); }
@@ -434,9 +434,9 @@ public:
 
     // The OctetString is really some number of sub-structures, which are defined by which extnID we have
 
-    bool GetRawExtension(std::vector<unsigned char>& out) const
+    bool GetRawExtension(std::vector<uint8_t>& out) const
     {
-        const std::vector<unsigned char>& extnData = extnValue.GetValue();
+        const std::vector<uint8_t>& extnData = extnValue.GetValue();
 
         if (extnData.size() > 0)
         {
@@ -461,16 +461,16 @@ private:
 
 struct KeyUsageValue
 {
-   unsigned int digitalSignature : 1;
-   unsigned int nonRepudiation : 1;
-   unsigned int keyEncipherment : 1;
-   unsigned int dataEncipherment : 1;
-   unsigned int keyAgreement : 1;
-   unsigned int keyCertSign : 1;
-   unsigned int cRLSign : 1;
-   unsigned int encipherOnly : 1;
-   unsigned int decipherOnly : 1;
-   unsigned int unused : 23;
+   uint32_t digitalSignature : 1;
+   uint32_t nonRepudiation : 1;
+   uint32_t keyEncipherment : 1;
+   uint32_t dataEncipherment : 1;
+   uint32_t keyAgreement : 1;
+   uint32_t keyCertSign : 1;
+   uint32_t cRLSign : 1;
+   uint32_t encipherOnly : 1;
+   uint32_t decipherOnly : 1;
+   uint32_t unused : 23;
 };
 
 class ExtensionBase : public DerBase
@@ -482,14 +482,14 @@ public:
     {
         size_t cbUsed = 0;
         size_t cbNeeded = EncodedSize();
-        std::vector<unsigned char>& data = os.Resize(cbNeeded);
+        std::vector<uint8_t>& data = os.Resize(cbNeeded);
         DerBase::Encode(&data[0], data.size(), cbUsed);
     }
 
     bool Decode(const OctetString& os)
     {
         size_t cbUsed = 0;
-        const std::vector<unsigned char>& data = os.GetValue();
+        const std::vector<uint8_t>& data = os.GetValue();
         return DerBase::Decode(&data[0], data.size(), cbUsed);
     }
 
@@ -503,12 +503,12 @@ class RawExtension : public ExtensionBase
 public:
     RawExtension(const char* oid = nullptr) : ExtensionBase(oid){}
 
-    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) final
     {
         extension.Encode(pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) final
     {
         return extension.Decode(pIn, cbIn, cbUsed);
     }
@@ -549,13 +549,13 @@ public:
         keyUsageValue = {};
     }
 
-    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) final
     {
         // Encode the value into a BitString
         bits.Encode(pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) final
     {
         if (!bits.Decode(pIn, cbIn, cbUsed) || !BitStringToKeyUsage())
             return false;
@@ -565,7 +565,7 @@ public:
 
     const BitString& GetBitString() const { return bits; }
     const KeyUsageValue GetKeyUsage() const { return keyUsageValue; }
-    bool HasUsage() const { return (*reinterpret_cast<const int*>(&keyUsageValue) == 0); }
+    bool HasUsage() const { return (*reinterpret_cast<const int32_t*>(&keyUsageValue) == 0); }
 
 private:
 
@@ -578,7 +578,7 @@ private:
     {
         // Deal with the case where you have a bit string of value zero
         // which is 03 01 00
-        const std::vector<unsigned char>& value = bits.GetBits();
+        const std::vector<uint8_t>& value = bits.GetBits();
 
         if (value.size() == 1 && value[0] == 0)
             return true;
@@ -594,8 +594,8 @@ private:
             return true;
         }
 
-        unsigned char unusedBits = bits.UnusedBits();
-        const unsigned char* pBits = nullptr;
+        uint8_t unusedBits = bits.UnusedBits();
+        const uint8_t* pBits = nullptr;
         size_t _cbData = 0;
 
         if (!bits.GetValue(pBits, _cbData) || _cbData < 2)
@@ -657,10 +657,10 @@ private:
 
     void KeyUsageToBitString()
     {
-        int* pvalue = reinterpret_cast<int*>(&keyUsageValue);
-        unsigned char bitsUsed = 0;
+        int32_t* pvalue = reinterpret_cast<int32_t*>(&keyUsageValue);
+        uint8_t bitsUsed = 0;
 
-        for (int tmp = *pvalue; tmp != 0; )
+        for (int32_t tmp = *pvalue; tmp != 0; )
         {
             if (tmp != 0)
             {
@@ -670,14 +670,14 @@ private:
         }
 
         // How many bytes do we write out?
-        unsigned char byteCount = bitsUsed > 0 ? bitsUsed / 8 + 1 : 0;
-        unsigned char unusedBits = (byteCount * 8) - bitsUsed;
-        unsigned char buffer[4];
+        uint8_t byteCount = bitsUsed > 0 ? bitsUsed / 8 + 1 : 0;
+        uint8_t unusedBits = (byteCount * 8) - bitsUsed;
+        uint8_t buffer[4];
 
-        for (unsigned char i = 0; i < byteCount && i < 4; ++i)
+        for (uint8_t i = 0; i < byteCount && i < 4; ++i)
         {
             size_t offset = sizeof(buffer) - 1 - i;
-            buffer[offset] = *reinterpret_cast<unsigned char*>(pvalue);
+            buffer[offset] = *reinterpret_cast<uint8_t*>(pvalue);
         }
 
         bits.SetValue(unusedBits, buffer + (sizeof(buffer) - byteCount), byteCount);
@@ -702,7 +702,7 @@ public:
 
     // Also TODO - need to capture all the EKU OIDs
     // in the samples, be able to translate the most common to a friendly name
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) final
 	{
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -717,11 +717,11 @@ public:
 		return ret;
     }
 
-    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) final
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
         EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
 		eh.Finalize();
     }
@@ -750,17 +750,17 @@ class SubjectKeyIdentifier : public ExtensionBase
 public:
     SubjectKeyIdentifier() : ExtensionBase(id_ce_subjectKeyIdentifier) {}
 
-    virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) final
+    virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) final
     {
         keyIdentifier.Encode(pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) final
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) final
     {
         return keyIdentifier.Decode(pIn, cbIn, cbUsed);
     }
 
-    const std::vector<unsigned char>& GetKeyIdentifierValue() const { return keyIdentifier.GetValue(); }
+    const std::vector<uint8_t>& GetKeyIdentifierValue() const { return keyIdentifier.GetValue(); }
     const OctetString& GetKeyIdentifer() const { return keyIdentifier; }
 
 private:
@@ -837,8 +837,8 @@ private:
 class EDIPartyName final : public DerBase
 {
 public:
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const DirectoryString& GetNameAssigner() const { return nameAssigner; }
     const DirectoryString& GetPartyName() const { return partyName; }
@@ -962,7 +962,7 @@ public:
         if (derType._class != DerClass::ContextSpecific)
             return GeneralNameType::Error;
 
-        switch (static_cast<unsigned char>(derType.type))
+        switch (static_cast<uint8_t>(derType.type))
         {
         case 0:
             return GeneralNameType::OtherName;
@@ -1000,7 +1000,7 @@ private:
         {
             size_t cbUsed = 0;
             size_t innerSize = 0;
-            const unsigned char* pIn = ChoiceType::GetInnerBuffer(innerSize);
+            const uint8_t* pIn = ChoiceType::GetInnerBuffer(innerSize);
             return t.Decode(pIn, innerSize, cbUsed);
         }
         return false;
@@ -1010,13 +1010,13 @@ private:
 class GeneralNames final : public DerBase
 {
 public:
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         SetDataSize();
         EncodeSetOrSequenceOf(DerType::ConstructedSet, names, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+    virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -1049,11 +1049,11 @@ class DistributionPointName :public DerBase
 public:
     DistributionPointName() = default;
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         fullName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1062,7 +1062,7 @@ public:
 		eh.Finalize();
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
@@ -1113,11 +1113,11 @@ class DistributionPoint : public DerBase
 public:
     DistributionPoint() = default;
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
         
         distributionPoint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1129,7 +1129,7 @@ public:
 		eh.Finalize();
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
@@ -1216,12 +1216,12 @@ class CrlDistributionPoints : public ExtensionBase
 public:
     CrlDistributionPoints() : ExtensionBase(id_ce_cRLDistributionPoints) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, cRLDistributionPoints, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -1269,7 +1269,7 @@ class IssuingDistributionPoint : public ExtensionBase
 public:
     IssuingDistributionPoint() : ExtensionBase(id_ce_issuingDistributionPoint) {}
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
@@ -1328,11 +1328,11 @@ public:
         return true;
     }
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
         
         distributionPoint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1428,11 +1428,11 @@ class AuthorityKeyIdentifier : public ExtensionBase
 public:
     AuthorityKeyIdentifier() = default;
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         keyIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1444,7 +1444,7 @@ public:
 		eh.Finalize();
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
@@ -1518,11 +1518,11 @@ id-ad-ocsp OBJECT IDENTIFIER ::= { id-ad 1 }
 class AccessDescription : public DerBase
 {
 public:
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         accessMethod.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1531,7 +1531,7 @@ public:
 		eh.Finalize();
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         SequenceHelper sh(cbUsed);
 
@@ -1574,12 +1574,12 @@ class AuthorityInfoAccess : public ExtensionBase
 public:
     AuthorityInfoAccess() : ExtensionBase(id_pe_authorityInfoAccess) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, accessDescriptions, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -1610,12 +1610,12 @@ class SubjectAltName : public ExtensionBase
 public:
     SubjectAltName() : ExtensionBase(id_ce_subjectAltName){}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         names.Encode(pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         return names.Decode(pIn, cbIn, cbUsed);
     }
@@ -1656,12 +1656,12 @@ bar {
 class KeyPurposes : public DerBase
 {
 public:
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, keyPurposes, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -1692,12 +1692,12 @@ class ApplicationCertPolicies : public ExtensionBase
 public:
     ApplicationCertPolicies() : ExtensionBase(id_microsoft_appCertPolicies){}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, certPolicies, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -1740,11 +1740,11 @@ class CertTemplate : public ExtensionBase
 public:
     CertTemplate() : ExtensionBase(id_microsoft_certTemplate){}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         objId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1756,7 +1756,7 @@ public:
 		eh.Finalize();
     }
     
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         SequenceHelper sh(cbUsed);
 
@@ -1844,11 +1844,11 @@ class BasicConstraints : public ExtensionBase
 public:
     BasicConstraints() : ExtensionBase(id_ce_basicConstraints) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeHelper eh(cbUsed);
 
-        eh.Init(EncodedSize(), pOut, cbOut, static_cast<unsigned char>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), pOut, cbOut, static_cast<uint8_t>(DerType::ConstructedSequence), cbData);
 
         cA.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
         eh.Update();
@@ -1857,7 +1857,7 @@ public:
 		eh.Finalize();
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         SequenceHelper sh(cbUsed);
 
@@ -1961,12 +1961,12 @@ class MicrosoftCAVersion : public ExtensionBase
 public:
     MicrosoftCAVersion() : ExtensionBase(id_microsoft_certsrvCAVersion) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         version.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return version.Decode(pIn, cbIn, cbUsed);
     }
@@ -1989,12 +1989,12 @@ public:
     MicrosoftEnrollCertType() : ExtensionBase(id_microsoft_enrollCertType) {}
 
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         certType.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return certType.Decode(pIn, cbIn, cbUsed);
     }
@@ -2020,12 +2020,12 @@ class MicrosoftPreviousCertHash : public ExtensionBase
 public:
     MicrosoftPreviousCertHash() : ExtensionBase(id_microsoft_certsrvPrevHash) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         prevCertHash.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return prevCertHash.Decode(pIn, cbIn, cbUsed);
     }
@@ -2044,12 +2044,12 @@ class ApplePushDev : public ExtensionBase
 {
 public:
     ApplePushDev() : ExtensionBase(id_apple_pushDev) {}
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         nothing.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return nothing.Decode(pIn, cbIn, cbUsed);
     }
@@ -2066,12 +2066,12 @@ class ApplePushProd : public ExtensionBase
 {
 public:
     ApplePushProd() : ExtensionBase(id_apple_pushProd) {}
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         nothing.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return nothing.Decode(pIn, cbIn, cbUsed);
     }
@@ -2089,12 +2089,12 @@ class AppleCustom6 : public ExtensionBase
 {
 public:
     AppleCustom6() : ExtensionBase(id_apple_custom6) {}
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         nothing.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return nothing.Decode(pIn, cbIn, cbUsed);
     }
@@ -2133,12 +2133,12 @@ class IssuerAltNames : public ExtensionBase
 public:
     IssuerAltNames() : ExtensionBase(id_ce_issuerAltName) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         altNames.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return altNames.Decode(pIn, cbIn, cbUsed);
     }
@@ -2237,12 +2237,12 @@ class FreshestCRL : public ExtensionBase
 public:
     FreshestCRL() : ExtensionBase(id_ce_freshestCRL) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         crlDist.Encode(pOut, cbOut, cbUsed);
     }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         return crlDist.Decode(pIn, cbIn, cbUsed);
     }
@@ -2285,8 +2285,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     // Accessors
     const char* AlgorithmOid() const { return algorithm.GetOidString(); }
@@ -2313,8 +2313,8 @@ class SignerInfo final : public DerBase
 public:
 	SignerInfo() = default;
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -2343,8 +2343,8 @@ protected:
 class OtherCertificateFormat final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -2365,8 +2365,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const AlgorithmIdentifier& GetAlgorithm() const { return algorithm; }
     const BitString& GetSubjectPublicKey() const { return subjectPublicKey; }
@@ -2389,12 +2389,12 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, values, pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
 	{
 		// This is actually a SEQUENCE, oddly, seems it should be a set
 		// Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
@@ -2440,7 +2440,7 @@ public:
             size_t oidIndex = ext.GetOidIndex();
             const char* oidString = oidIndex == ~static_cast<size_t>(0) ? nullptr : GetOidString(oidIndex);
             // Get the raw data from inside the OctetString
-            std::vector<unsigned char> extensionData;
+            std::vector<uint8_t> extensionData;
 
             if (!ext.GetRawExtension(extensionData))
             {
@@ -2510,7 +2510,7 @@ public:
 private:
     KeyUsageValue keyUsageValue;
     std::vector<ObjectIdentifier> ekus;
-    std::vector<unsigned char> subjectKeyIdentifier;
+    std::vector<uint8_t> subjectKeyIdentifier;
 
     const std::vector<Extension>& extensions;
 };
@@ -2518,8 +2518,8 @@ private:
 class Validity final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
     const Time& GetNotBefore() const { return notBefore; }
     const Time& GetNotAfter() const { return notAfter; }
@@ -2540,15 +2540,15 @@ public:
 	// These fields are context-specific, and may not be present (not just null)
     TBSCertificate() = default;
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     // Accessors
     // version
-    unsigned long GetVersion() const
+    uint32_t GetVersion() const
     {
         const Integer& _version = version.GetInnerType();
-        unsigned long l = 0;
+        uint32_t l = 0;
 
         if (_version.GetValue(l) && l < 3)
         {
@@ -2557,7 +2557,7 @@ public:
         }
         else
         {
-            return static_cast<unsigned long>(0);
+            return static_cast<uint32_t>(0);
         }
     }
 
@@ -2579,7 +2579,7 @@ public:
 
     // serialNumber
     // TBD, consider conversion to string as decimal or hexadecimal
-    void GetSerialNumber(std::vector<unsigned char>& out) const { out.clear(); out = serialNumber.GetBytes(); }
+    void GetSerialNumber(std::vector<uint8_t>& out) const { out.clear(); out = serialNumber.GetBytes(); }
 
     // signature
     const char* SignatureAlgorithm() const { return signature.AlgorithmLabel(); }
@@ -2617,14 +2617,14 @@ public:
         return alg.AlgorithmOid();
     }
 
-    void GetPublicKey(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    void GetPublicKey(uint8_t& unusedBits, std::vector<uint8_t>& out)
     {
         const BitString& bits = subjectPublicKeyInfo.GetSubjectPublicKey();
         bits.GetValue(unusedBits, out);
     }
 
     // issuerUniqueID
-    bool GetIssuerUniqueID(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    bool GetIssuerUniqueID(uint8_t& unusedBits, std::vector<uint8_t>& out)
     {
         const BitString& bits = issuerUniqueID.GetInnerType();
 
@@ -2638,7 +2638,7 @@ public:
     }
 
     // subjectUniqueID
-    bool GetSubjectUniqueID(unsigned char& unusedBits, std::vector<unsigned char>& out)
+    bool GetSubjectUniqueID(uint8_t& unusedBits, std::vector<uint8_t>& out)
     {
         const BitString& bits = subjectUniqueID.GetInnerType();
 
@@ -2716,13 +2716,13 @@ private:
 class Certificate final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     // Accessors
     // signatureValue
     size_t SignatureSize() const { return signatureValue.ValueSize(); }
-    bool GetSignatureValue(unsigned char& unusedBits, std::vector<unsigned char>& out) const { return signatureValue.GetValue(unusedBits, out); }
+    bool GetSignatureValue(uint8_t& unusedBits, std::vector<uint8_t>& out) const { return signatureValue.GetValue(unusedBits, out); }
 
     // signatureAlgorithm 
     // TBD - create a way to return parameters if they are ever not null
@@ -2739,11 +2739,11 @@ public:
     const std::string& GetFileName() const { return fileName; }
     void SetFileName(const std::string& name) { fileName = name; }
 
-    const std::vector<unsigned char>& GetThumbprint() const { return thumbprint; }
-    std::vector<unsigned char>& GetThumbprint() { return thumbprint; }
+    const std::vector<uint8_t>& GetThumbprint() const { return thumbprint; }
+    std::vector<uint8_t>& GetThumbprint() { return thumbprint; }
 
-    const std::vector<unsigned char>& GetThumbprint256() const { return thumbprint256; }
-    std::vector<unsigned char>& GetThumbprint256() { return thumbprint256; }
+    const std::vector<uint8_t>& GetThumbprint256() const { return thumbprint256; }
+    std::vector<uint8_t>& GetThumbprint256() { return thumbprint256; }
 
 private:
 	virtual size_t SetDataSize() override
@@ -2756,8 +2756,8 @@ private:
 	AlgorithmIdentifier signatureAlgorithm;
 	BitString signatureValue;
     std::string fileName;
-    std::vector<unsigned char> thumbprint;
-    std::vector<unsigned char> thumbprint256;
+    std::vector<uint8_t> thumbprint;
+    std::vector<uint8_t> thumbprint256;
 };
 
 enum class DigestedObjectTypeValue
@@ -2770,7 +2770,7 @@ enum class DigestedObjectTypeValue
 class DigestedObjectType : public Enumerated
 {
 public:
-	DigestedObjectType(DigestedObjectTypeValue v = DigestedObjectTypeValue::publicKey) : Enumerated(static_cast<unsigned char>(v)) {}
+	DigestedObjectType(DigestedObjectTypeValue v = DigestedObjectTypeValue::publicKey) : Enumerated(static_cast<uint8_t>(v)) {}
 };
 
 class IssuerSerial final : public DerBase
@@ -2782,8 +2782,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	GeneralNames issuer;
 	CertificateSerialNumber serial;
@@ -2807,8 +2807,8 @@ public:
 
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	DigestedObjectType digestedObjectType;
 	ObjectIdentifier otherObjectTypeID;
@@ -2827,8 +2827,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	IssuerSerial baseCertificateID; // optional
 	GeneralNames entityName;
@@ -2839,9 +2839,9 @@ class AttCertValidityPeriod final : public DerBase
 {
 public:
 	virtual size_t SetDataSize() override { return (cbData = notBeforeTime.EncodedSize() + notAfterTime.EncodedSize()); }
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 
 	GeneralizedTime notBeforeTime;
@@ -2857,8 +2857,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	GeneralNames issuerName;
 	IssuerSerial baseCertificateID;
@@ -2893,8 +2893,8 @@ public:
 		return cbData;
 	}
 	
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	AttCertVersion version; // set this to CertVersionValue::v2
 	Holder holder;
@@ -2915,8 +2915,8 @@ public:
 		return (cbData = acinfo.EncodedSize() + signatureAlgorithm.EncodedSize() + signatureValue.EncodedSize());
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	AttributeCertificateInfo acinfo;
 	AlgorithmIdentifier signatureAlgorithm;
@@ -2955,12 +2955,12 @@ public:
 	void SetValue(AttributeCertificateV2& v2AttrCert) { SetValue(CertificateChoicesType::AttributeCert, v2AttrCert); }
 	void SetValue(OtherCertificateFormat& other) { SetValue(CertificateChoicesType::OtherCert, other); }
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		value.Encode(pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return value.Decode(pIn, cbIn, cbUsed);
 	}
@@ -2989,8 +2989,8 @@ typedef Extensions CrlExtensions;
 class RevocationEntry final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 	CertificateSerialNumber userCertificate;
 	Time revocationDate;
@@ -3006,12 +3006,12 @@ protected:
 class RevokedCertificates final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
         EncodeSetOrSequenceOf(DerType::ConstructedSequence, entries, pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
         size_t cbPrefix = 0;
         size_t cbSize = 0;
@@ -3061,8 +3061,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	Integer version; // optional, must be v2 if present
 	AlgorithmIdentifier signature;
@@ -3082,8 +3082,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	TBSCertList tbsCertList;
 	AlgorithmIdentifier signatureAlgorithm;
@@ -3094,8 +3094,8 @@ class OtherRevocationInfoFormat final : public DerBase
 {
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
     ObjectIdentifier otherRevInfoFormat;
@@ -3122,12 +3122,12 @@ public:
 	void SetValue(CertificateList& crl) { SetValue(RevocationInfoChoiceType::CRL, crl); }
 	void SetValue(OtherRevocationInfoFormat& other) { SetValue(RevocationInfoChoiceType::Other, other); }
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		value.Encode(pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return value.Decode(pIn, cbIn, cbUsed);
 	}
@@ -3160,8 +3160,8 @@ class SignedData final : public DerBase
 {
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3193,8 +3193,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	ContentType contentType;
 	AnyType content;
@@ -3229,12 +3229,12 @@ public:
 		return cbData;
 	}
 
-	void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+	void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 	{
 		value.Encode(pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	AnyType value;
 private:
@@ -3257,9 +3257,9 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	DisplayText organization;
 	std::vector<Integer> noticeNumbers;
@@ -3268,8 +3268,8 @@ public:
 class UserNotice final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3288,8 +3288,8 @@ public:
 	// If policyQualifierId is id-qt-cps, then qualifier is CPSuri
 	// See https://tools.ietf.org/html/rfc3280 for specification
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const PolicyQualifierId& GetPolicyQualifierId() const { return policyQualifierId; }
     const AnyType& GetQualifier() const { return qualifier; }
@@ -3309,8 +3309,8 @@ class PolicyInformation final : public DerBase
 public:
     PolicyInformation() = default;
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
     const CertPolicyId& GetPolicyIdentifier() const { return policyIdentifier;}
     const std::vector<PolicyQualifierInfo>& GetPolicyQualifiers() const { return policyQualifiers; }
@@ -3355,12 +3355,12 @@ class CertificatePolicies final : public ExtensionBase
 public:
     CertificatePolicies() : ExtensionBase(id_ce_certificatePolicies) {}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         EncodeSetOrSequenceOf(DerType::ConstructedSet, certificatePolicies, pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+    virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
     {
 		size_t cbSize = 0;
 		size_t cbPrefix = 0;
@@ -3390,8 +3390,8 @@ class ESSCertID final : public DerBase
 {
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3411,8 +3411,8 @@ class SigningCertificate final : public DerBase
 	smime(16) id-aa(2) 12 }
 	*/
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3429,8 +3429,8 @@ class ESSCertIDv2 final : public DerBase
 public:
 	ESSCertIDv2(HashAlgorithm alg = HashAlgorithm::SHA256) : hashAlgorithm(alg){}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3451,8 +3451,8 @@ class SigningCertificateV2 final : public DerBase
 	smime(16) id-aa(2) 47 }
 	*/
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	void AddSigningCert(const ESSCertIDv2& certID)
 	{
@@ -3481,8 +3481,8 @@ typedef OctetString OtherHashValue;
 class OtherHashAlgAndValue final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3500,8 +3500,8 @@ typedef ObjectIdentifier SigPolicyQualifierId;
 class SigPolicyQualifierInfo final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3520,8 +3520,8 @@ class SignaturePolicyId final : public DerBase
 {
 public:
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3561,8 +3561,8 @@ smime(16) id-spq(5) 2 }
 class SPUserNotice final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3602,8 +3602,8 @@ smime(16) cti(6) 6}
 class CommitmentTypeQualifier final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3623,8 +3623,8 @@ us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) id-aa(2) 16}
 class CommitmentTypeIndication final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3646,8 +3646,8 @@ typedef std::vector<DirectoryString> PostalAddress; // 1-6 items
 class SignerLocation final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 protected:
 	virtual size_t SetDataSize() override
@@ -3670,8 +3670,8 @@ typedef AttributeCertificate CertifiedAttributes;
 class SignerAttribute final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3688,8 +3688,8 @@ private:
 class MessageImprint final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3707,8 +3707,8 @@ typedef ObjectIdentifier TSAPolicyId;
 class TimeStampReq final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3773,12 +3773,12 @@ systemFailure       (25)
 class PKIFreeText final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
         EncodeSetOrSequenceOf(DerType::ConstructedSet, values, pOut, cbOut, cbUsed);
 	}
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DecodeSet(pIn, cbIn, cbUsed, values);
 	}
@@ -3787,7 +3787,7 @@ protected:
 	virtual size_t SetDataSize() override
 	{
 		cbData = 0;
-		for (unsigned int i = 0; i < values.size(); ++i)
+		for (uint32_t i = 0; i < values.size(); ++i)
 		{
 			cbData += values[i].EncodedSize();
 		}
@@ -3802,8 +3802,8 @@ typedef ContentInfo TimeStampToken; // id-signedData
 class PKIStatusInfo final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3820,8 +3820,8 @@ private:
 class TimeStampResp final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3837,8 +3837,8 @@ private:
 class Accuracy final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3855,8 +3855,8 @@ private:
 class TSTInfo final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3916,8 +3916,8 @@ typedef OtherHashAlgAndValue OtherHash;
 class OtherCertId final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3939,8 +3939,8 @@ us(840) rsadsi(113549) pkcs(1) pkcs-9(9) smime(16) id-aa(2) 22}
 class CrlIdentifier final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3957,8 +3957,8 @@ private:
 class CrlValidatedID final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -3988,12 +3988,12 @@ class ResponderID final : public DerBase
 public:
 	ResponderID(ResponderIDType t = ResponderIDType::NotSet) : type(t) {}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 	{
 		value.Encode(pOut, cbOut, cbUsed);
 	}
 
-	bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+	bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 	{
 		// TODO - assign type value once we can determine what this is
 		return value.Decode(pIn, cbIn, cbUsed);
@@ -4029,8 +4029,8 @@ public:
 		return cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	ResponderID ocspResponderID; //As in OCSP response data
@@ -4040,8 +4040,8 @@ private:
 class OcspResponsesID final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4057,9 +4057,9 @@ private:
 class OcspListID final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
 	{
 		return DecodeSet(pIn, cbIn, cbUsed, ocspResponses);
 	}
@@ -4079,8 +4079,8 @@ typedef ObjectIdentifier OtherRevRefType;
 class OtherRevRefs final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4096,8 +4096,8 @@ private:
 class CrlOcspRef final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4131,8 +4131,8 @@ typedef ObjectIdentifier OtherRevValType;
 class OtherRevVals final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4164,7 +4164,7 @@ enum class CRLReasonValue
 class CRLReason : public Enumerated
 {
 public:
-	CRLReason(CRLReasonValue v = CRLReasonValue::unspecified) : Enumerated(static_cast<unsigned char>(v)) {}
+	CRLReason(CRLReasonValue v = CRLReasonValue::unspecified) : Enumerated(static_cast<uint8_t>(v)) {}
 
     void ToString( std::string& str )
     {
@@ -4219,8 +4219,8 @@ public:
 class RevokedInfo final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4247,8 +4247,8 @@ class CertStatus final : public DerBase
 public:
 	CertStatus() : type(CertStatusType::Unknown) {}
 
-	virtual void Encode(unsigned char * pOut, size_t cbOut, size_t & cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t * pOut, size_t cbOut, size_t & cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 	virtual size_t EncodedSize()
 	{
@@ -4275,8 +4275,8 @@ private:
 class CertID final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4298,8 +4298,8 @@ private:
 class SingleResponse final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4323,8 +4323,8 @@ private:
 class ResponseData final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4349,8 +4349,8 @@ private:
 class BasicOCSPResponse final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override
@@ -4373,8 +4373,8 @@ private:
 class RevocationValues final : public DerBase
 {
 public:
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 private:
 	virtual size_t SetDataSize() override

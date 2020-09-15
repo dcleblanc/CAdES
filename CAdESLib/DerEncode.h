@@ -17,7 +17,7 @@ template <typename T>
 size_t GetDataSize(std::vector<T>& in) 
 {
 	size_t ret = 0;
-	for (unsigned int i = 0; i < in.size(); ++i)
+	for (uint32_t i = 0; i < in.size(); ++i)
 	{
 		ret += in[i].EncodedSize();
 	}

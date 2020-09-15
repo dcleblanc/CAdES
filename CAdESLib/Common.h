@@ -29,19 +29,19 @@ void ConvertWstringToString(const std::wstring& in, std::string& out);
 #include <cstdarg>
 
 // Safe CRT functions not present in Linux
-int memcpy_s(
+int32_t memcpy_s(
    void *dest,
    size_t destSize,
    const void *src,
    size_t count
 );
 
-int gmtime_s(
+int32_t gmtime_s(
    struct tm* tmDest,
    const std::time_t* sourceTime
 );
 
-int sprintf_s(
+int32_t sprintf_s(
    char *buffer,
    size_t sizeOfBuffer,
    const char *format,
@@ -60,7 +60,7 @@ int sprintf_s(
 
 // Once there is more to it, move these to a header 
 // that can be used to abstract out platform crypto differences
-bool HashVectorSha1(const std::vector<unsigned char>& data, std::vector<unsigned char>& out);
-bool HashVectorSha256(const std::vector<unsigned char>& data, std::vector<unsigned char>& out);
+bool HashVectorSha1(const std::vector<uint8_t>& data, std::vector<uint8_t>& out);
+bool HashVectorSha256(const std::vector<uint8_t>& data, std::vector<uint8_t>& out);
 
 

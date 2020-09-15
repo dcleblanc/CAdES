@@ -9,9 +9,9 @@
 	This is actually a bitfield, roughly defined as
 	struct DerType
 	{
-		unsigned char class : 2,
-		unsigned char constructed : 1, // Constructed = 1, Primitive = 0
-		unsigned char tag : 5
+		uint8_t class : 2,
+		uint8_t constructed : 1, // Constructed = 1, Primitive = 0
+		uint8_t tag : 5
 	}
 
 	class is defined as follows:
@@ -74,7 +74,7 @@ enum class DerType
 class DerTypeContainer
 {
 public:
-	DerTypeContainer(unsigned char c) 
+	DerTypeContainer(uint8_t c) 
 		: type(static_cast<DerType>(c & 0x1f)), 
 		_class(static_cast<DerClass>((c & 0xc0) >> 6)),
 		constructed(!!(c & 0x20))
@@ -82,9 +82,9 @@ public:
 
 	}
 
-	operator unsigned char()
+	operator uint8_t()
 	{
-		return (static_cast<unsigned char>(_class) << 6) | (constructed ? 0x20 : 0) | (static_cast<unsigned char>(type));
+		return (static_cast<uint8_t>(_class) << 6) | (constructed ? 0x20 : 0) | (static_cast<uint8_t>(type));
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const DerTypeContainer& type);
@@ -94,7 +94,7 @@ public:
 	bool constructed;
 };
 
-inline size_t GetSizeBytes(unsigned long long size)
+inline size_t GetSizeBytes(uint64_t size)
 {
 	if (size < 0x80)
 		return 1;
@@ -122,13 +122,13 @@ inline size_t GetSizeBytes(unsigned long long size)
 	return ~static_cast<size_t>(0);
 }
 
-bool EncodeSize(size_t size, unsigned char* out, size_t cbOut, size_t& cbUsed);
-bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRead);
+bool EncodeSize(size_t size, uint8_t* out, size_t cbOut, size_t& cbUsed);
+bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead);
 
-void DebugDer(std::ostream& outFile, const unsigned char* pIn, size_t cbIn, unsigned long level = 0);
+void DebugDer(std::ostream& outFile, const uint8_t* pIn, size_t cbIn, uint32_t level = 0);
 
 template <typename T>
-void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOut, size_t cbOut, size_t & cbUsed)
+void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, uint8_t * pOut, size_t cbOut, size_t & cbUsed)
 {
 	size_t cbInternal = 0;
 	size_t offset = 0;
@@ -138,13 +138,13 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOu
 		if (cbOut < 2)
 			throw std::overflow_error("Overflow in EncodeSetOrSequenceOf");
 
-		pOut[0] = static_cast<unsigned char>(DerType::Null);
+		pOut[0] = static_cast<uint8_t>(DerType::Null);
 		pOut[1] = 0;
 		cbUsed = 2;
 		return;
 	}
 
-	pOut[0] = static_cast<unsigned char>(type);
+	pOut[0] = static_cast<uint8_t>(type);
 
 	size_t cbVector = GetEncodedSize(in);
 
@@ -154,7 +154,7 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOu
 
 	offset += cbInternal;
 
-	for (unsigned int i = 0; i < in.size(); ++i)
+	for (uint32_t i = 0; i < in.size(); ++i)
 	{
 		in[i].Encode(pOut + offset, cbOut - offset, cbInternal);
 		offset += cbInternal;
@@ -164,12 +164,12 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, unsigned char * pOu
 }
 
 // Basic check for any type
-inline bool CheckDecode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& size, size_t& cbPrefix)
+inline bool CheckDecode(const uint8_t* pIn, size_t cbIn, const DerType type, size_t& size, size_t& cbPrefix)
 {
     // Check for sufficient incoming bytes
     if (cbIn >= 3 && 
         // If it is context-specific, allow it, else verify that it is the type we expect
-        ((pIn[0] & 0x80) || pIn[0] == static_cast<unsigned char>(type)) )
+        ((pIn[0] & 0x80) || pIn[0] == static_cast<uint8_t>(type)) )
     {
         if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
             throw std::out_of_range("Illegal size value");
@@ -212,11 +212,11 @@ public:
 		return 1 + GetSizeBytes(cbData) + cbData;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) = 0;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) = 0;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) = 0;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) = 0;
 
 	template <typename T>
-	static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSet(const uint8_t* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
 	{
 		size_t cbPrefix = 0;
 		size_t cbSize = 0;
@@ -229,13 +229,13 @@ public:
 	}
 
     template <typename T>
-    static bool DecodeSet(const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
+    static bool DecodeSet(const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
     {
         return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbPrefix, cbSize, out);
     }
 
     template <typename T>
-    static bool DecodeSequenceOf(const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
+    static bool DecodeSequenceOf(const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
     {
         return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbPrefix, cbSize, out);
     }
@@ -251,14 +251,14 @@ protected:
             throw std::out_of_range("Size mismatch!");
     }
 
-    static bool DecodeSequence(const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
+    static bool DecodeSequence(const uint8_t* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
     {
         return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
     }
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
 	// adjusts pIn and cbIn to only include the sequence
-	static bool DecodeSequenceOrSet(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
+	static bool DecodeSequenceOrSet(DerType type, const uint8_t* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
 	{
 		// Avoid complications - 
 
@@ -286,7 +286,7 @@ protected:
 	}
 
 	template <typename T>
-	static bool DecodeSetOrSequenceOf(DerType type, const unsigned char* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
+	static bool DecodeSetOrSequenceOf(DerType type, const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
 	{
 		bool isNull = false;
 		size_t offset = 0;
@@ -343,9 +343,9 @@ protected:
 	}
 
 	// Check for types that have a vector or a type of string
-	static bool DecodeNull(const unsigned char* pIn, size_t cbIn, size_t& cbUsed)
+	static bool DecodeNull(const uint8_t* pIn, size_t cbIn, size_t& cbUsed)
 	{
-		if (cbIn >= 2 && pIn[0] == static_cast<unsigned char>(DerType::Null) && pIn[1] == 0)
+		if (cbIn >= 2 && pIn[0] == static_cast<uint8_t>(DerType::Null) && pIn[1] == 0)
 		{
 			cbUsed = 2;
 			return true;
@@ -356,7 +356,7 @@ protected:
 	}
 
 	template <typename T>
-	bool Decode(const unsigned char* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
+	bool Decode(const uint8_t* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -401,7 +401,7 @@ public:
         cbUsed += prefixSize;
     }
 
-    DecodeResult Init(const unsigned char * pIn, size_t cbIn, size_t& _dataSize)
+    DecodeResult Init(const uint8_t * pIn, size_t cbIn, size_t& _dataSize)
     {
         // This checks internally to see if the data size is within bounds of cbIn
         if (!DerBase::DecodeSequence(pIn, cbIn, cbUsed, dataSize, isNull))
@@ -426,7 +426,7 @@ public:
             throw std::runtime_error("Parsing error");
     }
 
-    const unsigned char* DataPtr(const unsigned char * pIn) const { return pIn + cbUsed + prefixSize; }
+    const uint8_t* DataPtr(const uint8_t * pIn) const { return pIn + cbUsed + prefixSize; }
 
     size_t DataSize() 
     { 
@@ -468,7 +468,7 @@ public:
     EncodeHelper(size_t& _cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed){}
 	~EncodeHelper() {}
 
-    void Init(size_t _cbNeeded, unsigned char* pOut, size_t cbOut, unsigned char type, size_t cbData)
+    void Init(size_t _cbNeeded, uint8_t* pOut, size_t cbOut, uint8_t type, size_t cbData)
     { 
         cbNeeded = _cbNeeded; 
         if(cbNeeded > cbOut || cbOut < 2)
@@ -505,7 +505,7 @@ public:
             // std::cout << "Size needed not equal to size used" << std::endl;
     }
 
-    unsigned char* DataPtr(unsigned char * pOut) const { return pOut + offset; }
+    uint8_t* DataPtr(uint8_t * pOut) const { return pOut + offset; }
 
     size_t DataSize()
     {
@@ -543,10 +543,10 @@ enum class OptionType
 };
 
 
-template <typename T, unsigned char type, OptionType optionType>
+template <typename T, uint8_t type, OptionType optionType>
 class ContextSpecificHolder;
 
-template <typename T, unsigned char type>
+template <typename T, uint8_t type>
 class ContextSpecificHolder <T, type, OptionType::Explicit>
 {
 public:
@@ -566,7 +566,7 @@ public:
 
 	// This contains an encapsulated type, and it has a type
 	// that is defined by the context
-	bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+	bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 	{
         // If this is an optional type, we could have used
         // all the bytes on the previous item
@@ -601,7 +601,7 @@ public:
         return false;
 	}
 
-	void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+	void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
 	{
 		// Handle the case where there is no data, and we shouldn't write out anything
 		size_t innerSize = innerType.EncodedSize();
@@ -640,7 +640,7 @@ private:
     bool hasData;
 };
 
-template <typename T, unsigned char type>
+template <typename T, uint8_t type>
 class ContextSpecificHolder <T, type, OptionType::Implicit>
 {
 public:
@@ -654,9 +654,9 @@ public:
 		return innerType.EncodedSize(); 
 	}
 
-    bool IsPresent(unsigned char t) const { return t == type; }
+    bool IsPresent(uint8_t t) const { return t == type; }
 
-    bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
     {
         // If this is an optional type, we could have used
         // all the bytes on the previous item
@@ -674,7 +674,7 @@ public:
         return false;
     }
 
-    void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed)
+    void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
     {
         // Handle the case where there is no data, and we shouldn't write out anything
         size_t innerSize = innerType.EncodedSize();
@@ -695,7 +695,7 @@ public:
         // A non-constructed type is the same as the type it wraps, 
         // except for the type byte, which will be ([0x80 or 0xA0] | option number)
         innerType.Encode(pOut, cbOut, cbUsed);
-        *pOut = static_cast<unsigned char>(type);
+        *pOut = static_cast<uint8_t>(type);
     }
 
     const T& GetInnerType() const { return innerType; }
@@ -726,17 +726,17 @@ public:
 	void SetNull()
 	{
 		encodedValue.resize(2);
-		encodedValue[0] = static_cast<unsigned char>(DerType::Null);
+		encodedValue[0] = static_cast<uint8_t>(DerType::Null);
 		encodedValue[1] = 0;
 	}
 
-	void SetEncodedValue(const unsigned char* pIn, size_t cbIn)
+	void SetEncodedValue(const uint8_t* pIn, size_t cbIn)
 	{
 		encodedValue.resize(cbIn);
 		encodedValue.insert(encodedValue.begin(), pIn, pIn + cbIn);
 	}
 
-	void SetEncodedValue(std::vector<unsigned char>& lhs)
+	void SetEncodedValue(std::vector<uint8_t>& lhs)
 	{
 		encodedValue.swap(lhs);
 	}
@@ -752,7 +752,7 @@ public:
 		in.Encode(&encodedValue[0], cbOut, cbUsed);
 	}
  
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		// Should be encoded already
 		if (encodedValue.size() == 0)
@@ -762,13 +762,13 @@ public:
 		cbUsed = encodedValue.size();
 	}
 
-	bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed)
+	bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 	{
 		// This can hold anything, by design. Just copy the bytes, might be a Null
 		if (cbIn < 2)
 			return false;
 
-		if (pIn[0] == static_cast<unsigned char>(DerType::Null))
+		if (pIn[0] == static_cast<uint8_t>(DerType::Null))
 		{
 			if (pIn[1] == 0)
 			{
@@ -793,7 +793,7 @@ public:
 		}
 	}
 
-	const unsigned char* GetBuffer() const { return &encodedValue[0]; }
+	const uint8_t* GetBuffer() const { return &encodedValue[0]; }
 	size_t GetBufferSize() const { return encodedValue.size(); }
 
 	// Shouldn't need this for this class, but everything needs it implemented
@@ -818,7 +818,7 @@ public:
     DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
 
     const AnyType& operator=(const AnyType& rhs) { encodedValue = rhs.encodedValue; return *this; }
-    const std::vector<unsigned char>& GetData() const { return encodedValue; }
+    const std::vector<uint8_t>& GetData() const { return encodedValue; }
 
     template <typename T>
     bool ConvertToType(T& type) const
@@ -850,7 +850,7 @@ public:
 	}
 
 private:
-	std::vector<unsigned char> encodedValue;
+	std::vector<uint8_t> encodedValue;
 };
 
 /*
@@ -880,12 +880,12 @@ class ChoiceType : public DerBase
 public:
     ChoiceType() : derType(0xff){}
 
-    virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
     {
         value.Encode(pOut, cbOut, cbUsed);
     }
 
-    virtual bool Decode(const unsigned char * pIn, size_t cbIn, size_t & cbUsed) override
+    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
     {
         if (value.Decode(pIn, cbIn, cbUsed))
         {
@@ -903,7 +903,7 @@ public:
     {
         size_t cbUsed = 0;
         SequenceHelper sh(cbUsed);
-        const unsigned char* pIn = value.GetBuffer();
+        const uint8_t* pIn = value.GetBuffer();
 
         switch (sh.Init(pIn, value.GetBufferSize(), this->cbData))
         {
@@ -919,9 +919,9 @@ public:
         return inner.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize());
     }
 
-    const unsigned char* GetInnerBuffer(size_t& innerSize) const
+    const uint8_t* GetInnerBuffer(size_t& innerSize) const
     {
-        const unsigned char* pIn = value.GetBuffer();
+        const uint8_t* pIn = value.GetBuffer();
         size_t cbIn = value.GetBufferSize();
         size_t cbPrefix = 0;
 
@@ -954,8 +954,8 @@ public:
 	void SetValue(bool f) { b = f ? 0xff : 0; }
 	bool GetValue() const { return b == 0 ? false : true; }
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 	friend std::ostream& operator<<(std::ostream& os, const Boolean& b)
 	{
@@ -972,7 +972,7 @@ public:
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
-	unsigned char b;
+	uint8_t b;
 };
 
 // Allowed to be any size
@@ -1009,12 +1009,12 @@ public:
 		if (fAddLeadingZero)
 			value.push_back(0);
 
-		unsigned char* pData = reinterpret_cast<unsigned char*>(&in);
+		uint8_t* pData = reinterpret_cast<uint8_t*>(&in);
 
 		// Assuming that we're on a little-endian system, start at the end
 		bool fHasData = false;
 
-		for (int i = sizeof(T) - 1; i >= 0; --i)
+		for (int32_t i = sizeof(T) - 1; i >= 0; --i)
 		{
 			// Discard leading zeros
 			if (!fHasData && pData[i] == 0)
@@ -1025,8 +1025,8 @@ public:
 		}
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::Integer, cbUsed, value);
 	}
@@ -1053,7 +1053,7 @@ public:
 
 	size_t ByteCount() const { return value.size(); }
 
-    bool GetValue(unsigned long& data) const
+    bool GetValue(uint32_t& data) const
     {
         size_t cbValue = value.size();
 
@@ -1061,7 +1061,7 @@ public:
             return false;
 
         // Test for leading zero
-        const unsigned char* pData = &value[0];
+        const uint8_t* pData = &value[0];
 
         if (*pData == 0)
         {
@@ -1083,24 +1083,24 @@ public:
         return true;
     }
 
-    const std::vector<unsigned char>& GetBytes() const { return value; }
+    const std::vector<uint8_t>& GetBytes() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<unsigned char> value;
+	std::vector<uint8_t> value;
 };
 
 class BitString final : public DerBase
 {
 public:
-	void SetValue(unsigned char unusedBits, const unsigned char* data, size_t cbData);
+	void SetValue(uint8_t unusedBits, const uint8_t* data, size_t cbData);
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	unsigned char UnusedBits() const { return value.size() > 0 ? value[0] : 0; }
+	uint8_t UnusedBits() const { return value.size() > 0 ? value[0] : 0; }
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::BitString, cbUsed, value);
 	}
@@ -1110,11 +1110,11 @@ public:
         if (value.size() < 2)
             return 0;
         
-        unsigned char unusedBits = value[0];
+        uint8_t unusedBits = value[0];
         return value.size() * 8 - unusedBits;
     }
 
-    bool GetValue(unsigned char& unusedBits, std::vector<unsigned char>& out) const 
+    bool GetValue(uint8_t& unusedBits, std::vector<uint8_t>& out) const 
     {
         if (value.size() < 2)
             return false;
@@ -1126,7 +1126,7 @@ public:
         return true;
     }
 
-    bool GetValue(const unsigned char*& pValue, size_t& cbValue)
+    bool GetValue(const uint8_t*& pValue, size_t& cbValue)
     {
         if (value.size() < 2)
             return false;
@@ -1138,8 +1138,8 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
 	{
-		const unsigned long linelength = 80;
-		const unsigned char* pData = &o.value[0];
+		const uint32_t linelength = 80;
+		const uint8_t* pData = &o.value[0];
 		std::ostringstream osTmp;
 
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
@@ -1157,8 +1157,8 @@ public:
 
 	friend std::wostream& operator<<(std::wostream& os, const BitString& o)
 	{
-		const unsigned long linelength = 80;
-		const unsigned char* pData = &o.value[0];
+		const uint32_t linelength = 80;
+		const uint8_t* pData = &o.value[0];
 		std::wostringstream osTmp;
 
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
@@ -1174,24 +1174,24 @@ public:
 		return os;
 	}
 
-	const std::vector<unsigned char>& GetBits() const { return value; }
+	const std::vector<uint8_t>& GetBits() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<unsigned char> value;
+	std::vector<uint8_t> value;
 };
 
 class OctetString final : public DerBase
 {
 public:
 
-    void SetValue(const std::vector<unsigned char>& in)
+    void SetValue(const std::vector<uint8_t>& in)
     {
         value = in;
     }
 
-	void SetValue(const unsigned char* data, size_t cb)
+	void SetValue(const uint8_t* data, size_t cb)
 	{
 		value.clear();
 		value.resize(cb);
@@ -1200,16 +1200,16 @@ public:
 
     // For use by extensions, which need to write
     // internal structs into the buffer.
-    std::vector<unsigned char>& Resize(size_t cb)
+    std::vector<uint8_t>& Resize(size_t cb)
     {
         value.clear();
         value.resize(cb);
         return value;
     }
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::OctetString, cbUsed, value);
 	}
@@ -1236,22 +1236,22 @@ public:
 		return os;
 	}
 
-    const std::vector<unsigned char>& GetValue() const { return value; }
+    const std::vector<uint8_t>& GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<unsigned char> value;
+	std::vector<uint8_t> value;
 };
 
 class Enumerated : public DerBase
 {
 public:
-	Enumerated(unsigned char v = 0xff) : value(v) {}
+	Enumerated(uint8_t v = 0xff) : value(v) {}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -1282,12 +1282,12 @@ public:
 		return os;
 	}
 
-	unsigned char GetValue() const { return value; }
+	uint8_t GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
-	unsigned char value;
+	uint8_t value;
 };
 
 class ObjectIdentifier final : public DerBase
@@ -1307,9 +1307,9 @@ public:
 
 	void SetValue(const char* szOid);
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
         bool fRet = DerBase::Decode(pIn, cbIn, DerType::ObjectIdentifier, cbUsed, value);
 
@@ -1348,7 +1348,7 @@ public:
         return ::GetOidString(oidIndex);
     }
 
-    std::vector<unsigned char>& GetBytes() { return value; }
+    std::vector<uint8_t>& GetBytes() { return value; }
 
     bool IsEmpty() const { return value.size() == 0; }
 
@@ -1372,11 +1372,11 @@ private:
 
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	void EncodeLong(unsigned long in, unsigned char* out, size_t cbOut, size_t& cbUsed);
-	bool DecodeLong(const unsigned char* in, size_t cbIn, unsigned long& out, size_t& cbRead) const;
-	void GetNextLong(const char* start, const char*& next, unsigned long& out);
+	void EncodeLong(uint32_t in, uint8_t* out, size_t cbOut, size_t& cbUsed);
+	bool DecodeLong(const uint8_t* in, size_t cbIn, uint32_t& out, size_t& cbRead) const;
+	void GetNextLong(const char* start, const char*& next, uint32_t& out);
 
-	std::vector<unsigned char> value;
+	std::vector<uint8_t> value;
     size_t oidIndex;
 
 };
@@ -1412,9 +1412,9 @@ public:
 		return true;
 	}
 	
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UTCTime, cbUsed, value);
 	}
@@ -1467,9 +1467,9 @@ public:
 	}
 
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::GeneralizedTime, cbUsed, value);
 	}
@@ -1539,8 +1539,8 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
 
 	friend std::ostream& operator<<(std::ostream& os, const Time& str)
 	{
@@ -1576,7 +1576,7 @@ inline bool IsAscii(const char* str)
 {
 	for (; *str != '\0'; ++str)
 	{
-		if (static_cast<unsigned char>(*str) & 0x80)
+		if (static_cast<uint8_t>(*str) & 0x80)
 			return false;
 	}
 	return true;
@@ -1596,9 +1596,9 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::IA5String, cbUsed, value);
 	}
@@ -1636,8 +1636,8 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::GeneralString, cbUsed, value);
 	}
@@ -1670,9 +1670,9 @@ public:
 	// constrain to printable chars
 	// a-z, A-Z, 0-9 ' () +,-.?:/= and SPACE
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::PrintableString, cbUsed, value);
 	}
@@ -1711,8 +1711,8 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::T61String, cbUsed, value);
 	}
@@ -1754,8 +1754,8 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UTF8String, cbUsed, value);
 	}
@@ -1793,8 +1793,8 @@ public:
 		return true;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::VisibleString, cbUsed, value);
 	}
@@ -1835,9 +1835,9 @@ public:
 	}
 	*/
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UniversalString, cbUsed, value);
 	}
@@ -1880,9 +1880,9 @@ public:
 
 	virtual size_t SetDataSize() override { return (cbData = value.size() * sizeof(wchar_t)); }
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 	
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::BMPString, cbUsed, value);
 	}
@@ -1906,20 +1906,20 @@ public:
 		return os;
 	}
 
-	virtual void Encode(unsigned char* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
 	{
 		if(cbOut < 2)
 			throw std::overflow_error("Overflow in Null::Encode");
 
-		pOut[0] = static_cast<unsigned char>(DerType::Null);
+		pOut[0] = static_cast<uint8_t>(DerType::Null);
 		pOut[1] = 0;
 		cbUsed = 2;
 	}
 
-	virtual bool Decode(const unsigned char* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
 	{
 		// This one is special
-		if (cbIn < 2 || pIn[0] != static_cast<unsigned char>(DerType::Null) || pIn[1] != 0)
+		if (cbIn < 2 || pIn[0] != static_cast<uint8_t>(DerType::Null) || pIn[1] != 0)
 		{
 			cbUsed = 0;
 			return false;

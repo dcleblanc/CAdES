@@ -31,7 +31,7 @@ class MessageDigestAttribute
 public:
 	MessageDigestAttribute() : attr(id_messageDigest) {}
 
-	void SetDigest(const unsigned char* pDigest, size_t cbDigest);
+	void SetDigest(const uint8_t* pDigest, size_t cbDigest);
 
 private:
 	Attribute attr;

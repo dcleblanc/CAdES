@@ -9,9 +9,9 @@
 // This lives here, not in Common.h because it has its own warning behavior for the functions below
 #include <codecvt>
 
-static const int lib_version = 0x0100;
+static const int32_t lib_version = 0x0100;
 // Define something so that the linker won't complain about no public symbols from this compilation unit
-int get_version() { return lib_version; }
+int32_t get_version() { return lib_version; }
 
 // Also put some conversion utilities here
 
@@ -49,7 +49,7 @@ void ConvertWstringToString(const std::wstring& in, std::string& out)
 }
 
 #ifndef _WIN32
-int memcpy_s( void *dest, size_t destSize, const void *src, size_t count )
+int32_t memcpy_s( void *dest, size_t destSize, const void *src, size_t count )
 {
 	if( destSize < count )
 		return ERANGE;
@@ -58,7 +58,7 @@ int memcpy_s( void *dest, size_t destSize, const void *src, size_t count )
 	return 0;
 }
 
-int gmtime_s( struct tm* tmDest, const std::time_t* sourceTime )
+int32_t gmtime_s( struct tm* tmDest, const std::time_t* sourceTime )
 {
 	if( tmDest == nullptr )
 		return EINVAL;
@@ -73,9 +73,9 @@ int gmtime_s( struct tm* tmDest, const std::time_t* sourceTime )
 	return 0;
 }
 
-int sprintf_s( char *buffer, size_t sizeOfBuffer, const char *format, ... )
+int32_t sprintf_s( char *buffer, size_t sizeOfBuffer, const char *format, ... )
 {
-    int retval;
+    int32_t retval;
     va_list ap;
 
 	if( buffer == nullptr || format == nullptr)

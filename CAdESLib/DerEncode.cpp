@@ -5,31 +5,31 @@
 #include "CAdES.h"
 #include "DerEncode.h"
 
-bool EncodeSize(size_t size, unsigned char * out, size_t cbOut, size_t & cbUsed)
+bool EncodeSize(size_t size, uint8_t * out, size_t cbOut, size_t & cbUsed)
 {
-	unsigned char tmp[sizeof(unsigned long long)] = { 0 };
-	unsigned int i = 0;
+	uint8_t tmp[sizeof(uint64_t)] = { 0 };
+	uint32_t i = 0;
 
 	if (size <= 0x7f && cbOut >= 1)
 	{
-		*out = static_cast<unsigned char>(size);
+		*out = static_cast<uint8_t>(size);
 		cbUsed = 1;
 		return true;
 	}
 
 	// Else the first byte is the number of following big-endian
 	// non-zero bytes
-	for (; i < sizeof(unsigned long long) - 1; ++i)
+	for (; i < sizeof(uint64_t) - 1; ++i)
 	{
 		// Convert incoming size to big-endian order
-		size_t offset = sizeof(unsigned long long) - (i + 1);
-		tmp[offset] = static_cast<unsigned char>(size);
+		size_t offset = sizeof(uint64_t) - (i + 1);
+		tmp[offset] = static_cast<uint8_t>(size);
 		size >>= 8;
 
 		if (size == 0)
 		{
 			cbUsed = i + 1;
-			tmp[offset - 1] = static_cast<unsigned char>(0x80 | (cbUsed));
+			tmp[offset - 1] = static_cast<uint8_t>(0x80 | (cbUsed));
 			cbUsed++;
 			break;
 		}
@@ -41,16 +41,16 @@ bool EncodeSize(size_t size, unsigned char * out, size_t cbOut, size_t & cbUsed)
 
 	if (cbOut >= cbUsed)
 	{
-		memcpy_s(out, cbOut, tmp + sizeof(long long) - cbUsed, cbUsed);
+		memcpy_s(out, cbOut, tmp + sizeof(int64_t) - cbUsed, cbUsed);
 		return true;
 	}
 	
 	return false;
 }
 
-bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRead)
+bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead)
 {
-	unsigned int i = 0;
+	uint32_t i = 0;
 
 	size = 0;
 	cbRead = 0;
@@ -68,8 +68,8 @@ bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRe
 		return true;
 	}
 
-	unsigned int bytesToDecode = static_cast<unsigned char>(in[0] & (~0x80));
-	unsigned long long tmp = 0;
+	uint32_t bytesToDecode = static_cast<uint8_t>(in[0] & (~0x80));
+	uint64_t tmp = 0;
 
 	// Decode a maximum of 8 bytes, which adds up to a 56-bit number
 	// That's MUCH bigger than anything we could possibly decode
@@ -109,7 +109,7 @@ bool DecodeSize(const unsigned char* in, size_t cbIn, size_t& size, size_t& cbRe
 class BasicDerType
 {
 public:
-	BasicDerType(const unsigned char * pIn, size_t cbIn) : pType(pIn), cb(cbIn) 
+	BasicDerType(const uint8_t * pIn, size_t cbIn) : pType(pIn), cb(cbIn) 
 	{
 		if (cb < 2)
 			throw std::exception(); // "Type too small"
@@ -302,11 +302,11 @@ public:
 		return os;
 	}
 
-	const unsigned char* pType;
+	const uint8_t* pType;
 	size_t cb;
 };
 
-void DebugDer(std::ostream& outFile, const unsigned char * pIn, size_t cbIn, unsigned long level)
+void DebugDer(std::ostream& outFile, const uint8_t * pIn, size_t cbIn, uint32_t level)
 {
 	if (cbIn < 2)
 		throw std::exception(); // Corrupt input
@@ -318,7 +318,7 @@ void DebugDer(std::ostream& outFile, const unsigned char * pIn, size_t cbIn, uns
 	while (offset < cbIn)
 	{
 		DerTypeContainer type(*(pIn + offset));
-		const unsigned char* pType = pIn + offset;
+		const uint8_t* pType = pIn + offset;
 		size_t cbType = cbIn - offset;
 
 		offset += 1;

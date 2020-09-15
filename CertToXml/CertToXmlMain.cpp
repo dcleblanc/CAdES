@@ -4,7 +4,7 @@
 bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<unsigned char> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
@@ -53,9 +53,9 @@ void DumpCertProperties(const char* szFile)
 void PrintOids();
 void TestOidTable();
 
-int DumpXML(const char* szFile)
+int32_t DumpXML(const char* szFile)
 {
-	int ret;
+	int32_t ret;
 	try
 	{
 		DumpCertProperties(szFile);
@@ -70,7 +70,7 @@ int DumpXML(const char* szFile)
 	return ret;
 }
 
-int main(int argc, char* argv[])
+int32_t main(int32_t argc, char* argv[])
 {
 	const char* szFile = nullptr;
 	bool fMultiPass = false;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	int ret = 0;
+	int32_t ret = 0;
 
 	if (fMultiPass)
 	{
