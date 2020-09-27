@@ -2,5 +2,5 @@ cmake_minimum_required (VERSION 3.13)
 PROJECT( CAdES )
 ADD_SUBDIRECTORY(CAdESLib)
 ADD_SUBDIRECTORY(get_crl)
-ADD_SUBDIRECTORY(DumpTlsCerts)
+#ADD_SUBDIRECTORY(DumpTlsCerts)
 

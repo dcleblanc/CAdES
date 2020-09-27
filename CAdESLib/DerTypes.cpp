@@ -183,16 +183,20 @@ bool ObjectIdentifier::ToString(std::string & out) const
     const char* szOid = this->GetOidString();
 
     if (szOid != nullptr)
-        out = szOid;
-
+	{
+		out = szOid;
+	}
+        
 	std::string tmp;
 	size_t cbRead = 0;
 	size_t pos = 0;
 	unsigned long node = 0;
 
 	if (value.size() < 1)
+	{
 		return false;
-
+	}
+		
 	if (value[0] < 40)
 	{
 		tmp = "0";

@@ -183,7 +183,9 @@ void PrintOids()
         OidHelper hlp;
 
         if (key.size() > maxKeylen)
-            maxKeylen = key.size();
+        {
+            maxKeylen = key.size();            
+        }
 
         hlp.oid = knownOids[i].oid;
         hlp.textOid = nullptr;
@@ -492,10 +494,10 @@ ExtensionId OidToExtensionId(const char* szOidTag)
     if (szOidTag == id_microsoft_enrollCertType)
         return ExtensionId::MicrosoftEnrollCertType;
 
-	if (szOidTag == id_microsoft_certFriendlyName)
-		return ExtensionId::MicrosoftCertFriendlyName;
+    if (szOidTag == id_microsoft_certFriendlyName)
+        return ExtensionId::MicrosoftCertFriendlyName;
 
-	if (szOidTag == id_microsoft_certsrvPrevHash)
+    if (szOidTag == id_microsoft_certsrvPrevHash)
         return ExtensionId::MicrosoftCertSrvPrevHash;
 
     if (szOidTag == id_apple_pushDev)
