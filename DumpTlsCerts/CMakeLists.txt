@@ -31,22 +31,6 @@ foreach( SETTINGS_FILE IN LISTS ${PROJECT_NAME}_SETTINGS )
   configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/${SETTINGS_FILE} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${SETTINGS_FILE} COPYONLY )
 endforeach()
 
-if( CDPX_BUILD )
-  add_custom_command(
-    OUTPUT  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}
-    DEPENDS ${${PROJECT_NAME}_SOURCE}
-    COMMAND ${CMAKE_COMMAND} -E env DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true dotnet publish --no-restore --verbosity quiet --output ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} --configuration ${CMAKE_BUILD_TYPE} --self-contained -r ubuntu.16.04-x64
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  )
-else()
-  add_custom_command(
-      OUTPUT  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}
-      DEPENDS ${${PROJECT_NAME}_SOURCE}
-      COMMAND ${CMAKE_COMMAND} -E env DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true dotnet publish --verbosity quiet --output ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} --configuration ${CMAKE_BUILD_TYPE} --self-contained -r ubuntu.16.04-x64
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-endif()
-
 add_custom_target( ${PROJECT_NAME}
   ALL
   DEPENDS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}

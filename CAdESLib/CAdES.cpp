@@ -2028,7 +2028,9 @@ bool DisplayText::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 {
 	if (cbIn < 2)
 		return false;
-
+    
+// Disable unused enum values warning, it adds a lot of noise here and only specific types are supported
+#pragma warning(disable: 4096)
 	switch (static_cast<DerType>(pIn[0]))
 	{
 	case DerType::VisibleString:
@@ -2046,6 +2048,7 @@ bool DisplayText::Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
 	default:
 		return false;
 	}
+#pragma warning(default: 4096)
 
 	return value.Decode(pIn, cbIn, cbUsed);
 }
