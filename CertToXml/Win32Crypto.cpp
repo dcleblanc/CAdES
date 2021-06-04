@@ -71,13 +71,13 @@ public:
         return (stat == ERROR_SUCCESS);
     }
 
-    bool HashData(const uint8_t* pIn, uint32_t cbIn)
+    bool HashData(const std::byte* pIn, uint32_t cbIn)
     {
         NTSTATUS stat = BCryptHashData(hHash, const_cast<PUCHAR>(pIn), cbIn, 0);
         return (stat == ERROR_SUCCESS);
     }
 
-    bool Finish(std::vector<uint8_t>& hashValue)
+    bool Finish(std::vector<std::byte>& hashValue)
     {
         hashValue.clear();
         hashValue.resize(algHandle.GetHashLength());
@@ -88,12 +88,12 @@ public:
 
 private:
     uint32_t sha256Size;
-    std::vector<uint8_t> hashObj;
+    std::vector<std::byte> hashObj;
     BCRYPT_HASH_HANDLE hHash;
     AlgHandle& algHandle;
 };
 
-bool HashVector(AlgHandle& algHandle, const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
+bool HashVector(AlgHandle& algHandle, const std::vector<std::byte>& data, std::vector<std::byte>& out)
 {
     HashHandle hashHandle(algHandle);
 
@@ -109,7 +109,7 @@ bool HashVector(AlgHandle& algHandle, const std::vector<uint8_t>& data, std::vec
 static AlgHandle algHandleSha1;
 static AlgHandle algHandleSha256;
 
-bool HashVectorSha256(const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
+bool HashVectorSha256(const std::vector<std::byte>& data, std::vector<std::byte>& out)
 {
 	// Warning, not thread safe, but we're currently single-threaded,
 	// so open this just once.
@@ -123,7 +123,7 @@ bool HashVectorSha256(const std::vector<uint8_t>& data, std::vector<uint8_t>& ou
     return HashVector(algHandleSha256, data, out);
 }
 
-bool HashVectorSha1(const std::vector<uint8_t>& data, std::vector<uint8_t>& out)
+bool HashVectorSha1(const std::vector<std::byte>& data, std::vector<std::byte>& out)
 {
 	if (algHandleSha1 == nullptr)
 	{

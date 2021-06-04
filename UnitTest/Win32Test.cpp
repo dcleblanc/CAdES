@@ -25,7 +25,7 @@ const DWORD encodingType = X509_ASN_ENCODING;
 	 PKCS_UTC_TIME
 */
 
-bool DecodeObject(LPCSTR lpszStructType, const uint8_t* encoded, uint32_t cbEncoded, void* out, uint32_t& cbOut)
+bool DecodeObject(LPCSTR lpszStructType, const std::byte* encoded, uint32_t cbEncoded, void* out, uint32_t& cbOut)
 {
 	const DWORD flags = 0;
 	return !!CryptDecodeObject(encodingType, lpszStructType, encoded, cbEncoded, flags, out, &cbOut);
@@ -36,7 +36,7 @@ bool EncodeObject(LPCSTR lpszStructType, const void* in, BYTE* out, uint32_t& cb
 	return !!CryptEncodeObjectEx(encodingType, lpszStructType, in, 0, nullptr, out, &cbEncoded);
 }
 
-bool DecodeObjectIdentifier(const uint8_t* encoded, uint32_t cbEncoded, std::string& out)
+bool DecodeObjectIdentifier(const std::byte* encoded, uint32_t cbEncoded, std::string& out)
 {
 	char buf[1024];
 	uint32_t cbOut = sizeof(buf);
@@ -48,7 +48,7 @@ bool DecodeObjectIdentifier(const uint8_t* encoded, uint32_t cbEncoded, std::str
 	return true;
 }
 
-bool EncodeObjectIdentifier(const char** in, uint8_t* out, uint32_t& cbOut)
+bool EncodeObjectIdentifier(const char** in, std::byte* out, uint32_t& cbOut)
 {
 	return EncodeObject(X509_OBJECT_IDENTIFIER, in, out, cbOut);
 }
@@ -66,8 +66,8 @@ void OidTest()
 
 	for (uint32_t i = 0; i < _countof(testOids); ++i)
 	{
-		uint8_t buf[256];
-		uint8_t buf2[256];
+		std::byte buf[256];
+		std::byte buf2[256];
 		uint32_t cbOut = sizeof(buf);
 		size_t cbUsed = 0;
 		std::string test;

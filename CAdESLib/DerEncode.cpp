@@ -5,50 +5,44 @@
 #include "CAdES.h"
 #include "DerEncode.h"
 
-bool EncodeSize(size_t size, uint8_t * out, size_t cbOut, size_t & cbUsed)
+void EncodeSize(size_t size, std::byte * out, size_t cbOut, size_t & cbUsed)
 {
-	uint8_t tmp[sizeof(uint64_t)] = { 0 };
-	uint32_t i = 0;
+	constexpr auto bufferLength = 8;
+	std::byte tmp[bufferLength] = { std::byte{0} };
 
 	if (size <= 0x7f && cbOut >= 1)
 	{
-		*out = static_cast<uint8_t>(size);
+		*out = static_cast<std::byte>(size);
 		cbUsed = 1;
-		return true;
+		return;
 	}
 
 	// Else the first byte is the number of following big-endian
 	// non-zero bytes
-	for (; i < sizeof(uint64_t) - 1; ++i)
+	for (uint32_t i = 0; i < bufferLength - 1; ++i)
 	{
 		// Convert incoming size to big-endian order
-		size_t offset = sizeof(uint64_t) - (i + 1);
-		tmp[offset] = static_cast<uint8_t>(size);
+		size_t offset = bufferLength - (i + 1);
+		tmp[offset] = static_cast<std::byte>(size);
 		size >>= 8;
 
 		if (size == 0)
 		{
 			cbUsed = i + 1;
-			tmp[offset - 1] = static_cast<uint8_t>(0x80 | (cbUsed));
+			tmp[offset - 1] = static_cast<std::byte>(0x80 | (cbUsed));
 			cbUsed++;
 			break;
 		}
 	}
 
 	// Detect abnormal loop exit
-	if (size != 0)
-		return false;
+	if (size != 0 || cbOut < cbUsed)
+		throw std::out_of_range("Abnormal loop termination while encoding");
 
-	if (cbOut >= cbUsed)
-	{
-		memcpy_s(out, cbOut, tmp + sizeof(int64_t) - cbUsed, cbUsed);
-		return true;
-	}
-	
-	return false;
+	memcpy_s(out, cbOut, tmp + bufferLength - cbUsed, cbUsed);
 }
 
-bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead)
+bool DecodeSize(const std::byte* in, size_t cbIn, size_t& size, size_t& cbRead)
 {
 	uint32_t i = 0;
 
@@ -61,14 +55,14 @@ bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead)
 	}
 
 	// Detect short form
-	if ((in[0] & 0x80) == 0)
+	if ((in[0] & std::byte{0x80}) == std::byte{0})
 	{
-		size = in[0];
+		size = std::to_integer<size_t>(in[0]);
 		cbRead = 1;
 		return true;
 	}
 
-	uint32_t bytesToDecode = static_cast<uint8_t>(in[0] & (~0x80));
+	auto bytesToDecode = std::to_integer<size_t>(in[0] & ~std::byte{0x80});
 	uint64_t tmp = 0;
 
 	// Decode a maximum of 8 bytes, which adds up to a 56-bit number
@@ -84,7 +78,7 @@ bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead)
 
 	for (i = 1; i < cbRead; ++i)
 	{
-		tmp += in[i];
+		tmp +=  std::to_integer<uint8_t>(in[i]);
 
 		if (i < bytesToDecode)
 			tmp <<= 8;
@@ -109,7 +103,7 @@ bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead)
 class BasicDerType
 {
 public:
-	BasicDerType(const uint8_t * pIn, size_t cbIn) : pType(pIn), cb(cbIn) 
+	BasicDerType(const std::byte * pIn, size_t cbIn) : pType(pIn), cb(cbIn) 
 	{
 		if (cb < 2)
 			throw std::exception(); // "Type too small"
@@ -302,11 +296,11 @@ public:
 		return os;
 	}
 
-	const uint8_t* pType;
+	const std::byte* pType;
 	size_t cb;
 };
 
-void DebugDer(std::ostream& outFile, const uint8_t * pIn, size_t cbIn, uint32_t level)
+void DebugDer(std::ostream& outFile, const std::byte * pIn, size_t cbIn, uint32_t level)
 {
 	if (cbIn < 2)
 		throw std::exception(); // Corrupt input
@@ -318,7 +312,7 @@ void DebugDer(std::ostream& outFile, const uint8_t * pIn, size_t cbIn, uint32_t 
 	while (offset < cbIn)
 	{
 		DerTypeContainer type(*(pIn + offset));
-		const uint8_t* pType = pIn + offset;
+		const std::byte* pType = pIn + offset;
 		size_t cbType = cbIn - offset;
 
 		offset += 1;

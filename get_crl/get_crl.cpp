@@ -12,7 +12,7 @@ template <typename T>
 LoadResult LoadObjectFromFile(const char* szFile, T& obj)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<std::byte> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
@@ -91,7 +91,7 @@ bool LoadCRLFromFile(const char* szFile, CertificateList& crl)
 }
 
 template <typename T>
-void DecodeExtension(T& t, const std::vector<uint8_t>& extensionBytes)
+void DecodeExtension(T& t, const std::vector<std::byte>& extensionBytes)
 {
     size_t cbExtension = extensionBytes.size();
     size_t cbUsed = 0;
@@ -164,7 +164,7 @@ void WriteDistributionPoint(const DistributionPoint& point)
         // if (point.HasCRLIssuer())
 }
 
-void WriteCRLDistributionPoints(const std::vector<uint8_t>& extensionBytes)
+void WriteCRLDistributionPoints(const std::vector<std::byte>& extensionBytes)
 {
     CrlDistributionPoints distPoints;
     DecodeExtension(distPoints, extensionBytes);
@@ -222,7 +222,7 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
 
         if( label != nullptr )
         {
-            const std::vector<uint8_t>& extensionBytes = ext.GetExtensionValue().GetValue();
+            const std::vector<std::byte>& extensionBytes = ext.GetExtensionValue().GetValue();
 
             if( strcmp(label, "authorityKeyIdentifier") == 0 )
             {
@@ -366,7 +366,7 @@ int32_t main(int32_t argc, char* argv[])
 
                 if( strcmp(id_ce_cRLDistributionPoints, ext.ExtensionIdOidString()) == 0 )
                 {
-                    const std::vector<uint8_t>& extensionBytes = ext.GetExtensionValue().GetValue();
+                    const std::vector<std::byte>& extensionBytes = ext.GetExtensionValue().GetValue();
                     WriteCRLDistributionPoints(extensionBytes);
                 }
             }

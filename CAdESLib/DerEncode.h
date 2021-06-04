@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 #pragma once
 
-template <typename T> 
-size_t GetEncodedSize(std::vector<T>& in) // Non-const reference, because EncodedSize will set cbData
+template <typename T>
+size_t GetEncodedSize(std::vector<T> &in) // Non-const reference, because EncodedSize will set cbData
 {
 	size_t ret = GetDataSize(in);
 
@@ -14,13 +14,12 @@ size_t GetEncodedSize(std::vector<T>& in) // Non-const reference, because Encode
 }
 
 template <typename T>
-size_t GetDataSize(std::vector<T>& in) 
+size_t GetDataSize(std::vector<T> &in)
 {
 	size_t ret = 0;
-	for (uint32_t i = 0; i < in.size(); ++i)
-	{
-		ret += in[i].EncodedSize();
+	for(auto i: in)
+	{ 
+		ret += i.EncodedSize();
 	}
-
 	return ret;
 }

@@ -9,9 +9,9 @@
 	This is actually a bitfield, roughly defined as
 	struct DerType
 	{
-		uint8_t class : 2,
-		uint8_t constructed : 1, // Constructed = 1, Primitive = 0
-		uint8_t tag : 5
+		std::byte class : 2,
+		std::byte constructed : 1, // Constructed = 1, Primitive = 0
+		std::byte tag : 5
 	}
 
 	class is defined as follows:
@@ -23,7 +23,7 @@
 		Private = 3
 	};
 */
-
+#include <span>
 enum class DerClass
 {
 	Universal = 0,
@@ -41,28 +41,28 @@ enum class DerType
 	OctetString = 4,
 	Null = 5,
 	ObjectIdentifier = 6,
-	ObjectDescriptor = 7,  // Not used in signing, don't need encoder for now
-	External = 8,  // Not used in signing, don't need encoder for now
-	Real = 9,  // Not used in signing, don't need encoder for now
+	ObjectDescriptor = 7, // Not used in signing, don't need encoder for now
+	External = 8,		  // Not used in signing, don't need encoder for now
+	Real = 9,			  // Not used in signing, don't need encoder for now
 	Enumerated = 10,
-	EmbeddedPDV = 11, // Not used in signing, don't need encoder for now
-	UTF8String = 12, // Not used in signing, don't need encoder for now
-	RelativeOid = 13, // Not used in signing, don't need encoder for now
-	Reserved1 = 14, // reserved
-	Reserved2 = 15, // reserved
-	Sequence = 16, // also sequence of
-	Set = 17, // also set of
+	EmbeddedPDV = 11,	// Not used in signing, don't need encoder for now
+	UTF8String = 12,	// Not used in signing, don't need encoder for now
+	RelativeOid = 13,	// Not used in signing, don't need encoder for now
+	Reserved1 = 14,		// reserved
+	Reserved2 = 15,		// reserved
+	Sequence = 16,		// also sequence of
+	Set = 17,			// also set of
 	NumericString = 18, // Not used in signing, don't need encoder for now
 	PrintableString = 19,
-	T61String = 20, // Not used in signing, don't need encoder for now
-    TeletexString = 20, // An alias for T61String
+	T61String = 20,		 // Not used in signing, don't need encoder for now
+	TeletexString = 20,	 // An alias for T61String
 	VideotexString = 21, // Not used in signing, don't need encoder for now
 	IA5String = 22,
 	UTCTime = 23,
 	GeneralizedTime = 24,
 	GraphicString = 25, // Not used in signing, don't need encoder for now
 	VisibleString = 26,
-	GeneralString = 27, // Not used in signing, don't need encoder for now
+	GeneralString = 27,	  // Not used in signing, don't need encoder for now
 	UniversalString = 28, // Not used in signing, don't need encoder for now
 	CharacterString = 29, // Not used in signing, don't need encoder for now
 	BMPString = 30,
@@ -74,20 +74,19 @@ enum class DerType
 class DerTypeContainer
 {
 public:
-	DerTypeContainer(uint8_t c) 
-		: type(static_cast<DerType>(c & 0x1f)), 
-		_class(static_cast<DerClass>((c & 0xc0) >> 6)),
-		constructed(!!(c & 0x20))
+	DerTypeContainer(std::byte c)
+		: type(static_cast<DerType>(c & std::byte{0x1f})),
+		  _class(static_cast<DerClass>((c & std::byte{0xc0}) >> 6)),
+		  constructed(std::byte{0x20} == (c & std::byte{0x20}))
 	{
-
 	}
 
-	operator uint8_t()
+	operator std::byte()
 	{
-		return (static_cast<uint8_t>(_class) << 6) | (constructed ? 0x20 : 0) | (static_cast<uint8_t>(type));
+		return (static_cast<std::byte>(_class) << 6) | (constructed ? std::byte{0x20} : std::byte{0}) | (static_cast<std::byte>(type));
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const DerTypeContainer& type);
+	friend std::ostream &operator<<(std::ostream &os, const DerTypeContainer &type);
 
 	DerType type;
 	DerClass _class;
@@ -122,13 +121,13 @@ inline size_t GetSizeBytes(uint64_t size)
 	return ~static_cast<size_t>(0);
 }
 
-bool EncodeSize(size_t size, uint8_t* out, size_t cbOut, size_t& cbUsed);
-bool DecodeSize(const uint8_t* in, size_t cbIn, size_t& size, size_t& cbRead);
+void EncodeSize(size_t size, std::byte *out, size_t cbOut, size_t &cbUsed);
+bool DecodeSize(const std::byte *in, size_t cbIn, size_t &size, size_t &cbRead);
 
-void DebugDer(std::ostream& outFile, const uint8_t* pIn, size_t cbIn, uint32_t level = 0);
+void DebugDer(std::ostream &outFile, const std::byte *pIn, size_t cbIn, uint32_t level = 0);
 
 template <typename T>
-void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, uint8_t * pOut, size_t cbOut, size_t & cbUsed)
+void EncodeSetOrSequenceOf(DerType type, std::vector<T> &in, std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	size_t cbInternal = 0;
 	size_t offset = 0;
@@ -138,19 +137,18 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, uint8_t * pOut, siz
 		if (cbOut < 2)
 			throw std::overflow_error("Overflow in EncodeSetOrSequenceOf");
 
-		pOut[0] = static_cast<uint8_t>(DerType::Null);
-		pOut[1] = 0;
+		pOut[0] = static_cast<std::byte>(DerType::Null);
+		pOut[1] = std::byte{0};
 		cbUsed = 2;
 		return;
 	}
 
-	pOut[0] = static_cast<uint8_t>(type);
+	pOut[0] = static_cast<std::byte>(type);
 
 	size_t cbVector = GetEncodedSize(in);
 
 	offset = 1;
-	if (!EncodeSize(cbVector, pOut + offset, cbOut - offset, cbInternal))
-		throw std::out_of_range("Error in EncodeSize");
+	EncodeSize(cbVector, pOut + offset, cbOut - offset, cbInternal);
 
 	offset += cbInternal;
 
@@ -164,26 +162,26 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T>& in, uint8_t * pOut, siz
 }
 
 // Basic check for any type
-inline bool CheckDecode(const uint8_t* pIn, size_t cbIn, const DerType type, size_t& size, size_t& cbPrefix)
+inline bool CheckDecode(const std::byte *pIn, size_t cbIn, const DerType type, size_t &size, size_t &cbPrefix)
 {
-    // Check for sufficient incoming bytes
-    if (cbIn >= 3 && 
-        // If it is context-specific, allow it, else verify that it is the type we expect
-        ((pIn[0] & 0x80) || pIn[0] == static_cast<uint8_t>(type)) )
-    {
-        if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
-            throw std::out_of_range("Illegal size value");
+	// Check for sufficient incoming bytes
+	if (cbIn >= 3 &&
+		// If it is context-specific, allow it, else verify that it is the type we expect
+		(std::byte{0} != (pIn[0] & std::byte{0x80}) || pIn[0] == static_cast<std::byte>(type)))
+	{
+		if (!DecodeSize(pIn + 1, cbIn - 1, size, cbPrefix) || 1 + cbPrefix + size > cbIn)
+			throw std::out_of_range("Illegal size value");
 
-        cbPrefix++;
-        return true;
-    }
-    else if (cbIn == 2 && pIn[1] == 0)
-    {
-        // Zero length sequence, which can happen if the first member has a default, and the remaining are optional
-        size = 2;
-        cbPrefix = 2;
-        return true;
-    }
+		cbPrefix++;
+		return true;
+	}
+	else if (cbIn == 2 && pIn[1] == std::byte{0})
+	{
+		// Zero length sequence, which can happen if the first member has a default, and the remaining are optional
+		size = 2;
+		cbPrefix = 2;
+		return true;
+	}
 
 	cbPrefix = 0;
 	return false;
@@ -197,7 +195,7 @@ class AnyType;
 
 class DerBase
 {
-    friend class SequenceHelper;
+	friend class SequenceHelper;
 
 public:
 	DerBase() : cbData(0) {}
@@ -205,18 +203,18 @@ public:
 	virtual size_t EncodedSize() const
 	{
 		// No longer calling SetDataSize here
-		// If the object is already fully loaded, then we know cbData, and don't need to 
+		// If the object is already fully loaded, then we know cbData, and don't need to
 		// take the perf hit of recalculating it.
-		// If it has been set some other way, say we're building the object 
+		// If it has been set some other way, say we're building the object
 		// directly, then call SetDataSize when you're done.
 		return 1 + GetSizeBytes(cbData) + cbData;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) = 0;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) = 0;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) = 0;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) = 0;
 
 	template <typename T>
-	static bool DecodeSet(const uint8_t* pIn, size_t cbIn, size_t& cbUsed, std::vector<T>& out)
+	static bool DecodeSet(const std::byte *pIn, size_t cbIn, size_t &cbUsed, std::vector<T> &out)
 	{
 		size_t cbPrefix = 0;
 		size_t cbSize = 0;
@@ -228,39 +226,39 @@ public:
 		return ret;
 	}
 
-    template <typename T>
-    static bool DecodeSet(const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
-    {
-        return 	DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbPrefix, cbSize, out);
-    }
+	template <typename T>
+	static bool DecodeSet(const std::byte *pIn, size_t cbIn, size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
+	{
+		return DecodeSetOrSequenceOf(DerType::ConstructedSet, pIn, cbIn, cbPrefix, cbSize, out);
+	}
 
-    template <typename T>
-    static bool DecodeSequenceOf(const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
-    {
-        return 	DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbPrefix, cbSize, out);
-    }
+	template <typename T>
+	static bool DecodeSequenceOf(const std::byte *pIn, size_t cbIn, size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
+	{
+		return DecodeSetOrSequenceOf(DerType::ConstructedSequence, pIn, cbIn, cbPrefix, cbSize, out);
+	}
 
 	size_t GetcbData() const { return cbData; }
 
 protected:
 	virtual size_t SetDataSize() = 0;
 
-    void CheckOutputSize(size_t cbUsed)
-    {
-        if (1 + GetSizeBytes(cbData) + cbData != cbUsed)
-            throw std::out_of_range("Size mismatch!");
-    }
+	void CheckOutputSize(size_t cbUsed)
+	{
+		if (1 + GetSizeBytes(cbData) + cbData != cbUsed)
+			throw std::out_of_range("Size mismatch!");
+	}
 
-    static bool DecodeSequence(const uint8_t* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
-    {
-        return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
-    }
+	static bool DecodeSequence(const std::byte *pIn, size_t cbIn, size_t &cbUsed, size_t &size, bool &isNull)
+	{
+		return DecodeSequenceOrSet(DerType::ConstructedSequence, pIn, cbIn, cbUsed, size, isNull);
+	}
 
 	// This checks whether the tag is for a sequence, as expected, and if it is,
 	// adjusts pIn and cbIn to only include the sequence
-	static bool DecodeSequenceOrSet(DerType type, const uint8_t* pIn, size_t cbIn, size_t& cbUsed, size_t& size, bool& isNull)
+	static bool DecodeSequenceOrSet(DerType type, const std::byte *pIn, size_t cbIn, size_t &cbUsed, size_t &size, bool &isNull)
 	{
-		// Avoid complications - 
+		// Avoid complications -
 
 		if (DecodeNull(pIn, cbIn, cbUsed))
 		{
@@ -286,7 +284,7 @@ protected:
 	}
 
 	template <typename T>
-	static bool DecodeSetOrSequenceOf(DerType type, const uint8_t* pIn, size_t cbIn, size_t& cbPrefix, size_t& cbSize, std::vector<T>& out)
+	static bool DecodeSetOrSequenceOf(DerType type, const std::byte *pIn, size_t cbIn, size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
 	{
 		bool isNull = false;
 		size_t offset = 0;
@@ -308,7 +306,7 @@ protected:
 		}
 
 		offset = cbPrefix;
-        cbIn = cbPrefix + cbSize;
+		cbIn = cbPrefix + cbSize;
 
 		for (;;)
 		{
@@ -320,9 +318,9 @@ protected:
 
 			if (!t.Decode(pIn + offset, cbIn - offset, cbElement))
 			{
-				// Accomodate the case where we have to decode into the 
+				// Accomodate the case where we have to decode into the
 				// sequence to see if the element is optional
-				if( cbElement == 0 )
+				if (cbElement == 0)
 				{
 					cbPrefix = 0;
 					cbSize = 0;
@@ -343,20 +341,20 @@ protected:
 	}
 
 	// Check for types that have a vector or a type of string
-	static bool DecodeNull(const uint8_t* pIn, size_t cbIn, size_t& cbUsed)
+	static bool DecodeNull(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 	{
-		if (cbIn >= 2 && pIn[0] == static_cast<uint8_t>(DerType::Null) && pIn[1] == 0)
+		if (cbIn >= 2 && pIn[0] == static_cast<std::byte>(DerType::Null) && pIn[1] == std::byte{0})
 		{
 			cbUsed = 2;
 			return true;
 		}
-			
+
 		cbUsed = 0;
 		return false;
 	}
 
 	template <typename T>
-	bool Decode(const uint8_t* pIn, size_t cbIn, const DerType type, size_t& cbUsed, T& value)
+	bool Decode(const std::byte *pIn, size_t cbIn, const DerType type, size_t &cbUsed, T &value)
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -381,106 +379,106 @@ protected:
 
 enum class DecodeResult
 {
-    Failed,
-    Null,
-    EmptySequence,
-    Success
+	Failed,
+	Null,
+	EmptySequence,
+	Success
 };
 
 class SequenceHelper
 {
 public:
-    SequenceHelper(size_t& _cbUsed) : dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed), isNull(false) {}
+	SequenceHelper(size_t &_cbUsed) : dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed), isNull(false) {}
 
-    // Note - because CheckExit throws, the destructor must also be marked as throwing
-    // or we will land in terminate and not the catch block.
-    ~SequenceHelper() noexcept(false)
-    {
-       	Update();
-        CheckExit();
-        cbUsed += prefixSize;
-    }
+	// Note - because CheckExit throws, the destructor must also be marked as throwing
+	// or we will land in terminate and not the catch block.
+	~SequenceHelper() noexcept(false)
+	{
+		Update();
+		CheckExit();
+		cbUsed += prefixSize;
+	}
 
-    DecodeResult Init(const uint8_t * pIn, size_t cbIn, size_t& _dataSize)
-    {
-        // This checks internally to see if the data size is within bounds of cbIn
-        if (!DerBase::DecodeSequence(pIn, cbIn, cbUsed, dataSize, isNull))
-            return DecodeResult::Failed;
+	DecodeResult Init(const std::byte *pIn, size_t cbIn, size_t &_dataSize)
+	{
+		// This checks internally to see if the data size is within bounds of cbIn
+		if (!DerBase::DecodeSequence(pIn, cbIn, cbUsed, dataSize, isNull))
+			return DecodeResult::Failed;
 
-        if (isNull)
-            return DecodeResult::Null;
+		if (isNull)
+			return DecodeResult::Null;
 
-        if (cbUsed == cbIn)
-            return DecodeResult::EmptySequence;
+		if (cbUsed == cbIn)
+			return DecodeResult::EmptySequence;
 
-        prefixSize = cbUsed;
+		prefixSize = cbUsed;
 		_dataSize = dataSize;
-        cbUsed = 0; // Let cbUsed now track just the amount of remaining data
-        return DecodeResult::Success;
-    }
+		cbUsed = 0; // Let cbUsed now track just the amount of remaining data
+		return DecodeResult::Success;
+	}
 
-    void CheckExit() noexcept(false)
-    {
-        // if it isn't an error return, then make sure we've consumed all the data
-        if (!isNull && cbUsed != dataSize)
-            throw std::runtime_error("Parsing error");
-    }
+	void CheckExit() noexcept(false)
+	{
+		// if it isn't an error return, then make sure we've consumed all the data
+		if (!isNull && cbUsed != dataSize)
+			throw std::runtime_error("Parsing error");
+	}
 
-    const uint8_t* DataPtr(const uint8_t * pIn) const { return pIn + cbUsed + prefixSize; }
+	const std::byte *DataPtr(const std::byte *pIn) const { return pIn + cbUsed + prefixSize; }
 
-    size_t DataSize() 
-    { 
-        if (cbUsed > dataSize)
-            throw std::overflow_error("Integer overflow in data size");
+	size_t DataSize()
+	{
+		if (cbUsed > dataSize)
+			throw std::overflow_error("Integer overflow in data size");
 
-        return dataSize - cbUsed;
-    }
+		return dataSize - cbUsed;
+	}
 
-    void Update() 
-    { 
-        cbUsed += cbCurrent; 
-        cbCurrent = 0;
-    }
+	void Update()
+	{
+		cbUsed += cbCurrent;
+		cbCurrent = 0;
+	}
 
-    size_t& CurrentSize() { return cbCurrent; }
-    bool IsAllUsed() const { return cbUsed == dataSize; }
+	size_t &CurrentSize() { return cbCurrent; }
+	bool IsAllUsed() const { return cbUsed == dataSize; }
 
 	// Used to help work with optional cases
 	// where we don't know that it was optional until we decode into it
-	void Reset() 
-	{ 
+	void Reset()
+	{
 		dataSize = 0;
 		prefixSize = 0;
 		cbCurrent = 0;
 	}
 
 private:
-    size_t dataSize;
-    size_t prefixSize;
-    size_t cbCurrent;
-    size_t& cbUsed;
-    bool isNull;
+	size_t dataSize;
+	size_t prefixSize;
+	size_t cbCurrent;
+	size_t &cbUsed;
+	bool isNull;
 };
 
 class EncodeHelper
 {
 public:
-    EncodeHelper(size_t& _cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed){}
+	EncodeHelper(size_t &_cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed) {}
 	~EncodeHelper() {}
 
-    void Init(size_t _cbNeeded, uint8_t* pOut, size_t cbOut, uint8_t type, size_t cbData)
-    { 
-        cbNeeded = _cbNeeded; 
-        if(cbNeeded > cbOut || cbOut < 2)
-            throw std::overflow_error("Overflow in Encode");
+	void Init(size_t _cbNeeded, std::byte *pOut, size_t cbOut, std::byte type, size_t cbData)
+	{
+		cbNeeded = _cbNeeded;
+		if (cbNeeded > cbOut || cbOut < 2)
+			throw std::overflow_error("Overflow in Encode");
 
-        // Set the type
-        *pOut = type;
-        offset = 1;
+		// Set the type
+		*pOut = type;
+		offset = 1;
 
-        EncodeSize(cbData, DataPtr(pOut), DataSize(), CurrentSize());
-        Update();
-    }
+		EncodeSize(cbData, DataPtr(pOut), DataSize(), CurrentSize());
+		Update();
+	}
 
 	// This MUST be called before going out of scope
 	// the method may throw, and if the throw were to happen in the destructor
@@ -492,36 +490,36 @@ public:
 		cbUsed = offset;
 	}
 
-    void Update()
-    {
-        offset += cbCurrent;
-        cbCurrent = 0;
-    }
+	void Update()
+	{
+		offset += cbCurrent;
+		cbCurrent = 0;
+	}
 
-    void CheckExit()
-    {
-        if (offset != cbNeeded)
-            throw std::runtime_error("Size needed not equal to size used");
-            // std::cout << "Size needed not equal to size used" << std::endl;
-    }
+	void CheckExit()
+	{
+		if (offset != cbNeeded)
+			throw std::runtime_error("Size needed not equal to size used");
+		// std::cout << "Size needed not equal to size used" << std::endl;
+	}
 
-    uint8_t* DataPtr(uint8_t * pOut) const { return pOut + offset; }
+	std::byte *DataPtr(std::byte *pOut) const { return pOut + offset; }
 
-    size_t DataSize()
-    {
-        if(offset > cbNeeded)
-            throw std::overflow_error("Integer overflow in data size");
+	size_t DataSize()
+	{
+		if (offset > cbNeeded)
+			throw std::overflow_error("Integer overflow in data size");
 
-        return cbNeeded - offset;
-    }
+		return cbNeeded - offset;
+	}
 
-    size_t& CurrentSize() { return cbCurrent; }
+	size_t &CurrentSize() { return cbCurrent; }
 
 private:
-    size_t offset;
-    size_t cbNeeded;
-    size_t cbCurrent;
-    size_t& cbUsed;
+	size_t offset;
+	size_t cbNeeded;
+	size_t cbCurrent;
+	size_t &cbUsed;
 };
 
 /*
@@ -538,16 +536,15 @@ private:
 
 enum class OptionType
 {
-    Implicit = 0,
-    Explicit,
+	Implicit = 0,
+	Explicit,
 };
 
-
-template <typename T, uint8_t type, OptionType optionType>
+template <typename T, std::byte type, OptionType optionType>
 class ContextSpecificHolder;
 
-template <typename T, uint8_t type>
-class ContextSpecificHolder <T, type, OptionType::Explicit>
+template <typename T, std::byte type>
+class ContextSpecificHolder<T, type, OptionType::Explicit>
 {
 public:
 	ContextSpecificHolder() : hasData(false) {}
@@ -556,52 +553,52 @@ public:
 	{
 		size_t innerSize = innerType.EncodedSize();
 
-        // if innerType decodes to null, then this isn't present
-        // Mirror the logic in Encode
-        if (innerSize <= 2)
-            return 0;
+		// if innerType decodes to null, then this isn't present
+		// Mirror the logic in Encode
+		if (innerSize <= 2)
+			return 0;
 
 		return 1 + GetSizeBytes(innerSize) + innerSize;
 	}
 
 	// This contains an encapsulated type, and it has a type
 	// that is defined by the context
-	bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
+	bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 	{
-        // If this is an optional type, we could have used
-        // all the bytes on the previous item
-        if (cbIn == 0)
-            throw std::out_of_range("Insufficient buffer");
+		// If this is an optional type, we could have used
+		// all the bytes on the previous item
+		if (cbIn == 0)
+			throw std::out_of_range("Insufficient buffer");
 
-        if (pIn[0] == type)
-        {
-            size_t offset = 0;
+		if (pIn[0] == type)
+		{
+			size_t offset = 0;
 
-            // Validate the sequence
-            size_t size = 0;
-            size_t cbPrefix = 0;
+			// Validate the sequence
+			size_t size = 0;
+			size_t cbPrefix = 0;
 
-            if (!CheckDecode(pIn, cbIn, static_cast<const DerType>(*pIn), size, cbPrefix))
-            {
-                cbUsed = 0;
-                return false;
-            }
+			if (!CheckDecode(pIn, cbIn, static_cast<const DerType>(*pIn), size, cbPrefix))
+			{
+				cbUsed = 0;
+				return false;
+			}
 
-            offset += cbPrefix;
-            // Now, we can decode the inner type
-            if (innerType.Decode(pIn + offset, size, cbUsed))
-            {
-                cbUsed += cbPrefix;
-                hasData = true;
-                return true;
-            }
-        }
+			offset += cbPrefix;
+			// Now, we can decode the inner type
+			if (innerType.Decode(pIn + offset, size, cbUsed))
+			{
+				cbUsed += cbPrefix;
+				hasData = true;
+				return true;
+			}
+		}
 
-        cbUsed = 0;
-        return false;
+		cbUsed = 0;
+		return false;
 	}
 
-	void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
+	void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 	{
 		// Handle the case where there is no data, and we shouldn't write out anything
 		size_t innerSize = innerType.EncodedSize();
@@ -619,94 +616,92 @@ public:
 			throw std::out_of_range("Insufficient buffer");
 		}
 
-        size_t offset = 1;
-        cbUsed = 0;
+		size_t offset = 1;
+		cbUsed = 0;
 
-        *pOut = type;
-        EncodeSize(innerSize, pOut + offset, cbOut - offset, cbUsed);
+		*pOut = type;
+		EncodeSize(innerSize, pOut + offset, cbOut - offset, cbUsed);
 
-        offset += cbUsed;
-        innerType.Encode(pOut + offset, cbOut - offset, cbUsed);
+		offset += cbUsed;
+		innerType.Encode(pOut + offset, cbOut - offset, cbUsed);
 
-        cbUsed += offset;
+		cbUsed += offset;
 	}
 
-    const T& GetInnerType() const { return innerType; }
-    bool HasData() const { return hasData; }
+	const T &GetInnerType() const { return innerType; }
+	bool HasData() const { return hasData; }
 
 private:
-
 	T innerType;
-    bool hasData;
+	bool hasData;
 };
 
-template <typename T, uint8_t type>
-class ContextSpecificHolder <T, type, OptionType::Implicit>
+template <typename T, std::byte type>
+class ContextSpecificHolder<T, type, OptionType::Implicit>
 {
 public:
-    ContextSpecificHolder() : hasData(false) {}
+	ContextSpecificHolder() : hasData(false) {}
 
-    size_t EncodedSize() 
+	size_t EncodedSize()
 	{
 		if (innerType.GetcbData() == 0)
 			return 0;
 
-		return innerType.EncodedSize(); 
+		return innerType.EncodedSize();
 	}
 
-    bool IsPresent(uint8_t t) const { return t == type; }
+	bool IsPresent(std::byte t) const { return t == type; }
 
-    bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
-    {
-        // If this is an optional type, we could have used
-        // all the bytes on the previous item
-        if (cbIn == 0)
-            throw std::out_of_range("Insufficient buffer");
+	bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+	{
+		// If this is an optional type, we could have used
+		// all the bytes on the previous item
+		if (cbIn == 0)
+			throw std::out_of_range("Insufficient buffer");
 
-        if (IsPresent(pIn[0]))
-        {
-            bool fRet = innerType.Decode(pIn, cbIn, cbUsed);
-            hasData = fRet;
-            return fRet;
-        }
+		if (IsPresent(pIn[0]))
+		{
+			bool fRet = innerType.Decode(pIn, cbIn, cbUsed);
+			hasData = fRet;
+			return fRet;
+		}
 
-        cbUsed = 0;
-        return false;
-    }
+		cbUsed = 0;
+		return false;
+	}
 
-    void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed)
-    {
-        // Handle the case where there is no data, and we shouldn't write out anything
-        size_t innerSize = innerType.EncodedSize();
+	void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+	{
+		// Handle the case where there is no data, and we shouldn't write out anything
+		size_t innerSize = innerType.EncodedSize();
 
-        if (innerSize <= 2)
-        {
-            cbUsed = 0;
-            return;
-        }
+		if (innerSize <= 2)
+		{
+			cbUsed = 0;
+			return;
+		}
 
-        size_t cbSize = GetSizeBytes(innerSize);
+		size_t cbSize = GetSizeBytes(innerSize);
 
-        if (1 + cbSize + innerSize > cbOut)
-        {
-            throw std::out_of_range("Insufficient buffer");
-        }
+		if (1 + cbSize + innerSize > cbOut)
+		{
+			throw std::out_of_range("Insufficient buffer");
+		}
 
-        // A non-constructed type is the same as the type it wraps, 
-        // except for the type byte, which will be ([0x80 or 0xA0] | option number)
-        innerType.Encode(pOut, cbOut, cbUsed);
-        *pOut = static_cast<uint8_t>(type);
-    }
+		// A non-constructed type is the same as the type it wraps,
+		// except for the type byte, which will be ([0x80 or 0xA0] | option number)
+		innerType.Encode(pOut, cbOut, cbUsed);
+		*pOut = static_cast<std::byte>(type);
+	}
 
-    const T& GetInnerType() const { return innerType; }
-    T& GetInnerType() { return innerType; }
+	const T &GetInnerType() const { return innerType; }
+	T &GetInnerType() { return innerType; }
 
-    bool HasData() const { return hasData; }
+	bool HasData() const { return hasData; }
 
 private:
-
-    T innerType;
-    bool hasData;
+	T innerType;
+	bool hasData;
 };
 
 // In order for this to work without being overly clunky,
@@ -715,34 +710,34 @@ class AnyType final : public DerBase
 {
 public:
 	// encode this to NULL if empty
-	virtual size_t EncodedSize() 
-    {
-        if (encodedValue.size() == 0)
-            SetNull();
+	virtual size_t EncodedSize()
+	{
+		if (encodedValue.size() == 0)
+			SetNull();
 
-        return encodedValue.size(); 
-    }
+		return encodedValue.size();
+	}
 
 	void SetNull()
 	{
 		encodedValue.resize(2);
-		encodedValue[0] = static_cast<uint8_t>(DerType::Null);
-		encodedValue[1] = 0;
+		encodedValue[0] = static_cast<std::byte>(DerType::Null);
+		encodedValue[1] = std::byte{0};
 	}
 
-	void SetEncodedValue(const uint8_t* pIn, size_t cbIn)
+	void SetEncodedValue(const std::byte *pIn, size_t cbIn)
 	{
 		encodedValue.resize(cbIn);
 		encodedValue.insert(encodedValue.begin(), pIn, pIn + cbIn);
 	}
 
-	void SetEncodedValue(std::vector<uint8_t>& lhs)
+	void SetEncodedValue(std::vector<std::byte> &lhs)
 	{
 		encodedValue.swap(lhs);
 	}
 
 	template <typename T>
-	void SetValue(T& in)
+	void SetValue(T &in)
 	{
 		size_t cbOut = in.EncodedSize();
 		size_t cbUsed = 0;
@@ -751,8 +746,8 @@ public:
 
 		in.Encode(&encodedValue[0], cbOut, cbUsed);
 	}
- 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
+
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override
 	{
 		// Should be encoded already
 		if (encodedValue.size() == 0)
@@ -762,15 +757,15 @@ public:
 		cbUsed = encodedValue.size();
 	}
 
-	bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed)
+	bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 	{
 		// This can hold anything, by design. Just copy the bytes, might be a Null
 		if (cbIn < 2)
 			return false;
 
-		if (pIn[0] == static_cast<uint8_t>(DerType::Null))
+		if (pIn[0] == static_cast<std::byte>(DerType::Null))
 		{
-			if (pIn[1] == 0)
+			if (pIn[1] == std::byte{0})
 			{
 				cbUsed = 2;
 				return true;
@@ -788,58 +783,62 @@ public:
 			encodedValue.clear();
 			cbUsed = 1 + cbPrefix + static_cast<size_t>(size);
 			encodedValue.insert(encodedValue.begin(), pIn, pIn + cbUsed);
-			
+
 			return true;
 		}
 	}
 
-	const uint8_t* GetBuffer() const { return &encodedValue[0]; }
+	const std::byte *GetBuffer() const { return &encodedValue[0]; }
 	size_t GetBufferSize() const { return encodedValue.size(); }
 
 	// Shouldn't need this for this class, but everything needs it implemented
 	virtual size_t SetDataSize() override;
 
-    static std::ostream& Output(std::ostream& os, const AnyType& o);
-	static std::wostream& Output(std::wostream& os, const AnyType& o);
+	static std::ostream &Output(std::ostream &os, const AnyType &o);
+	static std::wostream &Output(std::wostream &os, const AnyType &o);
 
-	friend std::ostream& operator<<(std::ostream& os, const AnyType& o)
-	{
-        return Output(os, o);
-	}
-
-	friend std::wostream& operator<<(std::wostream& os, const AnyType& o)
+	friend std::ostream &operator<<(std::ostream &os, const AnyType &o)
 	{
 		return Output(os, o);
 	}
 
-	bool ToString(std::string& out) const;
-	bool ToString(std::wstring& out) const;
+	friend std::wostream &operator<<(std::wostream &os, const AnyType &o)
+	{
+		return Output(os, o);
+	}
 
-    DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
+	bool ToString(std::string &out) const;
+	bool ToString(std::wstring &out) const;
 
-    const AnyType& operator=(const AnyType& rhs) { encodedValue = rhs.encodedValue; return *this; }
-    const std::vector<uint8_t>& GetData() const { return encodedValue; }
+	DerType GetDerType() const { return encodedValue.size() > 1 ? static_cast<DerType>(encodedValue[0]) : DerType::Null; }
 
-    template <typename T>
-    bool ConvertToType(T& type) const
-    {
-        size_t cbUsed = 0;
-        return type.Decode(&encodedValue[0], encodedValue.size(), cbUsed) && cbUsed == encodedValue.size();
-    }
-
-    template <typename T>
-    bool OutputFromType(std::ostream& os) const 
-    {
-        T t;
-        bool fConverted = ConvertToType(t);
-        if (fConverted)
-            os << t;
-
-        return fConverted;
-    }
+	const AnyType &operator=(const AnyType &rhs)
+	{
+		encodedValue = rhs.encodedValue;
+		return *this;
+	}
+	const std::vector<std::byte> &GetData() const { return encodedValue; }
 
 	template <typename T>
-	bool OutputFromType(std::wostream& os) const
+	bool ConvertToType(T &type) const
+	{
+		size_t cbUsed = 0;
+		return type.Decode(&encodedValue[0], encodedValue.size(), cbUsed) && cbUsed == encodedValue.size();
+	}
+
+	template <typename T>
+	bool OutputFromType(std::ostream &os) const
+	{
+		T t;
+		bool fConverted = ConvertToType(t);
+		if (fConverted)
+			os << t;
+
+		return fConverted;
+	}
+
+	template <typename T>
+	bool OutputFromType(std::wostream &os) const
 	{
 		T t;
 		bool fConverted = ConvertToType(t);
@@ -850,7 +849,7 @@ public:
 	}
 
 private:
-	std::vector<uint8_t> encodedValue;
+	std::vector<std::byte> encodedValue;
 };
 
 /*
@@ -878,66 +877,66 @@ private:
 class ChoiceType : public DerBase
 {
 public:
-    ChoiceType() : derType(0xff){}
+	ChoiceType() : derType(std::byte{0xff}) {}
 
-    virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
-    {
-        value.Encode(pOut, cbOut, cbUsed);
-    }
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override
+	{
+		value.Encode(pOut, cbOut, cbUsed);
+	}
 
-    virtual bool Decode(const uint8_t * pIn, size_t cbIn, size_t & cbUsed) override
-    {
-        if (value.Decode(pIn, cbIn, cbUsed))
-        {
-            derType = *pIn;
-            return true;
-        }
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
+	{
+		if (value.Decode(pIn, cbIn, cbUsed))
+		{
+			derType = *pIn;
+			return true;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    const AnyType& GetValue() const { return value; }
+	const AnyType &GetValue() const { return value; }
 
-    // It appears that these are EXPLICIT, at least GeneralName is
-    bool GetInnerType(AnyType& inner)
-    {
-        size_t cbUsed = 0;
-        SequenceHelper sh(cbUsed);
-        const uint8_t* pIn = value.GetBuffer();
+	// It appears that these are EXPLICIT, at least GeneralName is
+	bool GetInnerType(AnyType &inner)
+	{
+		size_t cbUsed = 0;
+		SequenceHelper sh(cbUsed);
+		const std::byte *pIn = value.GetBuffer();
 
-        switch (sh.Init(pIn, value.GetBufferSize(), this->cbData))
-        {
-        case DecodeResult::Failed:
-            return false;
-        case DecodeResult::Null:
+		switch (sh.Init(pIn, value.GetBufferSize(), this->cbData))
+		{
+		case DecodeResult::Failed:
+			return false;
+		case DecodeResult::Null:
 		case DecodeResult::EmptySequence:
-            return true;
-        case DecodeResult::Success:
-            break;
-        }
+			return true;
+		case DecodeResult::Success:
+			break;
+		}
 
-        return inner.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize());
-    }
+		return inner.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize());
+	}
 
-    const uint8_t* GetInnerBuffer(size_t& innerSize) const
-    {
-        const uint8_t* pIn = value.GetBuffer();
-        size_t cbIn = value.GetBufferSize();
-        size_t cbPrefix = 0;
+	const std::byte *GetInnerBuffer(size_t &innerSize) const
+	{
+		const std::byte *pIn = value.GetBuffer();
+		size_t cbIn = value.GetBufferSize();
+		size_t cbPrefix = 0;
 
-        innerSize = 0;
+		innerSize = 0;
 
-        if (!DecodeSize(pIn + 1, cbIn - 1, innerSize, cbPrefix) || 1 + cbPrefix + innerSize > cbIn)
-            throw std::out_of_range("Illegal size value");
+		if (!DecodeSize(pIn + 1, cbIn - 1, innerSize, cbPrefix) || 1 + cbPrefix + innerSize > cbIn)
+			throw std::out_of_range("Illegal size value");
 
-        return pIn + cbPrefix + 1;
-    }
+		return pIn + cbPrefix + 1;
+	}
 
 protected:
-    virtual size_t SetDataSize() override { return value.SetDataSize(); }
+	virtual size_t SetDataSize() override { return value.SetDataSize(); }
 
-    AnyType value;
-    DerTypeContainer derType;
+	AnyType value;
+	DerTypeContainer derType;
 };
 
 class Boolean final : public DerBase
@@ -946,40 +945,39 @@ public:
 	Boolean(bool f = false)
 	{
 		if (f)
-			b = 0xff;
+			b = std::byte{0xff};
 		else
-			b = 0;
+			b = std::byte{0};
 	}
 
-	void SetValue(bool f) { b = f ? 0xff : 0; }
-	bool GetValue() const { return b == 0 ? false : true; }
+	void SetValue(bool f) { b = f ? std::byte{0xff} : std::byte{0}; }
+	bool GetValue() const { return b == std::byte{0} ? false : true; }
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override;
 
-	friend std::ostream& operator<<(std::ostream& os, const Boolean& b)
+	friend std::ostream &operator<<(std::ostream &os, const Boolean &b)
 	{
-		os << (b.b == 0 ? "false" : "true");
+		os << (b.b == std::byte{0} ? "false" : "true");
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const Boolean& b)
+	friend std::wostream &operator<<(std::wostream &os, const Boolean &b)
 	{
-		os << (b.b == 0 ? L"false" : L"true");
+		os << (b.b == std::byte{0} ? L"false" : L"true");
 		return os;
 	}
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
-	uint8_t b;
+	std::byte b;
 };
 
 // Allowed to be any size
 class Integer final : public DerBase
 {
 public:
-
 	template <typename T>
 	void SetValue(T in)
 	{
@@ -1009,7 +1007,7 @@ public:
 		if (fAddLeadingZero)
 			value.push_back(0);
 
-		uint8_t* pData = reinterpret_cast<uint8_t*>(&in);
+		std::byte *pData = reinterpret_cast<std::byte *>(&in);
 
 		// Assuming that we're on a little-endian system, start at the end
 		bool fHasData = false;
@@ -1025,13 +1023,13 @@ public:
 		}
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::Integer, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const Integer& o)
+	friend std::ostream &operator<<(std::ostream &os, const Integer &o)
 	{
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
@@ -1041,7 +1039,7 @@ public:
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const Integer& o)
+	friend std::wostream &operator<<(std::wostream &os, const Integer &o)
 	{
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
@@ -1053,112 +1051,112 @@ public:
 
 	size_t ByteCount() const { return value.size(); }
 
-    bool GetValue(uint32_t& data) const
-    {
-        size_t cbValue = value.size();
+	bool GetValue(uint32_t &data) const
+	{
+		size_t cbValue = value.size();
 
-        if (cbValue == 0)
-            return false;
+		if (cbValue == 0)
+			return false;
 
-        // Test for leading zero
-        const uint8_t* pData = &value[0];
+		// Test for leading zero
+		const std::byte *pData = &value[0];
 
-        if (*pData == 0)
-        {
-            ++pData;
-            --cbValue;
-        }
+		if (*pData == std::byte{0})
+		{
+			++pData;
+			--cbValue;
+		}
 
-        if (cbValue > 4)
-            return false;
+		if (cbValue > 4)
+			return false;
 
-        data = 0;
-        for (size_t i = 0; i < cbValue; ++i)
-        {
-            data += *pData;
-            if (i < cbValue - 1)
-                data <<= 8;
-        }
+		data = 0;
+		for (size_t i = 0; i < cbValue; ++i)
+		{
+			data += std::to_integer<uint32_t>(*pData);
+			if (i < cbValue - 1)
+				data <<= 8;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    const std::vector<uint8_t>& GetBytes() const { return value; }
+	const std::vector<std::byte> &GetBytes() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<uint8_t> value;
+	std::vector<std::byte> value;
 };
 
 class BitString final : public DerBase
 {
 public:
-	void SetValue(uint8_t unusedBits, const uint8_t* data, size_t cbData);
+	void SetValue(uint8_t unusedBits, const std::byte *data, size_t cbData);
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	uint8_t UnusedBits() const { return value.size() > 0 ? value[0] : 0; }
+	uint8_t UnusedBits() const { return value.size() > 0 ? std::to_integer<uint8_t>(value[0]) : (uint8_t)0; }
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::BitString, cbUsed, value);
 	}
 
-    size_t ValueSize() const
-    {
-        if (value.size() < 2)
-            return 0;
-        
-        uint8_t unusedBits = value[0];
-        return value.size() * 8 - unusedBits;
-    }
+	size_t ValueSize() const
+	{
+		if (value.size() < 2)
+			return 0;
 
-    bool GetValue(uint8_t& unusedBits, std::vector<uint8_t>& out) const 
-    {
-        if (value.size() < 2)
-            return false;
+		auto unusedBits = std::to_integer<uint8_t>(value[0]);
+		return value.size() * 8 - unusedBits;
+	}
 
-        unusedBits = value[0];
-        out.clear();
-        out.resize(value.size() - 1);
-        out.insert(out.begin(), value.begin() + 1, value.end());
-        return true;
-    }
+	bool GetValue(uint8_t &unusedBits, std::vector<std::byte> &out) const
+	{
+		if (value.size() < 2)
+			return false;
 
-    bool GetValue(const uint8_t*& pValue, size_t& cbValue)
-    {
-        if (value.size() < 2)
-            return false;
+		unusedBits = std::to_integer<uint8_t>(value[0]);
+		out.clear();
+		out.resize(value.size() - 1);
+		out.insert(out.begin(), value.begin() + 1, value.end());
+		return true;
+	}
 
-        pValue = &value[0];
-        cbValue = value.size();
-        return true;
-    }
+	bool GetValue(const std::byte *&pValue, size_t &cbValue)
+	{
+		if (value.size() < 2)
+			return false;
 
-	friend std::ostream& operator<<(std::ostream& os, const BitString& o)
+		pValue = &value[0];
+		cbValue = value.size();
+		return true;
+	}
+
+	friend std::ostream &operator<<(std::ostream &os, const BitString &o)
 	{
 		const uint32_t linelength = 80;
-		const uint8_t* pData = &o.value[0];
+		const std::byte *pData = &o.value[0];
 		std::ostringstream osTmp;
 
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
-            if (pos > 0 && (pos % linelength) == 0)
-                osTmp << std::endl;
+			if (pos > 0 && (pos % linelength) == 0)
+				osTmp << std::endl;
 
-            // This is done byte by byte
+			// This is done byte by byte
 			osTmp << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)pData[pos];
 		}
 
-        os << osTmp.str();
+		os << osTmp.str();
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const BitString& o)
+	friend std::wostream &operator<<(std::wostream &os, const BitString &o)
 	{
 		const uint32_t linelength = 80;
-		const uint8_t* pData = &o.value[0];
+		const std::byte *pData = &o.value[0];
 		std::wostringstream osTmp;
 
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
@@ -1174,47 +1172,46 @@ public:
 		return os;
 	}
 
-	const std::vector<uint8_t>& GetBits() const { return value; }
+	const std::vector<std::byte> &GetBits() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<uint8_t> value;
+	std::vector<std::byte> value;
 };
 
 class OctetString final : public DerBase
 {
 public:
+	void SetValue(const std::vector<std::byte> &in)
+	{
+		value = in;
+	}
 
-    void SetValue(const std::vector<uint8_t>& in)
-    {
-        value = in;
-    }
-
-	void SetValue(const uint8_t* data, size_t cb)
+	void SetValue(const std::byte *data, size_t cb)
 	{
 		value.clear();
 		value.resize(cb);
 		value.insert(value.begin(), data, data + cb);
 	}
 
-    // For use by extensions, which need to write
-    // internal structs into the buffer.
-    std::vector<uint8_t>& Resize(size_t cb)
-    {
-        value.clear();
-        value.resize(cb);
-        return value;
-    }
+	// For use by extensions, which need to write
+	// internal structs into the buffer.
+	std::vector<std::byte> &Resize(size_t cb)
+	{
+		value.clear();
+		value.resize(cb);
+		return value;
+	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::OctetString, cbUsed, value);
 	}
-	
-	friend std::ostream& operator<<(std::ostream& os, const OctetString& o)
+
+	friend std::ostream &operator<<(std::ostream &os, const OctetString &o)
 	{
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
@@ -1224,8 +1221,8 @@ public:
 		os << std::setfill(' ');
 		return os;
 	}
-	
-	friend std::wostream& operator<<(std::wostream& os, const OctetString& o)
+
+	friend std::wostream &operator<<(std::wostream &os, const OctetString &o)
 	{
 		for (size_t pos = 0; pos < o.value.size(); ++pos)
 		{
@@ -1236,22 +1233,22 @@ public:
 		return os;
 	}
 
-    const std::vector<uint8_t>& GetValue() const { return value; }
+	const std::vector<std::byte> &GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	std::vector<uint8_t> value;
+	std::vector<std::byte> value;
 };
 
 class Enumerated : public DerBase
 {
 public:
-	Enumerated(uint8_t v = 0xff) : value(v) {}
+	Enumerated(std::byte v = std::byte{0xff}) : value(v) {}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		size_t size = 0;
 		size_t cbPrefix = 0;
@@ -1270,56 +1267,56 @@ public:
 		return true;
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const Enumerated& e)
+	friend std::ostream &operator<<(std::ostream &os, const Enumerated &e)
 	{
-		os << e.value;
+		os << std::to_integer<uint8_t>(e.value);
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const Enumerated& e)
+	friend std::wostream &operator<<(std::wostream &os, const Enumerated &e)
 	{
-		os << e.value;
+		os << std::to_integer<uint8_t>(e.value);
 		return os;
 	}
 
-	uint8_t GetValue() const { return value; }
+	std::byte GetValue() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = 1); }
 
-	uint8_t value;
+	std::byte value;
 };
 
 class ObjectIdentifier final : public DerBase
 {
 public:
-	ObjectIdentifier(const char* szOid) : oidIndex(OidIndexUnknown)
+	ObjectIdentifier(const char *szOid) : oidIndex(OidIndexUnknown)
 	{
 		SetValue(szOid);
 	}
 
 	ObjectIdentifier() = default;
 
-    static const size_t OidIndexUnknown = ~static_cast<size_t>(0);
+	static const size_t OidIndexUnknown = ~static_cast<size_t>(0);
 
-	bool ToString(std::string& out) const;
-	bool ToString(std::wstring& out) const;
+	bool ToString(std::string &out) const;
+	bool ToString(std::wstring &out) const;
 
-	void SetValue(const char* szOid);
+	void SetValue(const char *szOid);
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
-        bool fRet = DerBase::Decode(pIn, cbIn, DerType::ObjectIdentifier, cbUsed, value);
+		bool fRet = DerBase::Decode(pIn, cbIn, DerType::ObjectIdentifier, cbUsed, value);
 
-        if(fRet)
-            SetOidIndex();
+		if (fRet)
+			SetOidIndex();
 
-        return fRet;
+		return fRet;
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const ObjectIdentifier& obj)
+	friend std::ostream &operator<<(std::ostream &os, const ObjectIdentifier &obj)
 	{
 		std::string s;
 		obj.ToString(s);
@@ -1328,7 +1325,7 @@ public:
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const ObjectIdentifier& obj)
+	friend std::wostream &operator<<(std::wostream &os, const ObjectIdentifier &obj)
 	{
 		std::wstring s;
 		obj.ToString(s);
@@ -1336,49 +1333,48 @@ public:
 		os << s;
 		return os;
 	}
-	
-	const char* GetOidLabel() const
-    {
-        // This will internally ignore invalid values to return null
-        return ::GetOidLabel(oidIndex);
-    }
 
-    const char* GetOidString() const
-    {
-        return ::GetOidString(oidIndex);
-    }
+	const char *GetOidLabel() const
+	{
+		// This will internally ignore invalid values to return null
+		return ::GetOidLabel(oidIndex);
+	}
 
-    std::vector<uint8_t>& GetBytes() { return value; }
+	const char *GetOidString() const
+	{
+		return ::GetOidString(oidIndex);
+	}
 
-    bool IsEmpty() const { return value.size() == 0; }
+	std::vector<std::byte> &GetBytes() { return value; }
 
-    const ObjectIdentifier& operator=(const ObjectIdentifier& rhs)
-    {
-        value = rhs.value;
-        oidIndex = rhs.oidIndex;
+	bool IsEmpty() const { return value.size() == 0; }
+
+	const ObjectIdentifier &operator=(const ObjectIdentifier &rhs)
+	{
+		value = rhs.value;
+		oidIndex = rhs.oidIndex;
 		return *this;
-    }
+	}
 
-    size_t GetOidIndex() const { return oidIndex; }
+	size_t GetOidIndex() const { return oidIndex; }
 
 private:
-    void SetOidIndex()
-    {
-        if (GetOidInfoIndex(value, oidIndex))
-            return;
+	void SetOidIndex()
+	{
+		if (GetOidInfoIndex(value, oidIndex))
+			return;
 
-        oidIndex = ~static_cast<size_t>(0);
-    }
+		oidIndex = ~static_cast<size_t>(0);
+	}
 
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
 
-	void EncodeLong(uint32_t in, uint8_t* out, size_t cbOut, size_t& cbUsed);
-	bool DecodeLong(const uint8_t* in, size_t cbIn, uint32_t& out, size_t& cbRead) const;
-	void GetNextLong(const char* start, const char*& next, uint32_t& out);
+	void EncodeLong(uint32_t in, std::byte *out, size_t cbOut, size_t &cbUsed);
+	bool DecodeLong(const std::span<std::byte> in, size_t cbIn, uint32_t &out, size_t &cbRead) const;
+	void GetNextLong(const char *start, const char *&next, uint32_t &out);
 
-	std::vector<uint8_t> value;
-    size_t oidIndex;
-
+	std::vector<std::byte> value;
+	size_t oidIndex;
 };
 
 class UTCTime final : public DerBase
@@ -1393,7 +1389,7 @@ public:
 		return SetValue(&gmt);
 	}
 
-	bool SetValue(tm* gmt)
+	bool SetValue(tm *gmt)
 	{
 		if (gmt->tm_year >= 150)
 			return false;
@@ -1401,31 +1397,31 @@ public:
 		// Ensure 2-digit year as per spec
 		char tmp[16];
 		sprintf_s(tmp, sizeof(tmp), "%02d%02d%02d%02d%02d%02dZ",
-			gmt->tm_year >= 100 ? gmt->tm_year - 100 : gmt->tm_year,
-			gmt->tm_mon + 1,
-			gmt->tm_mday,
-			gmt->tm_hour,
-			gmt->tm_min,
-			gmt->tm_sec);
+				  gmt->tm_year >= 100 ? gmt->tm_year - 100 : gmt->tm_year,
+				  gmt->tm_mon + 1,
+				  gmt->tm_mday,
+				  gmt->tm_hour,
+				  gmt->tm_min,
+				  gmt->tm_sec);
 
 		value = tmp;
 		return true;
 	}
-	
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UTCTime, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const UTCTime& str)
+	friend std::ostream &operator<<(std::ostream &os, const UTCTime &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const UTCTime& str)
+	friend std::wostream &operator<<(std::wostream &os, const UTCTime &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
@@ -1450,37 +1446,36 @@ public:
 		return SetValue(&gmt);
 	}
 
-	bool SetValue(tm* gmt)
+	bool SetValue(tm *gmt)
 	{
 		// Ensure 4-digit year as per spec
 		char tmp[16];
 		sprintf_s(tmp, sizeof(tmp), "%04d%02d%02d%02d%02d%02dZ",
-			gmt->tm_year + 1900,
-			gmt->tm_mon + 1,
-			gmt->tm_mday,
-			gmt->tm_hour,
-			gmt->tm_min,
-			gmt->tm_sec);
+				  gmt->tm_year + 1900,
+				  gmt->tm_mon + 1,
+				  gmt->tm_mday,
+				  gmt->tm_hour,
+				  gmt->tm_min,
+				  gmt->tm_sec);
 
 		value = tmp;
 		return true;
 	}
 
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::GeneralizedTime, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const GeneralizedTime& str)
+	friend std::ostream &operator<<(std::ostream &os, const GeneralizedTime &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const GeneralizedTime& str)
+	friend std::wostream &operator<<(std::wostream &os, const GeneralizedTime &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
@@ -1539,23 +1534,23 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override;
 
-	friend std::ostream& operator<<(std::ostream& os, const Time& str)
+	friend std::ostream &operator<<(std::ostream &os, const Time &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const Time& str)
+	friend std::wostream &operator<<(std::wostream &os, const Time &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	bool ToString(std::string& out) const;
-    const std::string& GetValue() const { return value; }
+	bool ToString(std::string &out) const;
+	const std::string &GetValue() const { return value; }
 	const std::wstring GetValueW() const { return utf8ToUtf16(value); }
 
 	TimeType GetType() const { return type; }
@@ -1572,11 +1567,11 @@ For documentation on string types, see:
 https://www.obj-sys.com/asn1tutorial/node128.html
 */
 
-inline bool IsAscii(const char* str)
+inline bool IsAscii(const char *str)
 {
 	for (; *str != '\0'; ++str)
 	{
-		if (static_cast<uint8_t>(*str) & 0x80)
+		if (std::byte{0} != (static_cast<std::byte>(*str) & std::byte{0x80}))
 			return false;
 	}
 	return true;
@@ -1587,7 +1582,7 @@ class IA5String final : public DerBase
 public:
 	// Needs to be constrained to ASCII range
 	// International ASCII characters (International Alphabet 5)
-	bool SetValue(const char* str)
+	bool SetValue(const char *str)
 	{
 		if (!IsAscii(str))
 			return false;
@@ -1596,26 +1591,26 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::IA5String, cbUsed, value);
 	}
-	
-	friend std::ostream& operator<<(std::ostream& os, const IA5String& str)
+
+	friend std::ostream &operator<<(std::ostream &os, const IA5String &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const IA5String& str)
+	friend std::wostream &operator<<(std::wostream &os, const IA5String &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1627,7 +1622,7 @@ class GeneralString final : public DerBase
 {
 public:
 	// all registered graphic and character sets plus SPACE and DELETE
-	bool SetValue(const char* str)
+	bool SetValue(const char *str)
 	{
 		if (!IsAscii(str))
 			return false;
@@ -1636,25 +1631,25 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::GeneralString, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const GeneralString& str)
+	friend std::ostream &operator<<(std::ostream &os, const GeneralString &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const GeneralString& str)
+	friend std::wostream &operator<<(std::wostream &os, const GeneralString &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1665,36 +1660,35 @@ private:
 class PrintableString final : public DerBase
 {
 public:
-	bool SetValue(const char* str);
+	bool SetValue(const char *str);
 
 	// constrain to printable chars
 	// a-z, A-Z, 0-9 ' () +,-.?:/= and SPACE
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::PrintableString, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const PrintableString& str)
+	friend std::ostream &operator<<(std::ostream &os, const PrintableString &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const PrintableString& str)
+	friend std::wostream &operator<<(std::wostream &os, const PrintableString &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
-
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
-	
+
 	std::string value;
 };
 
@@ -1702,7 +1696,7 @@ class T61String final : public DerBase
 {
 public:
 	// Arbitrary T.61 characters, likely obsolete
-	bool SetValue(const char* str)
+	bool SetValue(const char *str)
 	{
 		if (!IsAscii(str))
 			return false;
@@ -1711,25 +1705,25 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::T61String, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const T61String& str)
+	friend std::ostream &operator<<(std::ostream &os, const T61String &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const T61String& str)
+	friend std::wostream &operator<<(std::wostream &os, const T61String &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1745,7 +1739,7 @@ class UTF8String final : public DerBase
 {
 public:
 	// any character from a recognized alphabet (including ASCII control characters)
-	bool SetValue(const char* str)
+	bool SetValue(const char *str)
 	{
 		if (str == nullptr)
 			return false;
@@ -1754,25 +1748,25 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UTF8String, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const UTF8String& str)
+	friend std::ostream &operator<<(std::ostream &os, const UTF8String &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const UTF8String& str)
+	friend std::wostream &operator<<(std::wostream &os, const UTF8String &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1783,8 +1777,8 @@ private:
 class VisibleString final : public DerBase
 {
 public:
-	// International ASCII printing character sets 
-	bool SetValue(const char* str)
+	// International ASCII printing character sets
+	bool SetValue(const char *str)
 	{
 		if (!IsAscii(str))
 			return false;
@@ -1793,25 +1787,25 @@ public:
 		return true;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::VisibleString, cbUsed, value);
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const VisibleString& str)
+	friend std::ostream &operator<<(std::ostream &os, const VisibleString &str)
 	{
 		os << str.value;
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const VisibleString& str)
+	friend std::wostream &operator<<(std::wostream &os, const VisibleString &str)
 	{
 		os << utf8ToUtf16(str.value);
 		return os;
 	}
 
-	const std::string& ToString() const { return value; }
+	const std::string &ToString() const { return value; }
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size()); }
@@ -1835,13 +1829,12 @@ public:
 	}
 	*/
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::UniversalString, cbUsed, value);
 	}
-
 
 private:
 	virtual size_t SetDataSize() override { return (cbData = value.size() * sizeof(value[0])); }
@@ -1852,8 +1845,7 @@ private:
 class BMPString final : public DerBase
 {
 public:
-
-	friend std::ostream& operator<<(std::ostream& os, const BMPString& str)
+	friend std::ostream &operator<<(std::ostream &os, const BMPString &str)
 	{
 		std::string converted_str;
 
@@ -1862,27 +1854,27 @@ public:
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const BMPString& str)
+	friend std::wostream &operator<<(std::wostream &os, const BMPString &str)
 	{
 		os << str.value;
 		return os;
 	}
 
 	// Basic Multilingual Plane of ISO/IEC/ITU 10646-1
-	bool SetValue(const wchar_t* wz) 
+	bool SetValue(const wchar_t *wz)
 	{
 		if (wz == nullptr)
 			return false;
 
-		value = wz; 
+		value = wz;
 		return true;
 	}
 
 	virtual size_t SetDataSize() override { return (cbData = value.size() * sizeof(wchar_t)); }
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override;
-	
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
+
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		return DerBase::Decode(pIn, cbIn, DerType::BMPString, cbUsed, value);
 	}
@@ -1893,33 +1885,32 @@ public:
 class Null final : public DerBase
 {
 public:
-
-	friend std::ostream& operator<<(std::ostream& os, const Null& )
+	friend std::ostream &operator<<(std::ostream &os, const Null &)
 	{
 		os << "Null";
 		return os;
 	}
 
-	friend std::wostream& operator<<(std::wostream& os, const Null&)
+	friend std::wostream &operator<<(std::wostream &os, const Null &)
 	{
 		os << L"Null";
 		return os;
 	}
 
-	virtual void Encode(uint8_t* pOut, size_t cbOut, size_t& cbUsed) override
+	virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override
 	{
-		if(cbOut < 2)
+		if (cbOut < 2)
 			throw std::overflow_error("Overflow in Null::Encode");
 
-		pOut[0] = static_cast<uint8_t>(DerType::Null);
-		pOut[1] = 0;
+		pOut[0] = static_cast<std::byte>(DerType::Null);
+		pOut[1] = std::byte{0};
 		cbUsed = 2;
 	}
 
-	virtual bool Decode(const uint8_t* pIn, size_t cbIn, size_t& cbUsed) override
+	virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override
 	{
 		// This one is special
-		if (cbIn < 2 || pIn[0] != static_cast<uint8_t>(DerType::Null) || pIn[1] != 0)
+		if (cbIn < 2 || pIn[0] != static_cast<std::byte>(DerType::Null) || pIn[1] != std::byte{0})
 		{
 			cbUsed = 0;
 			return false;
@@ -1932,6 +1923,4 @@ public:
 	virtual size_t SetDataSize() override { return (cbData = 0); }
 };
 
-
 /* End basic DER encoding types */
-

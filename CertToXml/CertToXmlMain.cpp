@@ -4,7 +4,7 @@
 bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<std::byte> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{

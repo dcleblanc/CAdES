@@ -21,7 +21,7 @@ void SigningTimeAttribute::SetTime()
 	attr.AddAttributeValue(any);
 }
 
-void MessageDigestAttribute::SetDigest(const uint8_t* pDigest, size_t cbDigest)
+void MessageDigestAttribute::SetDigest(const std::byte* pDigest, size_t cbDigest)
 {
 	OctetString os;
 	os.SetValue(pDigest, cbDigest);
@@ -40,7 +40,7 @@ void CounterSignatureAttribute::SetSignedData(const SignedData & /*signedData*/)
 	size_t cbUsed = 0;
 	TBD, SignedData::EncodedSize not coded yet
 	size_t cbBuffer = signedData.EncodedSize();
-	std::vector<uint8_t> buffer(cbBuffer);
+	std::vector<std::byte> buffer(cbBuffer);
 
 	if (!Encode(os, &buffer[0], buffer.size(), cbUsed))
 		throw std::exception("Error in Encode");

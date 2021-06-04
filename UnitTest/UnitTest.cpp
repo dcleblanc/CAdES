@@ -159,7 +159,7 @@ void EncodeSizeTest()
 		{ 0xffffffffffffff + 1, false }*/
 	};
 
-	uint8_t buf[sizeof(uint64_t)];
+	std::byte buf[sizeof(uint64_t)];
 	size_t cbUsed;
 	size_t result;
 	size_t cbRead;
@@ -190,7 +190,7 @@ void EncodeSizeTest()
 
 }
 
-bool ParseDer(const uint8_t* pIn, size_t cbIn)
+bool ParseDer(const std::byte* pIn, size_t cbIn)
 {
 	size_t pos = 0;
 	while (pos < cbIn)
@@ -222,7 +222,7 @@ bool ParseDer(const uint8_t* pIn, size_t cbIn)
 	return true;
 }
 
-void DebugDump(const char* szFile, const uint8_t* pData, size_t cbData)
+void DebugDump(const char* szFile, const std::byte* pData, size_t cbData)
 {
 	std::string dbgFile(szFile);
 	dbgFile += ".dmp";
@@ -248,7 +248,7 @@ void DebugDump(const char* szFile, const uint8_t* pData, size_t cbData)
 void ParseTest(const char * szFile)
 {
 	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<uint8_t> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+	std::vector<std::byte> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
 
 	if (!stm.is_open())
 	{
@@ -264,7 +264,7 @@ void ParseTest(const char * szFile)
 	bool fEncode = false;
 	bool fDecode = false;
 	size_t cbBuffer = (contents.size() + (4096 - 1)) & ~(4096 - 1);
-	std::vector<uint8_t> outBuf(cbBuffer);
+	std::vector<std::byte> outBuf(cbBuffer);
 
 	try
 	{
