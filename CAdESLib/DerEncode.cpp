@@ -123,6 +123,7 @@ public:
 
 		size_t cbUsed = 0;
 
+#pragma warning(disable : 4061)
 		switch (typeContainer.type)
 		{
 		case DerType::External:
@@ -292,6 +293,7 @@ public:
 		break;
 
 		}
+#pragma warning(default : 4061)
 
 		return os;
 	}

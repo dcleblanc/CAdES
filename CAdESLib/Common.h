@@ -3,6 +3,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+// disable the byte padding added after data member warning
+#pragma warning(disable : 4820)
+
 #include <string>
 #include <set>
 #include <vector>

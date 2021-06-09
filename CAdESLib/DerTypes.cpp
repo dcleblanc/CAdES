@@ -29,6 +29,7 @@ std::ostream &operator<<(std::ostream &os, const DerTypeContainer &type)
 		return os;
 	}
 
+#pragma warning(disable : 4061)
 	switch (type.type)
 	{
 	case DerType::EOC:
@@ -156,18 +157,17 @@ std::ostream &operator<<(std::ostream &os, const DerTypeContainer &type)
 		break;
 
 	default:
-		os << "Unknown type " << static_cast<std::byte>(type.type);
+		os << "Unknown type " << static_cast<uint8_t>(type.type);
 		break;
 	}
+#pragma warning(default : 4061)
 
 	return os;
 }
 
 void BitString::SetValue(uint8_t unusedBits, const std::byte *data, size_t cb)
 {
-	// Behavior here is interesting - first char specifies how many trailing
-	// bits aren't used
-
+	// First byte specifies how many trailing bits aren't used
 	if (unusedBits > 7)
 		throw std::invalid_argument("Too many unused bits");
 
@@ -499,7 +499,7 @@ namespace
 	}
 
 	template <typename T>
-	void EncodeString(DerType type, const std::basic_string<T> &in, std::byte *out, size_t cbOut, size_t &cbUsed)
+	std::vector<std::byte> EncodeString(DerType type, const std::basic_string<T> &in)
 	{
 		// If it is empty, encode as Null
 		if (in.size() == 0)
@@ -576,19 +576,19 @@ bool Boolean::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 void Integer::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeVector(DerType::Integer, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void BitString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeVector(DerType::BitString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void OctetString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeVector(DerType::OctetString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void Enumerated::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
@@ -600,25 +600,24 @@ void Enumerated::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 	pOut[1] = std::byte{1};
 	pOut[2] = value;
 	cbUsed = 3;
-	CheckOutputSize(cbUsed);
+	
 }
 
 void ObjectIdentifier::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeVector(DerType::ObjectIdentifier, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void UTCTime::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
-	EncodeString<char>(DerType::UTCTime, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	pOut = EncodeString<char>(DerType::UTCTime, value);
 }
 
 void GeneralizedTime::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::GeneralizedTime, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void Time::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
@@ -635,7 +634,7 @@ void Time::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 		pOut[0] = static_cast<std::byte>(DerType::Null);
 		pOut[1] = std::byte{0};
 	}
-	CheckOutputSize(cbUsed);
+	
 }
 
 bool Time::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
@@ -647,6 +646,7 @@ bool Time::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 	DerType dertype = static_cast<DerType>(pIn[0]);
 	bool fRet = false;
 
+#pragma warning(disable : 4061)
 	switch (dertype)
 	{
 	case DerType::GeneralizedTime:
@@ -666,6 +666,7 @@ bool Time::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 	default:
 		break;
 	}
+#pragma warning(default : 4061)
 
 	if (!fRet)
 	{
@@ -732,49 +733,49 @@ bool Time::ToString(std::string &out) const
 void IA5String::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::IA5String, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void GeneralString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::GeneralString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void PrintableString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::PrintableString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void T61String::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::T61String, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void UTF8String::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::UTF8String, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void VisibleString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char>(DerType::VisibleString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void UniversalString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<char32_t>(DerType::UniversalString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 void BMPString::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
 {
 	EncodeString<wchar_t>(DerType::BMPString, value, pOut, cbOut, cbUsed);
-	CheckOutputSize(cbUsed);
+	
 }
 
 // Shouldn't need this for this class, but everything needs it implemented
@@ -798,6 +799,7 @@ bool AnyType::ToString(std::string &out) const
 {
 	out.clear();
 
+#pragma warning(disable : 4061)
 	switch (GetDerType())
 	{
 	case DerType::Null:
@@ -826,6 +828,7 @@ bool AnyType::ToString(std::string &out) const
 	default:
 		return false;
 	}
+#pragma warning(default : 4061)
 
 	return false;
 }
@@ -834,6 +837,7 @@ bool AnyType::ToString(std::wstring &out) const
 {
 	out.clear();
 
+#pragma warning(disable : 4061)
 	switch (GetDerType())
 	{
 	case DerType::Null:
@@ -865,6 +869,7 @@ bool AnyType::ToString(std::wstring &out) const
 	default:
 		return false;
 	}
+#pragma warning(default : 4061)
 
 	return false;
 }
@@ -874,6 +879,7 @@ std::ostream &AnyType::Output(std::ostream &os, const AnyType &o)
 	DerType type = o.GetDerType();
 	bool fConverted = true;
 
+#pragma warning(disable : 4061)
 	switch (type)
 	{
 	case DerType::Boolean:
@@ -945,6 +951,7 @@ std::ostream &AnyType::Output(std::ostream &os, const AnyType &o)
 		fConverted = false;
 		break;
 	}
+#pragma warning(default : 4061)
 
 	if (!fConverted)
 	{
@@ -962,6 +969,7 @@ std::wostream &AnyType::Output(std::wostream &os, const AnyType &o)
 	DerType type = o.GetDerType();
 	bool fConverted = true;
 
+#pragma warning(disable : 4061)
 	switch (type)
 	{
 	case DerType::Boolean:
@@ -1033,12 +1041,13 @@ std::wostream &AnyType::Output(std::wostream &os, const AnyType &o)
 		fConverted = false;
 		break;
 	}
+#pragma warning(default : 4061)
 
 	if (!fConverted)
 	{
-		for (size_t pos = 0; pos < o.encodedValue.size(); ++pos)
+		for (auto byteValue: o.encodedValue)
 		{
-			os << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)o.encodedValue[pos];
+			os << std::setfill(L'0') << std::setw(2) << std::hex << (uint8_t)byteValue;
 		}
 	}
 

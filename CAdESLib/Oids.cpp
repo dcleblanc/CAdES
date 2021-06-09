@@ -398,7 +398,7 @@ bool GetOidInfoIndex(const std::vector<std::byte> &value, size_t &index)
     if (value.size() >= oiTest.encodedOid.size())
         return false;
 
-    std::copy(value.begin(), value.end(), oiTest);
+    std::copy(value.begin(), value.end(), oiTest.encodedOid.begin());
     oiTest.encodedOid[sizeof(oiTest.encodedOid) - 1] = static_cast<std::byte>(value.size());
 
     pRet = std::lower_bound(oidTable, oidTable + _countof(oidTable), oiTest, OidLessThan);

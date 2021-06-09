@@ -93,9 +93,9 @@ private:
         size_t cbNeeded = 0; // For the set byte
 
         // First, calculate how much is needed for the set of attrValues
-        for (size_t i = 0; i < attrValues.size(); ++i)
+        for (auto attrValue: attrValues)
         {
-            cbNeeded += attrValues[i].EncodedSize();
+            cbNeeded += attrValue.EncodedSize();
         }
 
         cbNeeded += GetSizeBytes(cbNeeded) + 1;
@@ -473,6 +473,8 @@ class ExtensionBase : public DerBase
 public:
     ExtensionBase(const char *oid = nullptr) : szOid(oid) {}
 
+    using DerBase::Decode;
+    using DerBase::Encode;
     void Encode(OctetString &os)
     {
         size_t cbUsed = 0;
@@ -587,7 +589,7 @@ private:
             return true;
         }
 
-        uint8_t unusedBits = bits.UnusedBits();
+        auto unusedBits = bits.UnusedBits();
         const std::byte *pBits = nullptr;
         size_t _cbData = 0;
 
@@ -663,9 +665,10 @@ private:
             }
         }
 
+        // TODO: This code needs better comments and explanation of what it's doing
         // How many bytes do we write out?
-        uint8_t byteCount = bitsUsed > 0 ? bitsUsed / 8 + 1 : 0;
-        uint8_t unusedBits = (byteCount * 8) - bitsUsed;
+        size_t byteCount = bitsUsed > 0 ? bitsUsed / 8 + 1 : (size_t)0;
+        auto unusedBits = (byteCount * 8) - bitsUsed;
         std::byte buffer[4];
 
         for (uint8_t i = 0; i < byteCount && i < 4; ++i)
@@ -674,7 +677,7 @@ private:
             buffer[offset] = *reinterpret_cast<std::byte *>(pvalue);
         }
 
-        bits.SetValue(unusedBits, buffer + (sizeof(buffer) - byteCount), byteCount);
+        bits.SetValue((uint8_t)unusedBits, buffer + (sizeof(buffer) - byteCount), (size_t)byteCount);
     }
 
     BitString bits;
@@ -807,6 +810,7 @@ public:
         if (derType._class != DerClass::Universal || derType.constructed != 0)
             return DirectoryStringType::NotSet;
 
+#pragma warning(disable : 4061)
         switch (derType.type)
         {
         case DerType::TeletexString:
@@ -822,6 +826,7 @@ public:
         default:
             return DirectoryStringType::Error;
         }
+#pragma warning(default : 4061)
     }
 
 private:
@@ -957,7 +962,6 @@ public:
             return GeneralNameType::Error;
 
 // Disable unused enum values warning, it adds a lot of noise here and only specific types are supported
-#pragma warning(disable : 4096)
 #pragma warning(disable : 4061)
         switch (derType.type)
         {
@@ -982,6 +986,7 @@ public:
         default:
             return GeneralNameType::Error;
         }
+#pragma warning(default : 4061)
     }
 
 private:
@@ -2411,6 +2416,9 @@ class ExtensionData
 {
 public:
     ExtensionData(const std::vector<Extension> &ext) : extensions(ext) {}
+    ExtensionData(const ExtensionData &) = delete;
+    ExtensionData &operator=(ExtensionData &&) = delete;
+    ExtensionData &operator=(const ExtensionData &) = delete;
 
     void LoadExtensions()
     {
@@ -2598,14 +2606,14 @@ public:
         return alg.AlgorithmOid();
     }
 
-    void GetPublicKey(uint8_t & unusedBits, std::vector<std::byte> &out)
+    void GetPublicKey(uint8_t &unusedBits, std::vector<std::byte> &out)
     {
         const BitString &bits = subjectPublicKeyInfo.GetSubjectPublicKey();
         bits.GetValue(unusedBits, out);
     }
 
     // issuerUniqueID
-    bool GetIssuerUniqueID(uint8_t & unusedBits, std::vector<std::byte> &out)
+    bool GetIssuerUniqueID(uint8_t &unusedBits, std::vector<std::byte> &out)
     {
         const BitString &bits = issuerUniqueID.GetInnerType();
 
@@ -4220,7 +4228,7 @@ public:
     virtual void Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed) override;
     virtual bool Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed) override;
 
-    virtual size_t EncodedSize()
+    size_t EncodedSize() const override
     {
         if (type != CertStatusType::Revoked)
             return 2; // Null::EncodedSize()

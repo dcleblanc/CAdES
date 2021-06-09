@@ -2029,7 +2029,6 @@ bool DisplayText::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         return false;
 
 // Disable unused enum values warning, it adds a lot of noise here and only specific types are supported
-#pragma warning(disable : 4096)
 #pragma warning(disable : 4061)
     switch (static_cast<DerType>(pIn[0]))
     {
@@ -2048,7 +2047,7 @@ bool DisplayText::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     default:
         return false;
     }
-#pragma warning(default : 4096)
+#pragma warning(default : 4061)
 
     return value.Decode(pIn, cbIn, cbUsed);
 }

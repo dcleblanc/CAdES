@@ -199,6 +199,7 @@ class DerBase
 
 public:
 	DerBase() : cbData(0) {}
+	virtual ~DerBase() = 0;
 
 	virtual size_t EncodedSize() const
 	{
@@ -368,7 +369,7 @@ protected:
 		}
 
 		cbUsed = cbPrefix + static_cast<size_t>(size);
-		value.insert(value.begin(), pIn + cbPrefix, pIn + cbUsed);
+		value.insert(value.begin(),(char*)(pIn + cbPrefix), (char*)(pIn + cbUsed));
 		cbData = value.size();
 		return true;
 	}
@@ -398,6 +399,8 @@ public:
 		CheckExit();
 		cbUsed += prefixSize;
 	}
+
+	SequenceHelper &operator=(const SequenceHelper &) = delete;
 
 	DecodeResult Init(const std::byte *pIn, size_t cbIn, size_t &_dataSize)
 	{
@@ -464,7 +467,9 @@ class EncodeHelper
 {
 public:
 	EncodeHelper(size_t &_cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed) {}
-	~EncodeHelper() {}
+
+	EncodeHelper &operator=(const EncodeHelper) = delete;
+	~EncodeHelper() = default;
 
 	void Init(size_t _cbNeeded, std::byte *pOut, size_t cbOut, std::byte type, size_t cbData)
 	{
@@ -710,11 +715,8 @@ class AnyType final : public DerBase
 {
 public:
 	// encode this to NULL if empty
-	virtual size_t EncodedSize()
+	size_t EncodedSize() const override
 	{
-		if (encodedValue.size() == 0)
-			SetNull();
-
 		return encodedValue.size();
 	}
 
@@ -1146,7 +1148,7 @@ public:
 				osTmp << std::endl;
 
 			// This is done byte by byte
-			osTmp << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)pData[pos];
+			osTmp << std::setfill('0') << std::setw(2) << std::hex << std::to_integer<uint16_t>(pData[pos]);
 		}
 
 		os << osTmp.str();
@@ -1165,7 +1167,7 @@ public:
 				osTmp << std::endl;
 
 			// This is done byte by byte
-			osTmp << std::setfill(L'0') << std::setw(2) << std::hex << (unsigned short)pData[pos];
+			osTmp << std::setfill(L'0') << std::setw(2) << std::hex << std::to_integer<uint16_t>(pData[pos]);
 		}
 
 		os << osTmp.str();
