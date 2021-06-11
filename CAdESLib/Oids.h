@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #pragma once
+#include <span>
 
 // Attributes from https://www.ietf.org/rfc/rfc5280.txt
 
@@ -378,9 +379,9 @@ const char id_pilot_domainComponent[] = "0.9.2342.19200300.100.1.25";
 const char id_entrustVersInfo[] = "1.2.840.113533.7.65.0";
 
 // Helper functions
-bool GetOidInfoIndex(const std::vector<std::byte>& value, size_t& index);
-const char* GetOidString(size_t index);
-const char* GetOidLabel(size_t index);
+bool GetOidInfoIndex(std::span<const std::byte>& value, size_t& index);
+std::string GetOidString(size_t index);
+std::string GetOidLabel(size_t index);
 
 // Extension map
 

@@ -8,8 +8,8 @@
 
 struct OidAndPtr
 {
-    const char *oid;
-    const char *varname;
+    std::string oid;
+    std::string varname;
 };
 
 OidAndPtr knownOids[] =
@@ -156,10 +156,10 @@ OidAndPtr knownOids[] =
 class OidHelper
 {
 public:
-    const char *oid;
-    const std::byte *encodedOid; // ASN.1 encoding
-    const char *textOid;         // Friendly name
-    const char *varName;
+    std::string oid;
+    std::span<const std::byte> encodedOid; // ASN.1 encoding
+    std::string textOid;         // Friendly name
+    std::string varName;
 };
 
 #include <map>
@@ -168,7 +168,7 @@ void PrintOids()
 {
     // This is all terribly inefficient, but is only used
     // to create the structure definition we need
-    typedef std::vector<std::byte> oidBytes;
+    typedef std::vector<uint8_t> oidBytes;
     std::map<oidBytes, OidHelper> oidMap;
     size_t maxKeylen = 0;
     std::byte keybuf[12];
@@ -178,14 +178,16 @@ void PrintOids()
         ObjectIdentifier oi;
         oi.SetValue(knownOids[i].oid);
 
-        oidBytes key = oi.GetBytes();
+        auto keyBytes = oi.GetBytes();
+        auto pKeyBytes = reinterpret_cast<const uint8_t *>(keyBytes.data());
+        oidBytes key{pKeyBytes, pKeyBytes + keyBytes.size()};
         OidHelper hlp;
 
         if (key.size() > maxKeylen)
             maxKeylen = key.size();
 
         hlp.oid = knownOids[i].oid;
-        hlp.textOid = nullptr;
+        hlp.textOid = "";
         hlp.varName = knownOids[i].varname;
 
         oidMap[key] = hlp;
@@ -213,7 +215,7 @@ void PrintOids()
             printf("0x%02x, ", (std::byte)keybuf[i]);
         }
         printf("0x%02x }, ", (std::byte)keybuf[sizeof(keybuf) - 1]);
-        printf("%s, ", oh.varName);
+        printf("%s, ", oh.varName.c_str());
         printf("\"\" },\n");
     }
     printf("} \n");
@@ -228,8 +230,8 @@ namespace
     struct OidInfo
     {
         std::array<std::byte, 12> encodedOid{};
-        const char *szOid;
-        const char *szOidLabel;
+        std::string szOid;
+        std::string szOidLabel;
     };
 
     // Note - last byte is the number of octets used
@@ -388,7 +390,7 @@ namespace
 
 } // local namespace
 
-bool GetOidInfoIndex(const std::vector<std::byte> &value, size_t &index)
+bool GetOidInfoIndex(std::span<const std::byte>& value, size_t &index)
 {
     OidInfo *pRet = nullptr;
     OidInfo *pLast = oidTable + _countof(oidTable);
@@ -398,7 +400,7 @@ bool GetOidInfoIndex(const std::vector<std::byte> &value, size_t &index)
     if (value.size() >= oiTest.encodedOid.size())
         return false;
 
-    std::copy(value.begin(), value.end(), oiTest.encodedOid.begin());
+    value = oiTest.encodedOid;
     oiTest.encodedOid[sizeof(oiTest.encodedOid) - 1] = static_cast<std::byte>(value.size());
 
     pRet = std::lower_bound(oidTable, oidTable + _countof(oidTable), oiTest, OidLessThan);
@@ -411,23 +413,23 @@ bool GetOidInfoIndex(const std::vector<std::byte> &value, size_t &index)
     return true;
 }
 
-const char *GetOidString(size_t index)
+std::string GetOidString(size_t index)
 {
     if (index >= _countof(oidTable))
-        return nullptr;
+        return "";
 
     return oidTable[index].szOid;
 }
 
-const char *GetOidLabel(size_t index)
+std::string GetOidLabel(size_t index)
 {
     if (index >= _countof(oidTable))
-        return nullptr;
+        return "";
 
     return oidTable[index].szOidLabel;
 }
 
-ExtensionId OidToExtensionId(const char *szOidTag)
+ExtensionId OidToExtensionId(const char * szOidTag)
 {
     // Note - these are ranked in order of which are most common
     if (szOidTag == id_ce_keyUsage)
@@ -515,7 +517,7 @@ ExtensionId OidToExtensionId(const char *szOidTag)
 }
 
 #if _DEBUG
-const char *testOids[] =
+std::string testOids[] =
     {
         "0.9.2342.19200300.100.1.1",
         "0.9.2342.19200300.100.1.25",
@@ -575,9 +577,9 @@ void CheckOids()
         ObjectIdentifier oi;
 
         oi.SetValue(testOids[i]);
-        const char *sz = oi.GetOidLabel();
-        if (sz == nullptr)
-            std::cout << "Oid not found: " << testOids[i] << std::endl;
+        auto sz = oi.GetOidLabel();
+        // if (sz == "")
+        //     std::cout << "Oid not found: " << testOids[i] << std::endl;
     }
 }
 
@@ -593,19 +595,19 @@ void TestOidTable()
             throw std::runtime_error("Incorrect table ordering");
     }
 
-    for (size_t i = 1; i < _countof(oidTable); ++i)
+    for (auto &oid: oidTable)
     {
         // Now make sure that everything is going to round-trip, and the lower bound works
         ObjectIdentifier oi;
 
-        oi.SetValue(oidTable[i].szOid);
-        const char *sz = oi.GetOidString();
-        if (sz == nullptr || strcmp(sz, oidTable[i].szOid) != 0)
+        oi.SetValue(oid.szOid);
+        auto sz = oi.GetOidString();
+        if (sz.empty() || sz != oid.szOid)
             throw std::runtime_error("Oid String decode error");
 
         // Flush out any entries without tags
-        if (*oidTable[i].szOidLabel == '\0')
-            std::cout << "Missing label: " << oidTable[i].szOid << std::endl;
+        if (oid.szOidLabel.empty())
+            std::cout << "Missing label: " << oid.szOid << std::endl;
     }
 
     CheckOids();

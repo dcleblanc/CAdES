@@ -3,7 +3,7 @@
 
 #include "Common.h"
 
-const char *hashOids[] =
+const std::string hashOids[] =
     {
         id_md2,
         id_md5,
@@ -11,34 +11,35 @@ const char *hashOids[] =
         id_sha224,
         id_sha256,
         id_sha384,
-        id_sha512};
+        id_sha512
+    };
 
 AlgorithmIdentifier::AlgorithmIdentifier(HashAlgorithm alg) : algorithm(hashOids[static_cast<ptrdiff_t>(alg)])
 {
     parameters.SetNull();
 }
 
-void Accuracy::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Accuracy::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    seconds.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    seconds.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    millis.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    millis.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    micros.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    micros.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Accuracy::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Accuracy::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -49,38 +50,38 @@ bool Accuracy::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!seconds.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!seconds.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!millis.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!millis.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!micros.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!micros.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void AlgorithmIdentifier::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void AlgorithmIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    algorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    algorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    parameters.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    parameters.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool AlgorithmIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -91,7 +92,7 @@ bool AlgorithmIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUs
         break;
     }
 
-    if (!algorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!algorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -99,30 +100,30 @@ bool AlgorithmIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUs
     if (sh.IsAllUsed())
         return true;
 
-    if (!parameters.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!parameters.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void Attribute::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Attribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    attrType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    attrType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Attribute::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -133,11 +134,11 @@ bool Attribute::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!attrType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!attrType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), attrValues))
+    if (DecodeSet(sh.DataPtr(in), sh.CurrentSize(), attrValues))
     {
         return true;
     }
@@ -145,24 +146,24 @@ bool Attribute::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     return false;
 }
 
-void EncapsulatedContentInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void EncapsulatedContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    eContentType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    eContentType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    eContent.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    eContent.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool EncapsulatedContentInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -173,37 +174,37 @@ bool EncapsulatedContentInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &
         break;
     }
 
-    if (!eContentType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!eContentType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!eContent.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!eContent.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void IssuerSerial::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void IssuerSerial::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serial.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerUID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerUID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool IssuerSerial::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool IssuerSerial::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -214,44 +215,44 @@ bool IssuerSerial::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!issuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serial.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serial.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerUID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerUID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void ObjectDigestInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void ObjectDigestInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    digestedObjectType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    digestedObjectType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherObjectTypeID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherObjectTypeID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    digestAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    digestAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    objectDigest.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    objectDigest.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool ObjectDigestInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool ObjectDigestInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -262,45 +263,45 @@ bool ObjectDigestInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!digestedObjectType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!digestedObjectType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherObjectTypeID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherObjectTypeID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!digestAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!digestAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigest.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!objectDigest.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void Holder::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Holder::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    baseCertificateID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    baseCertificateID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    entityName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    entityName.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    objectDigestInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    objectDigestInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Holder::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Holder::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -311,38 +312,38 @@ bool Holder::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!baseCertificateID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!baseCertificateID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!entityName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!entityName.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigestInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!objectDigestInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OtherHashAlgAndValue::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherHashAlgAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    hashValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashValue.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherHashAlgAndValue::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -353,37 +354,37 @@ bool OtherHashAlgAndValue::Decode(const std::byte *pIn, size_t cbIn, size_t &cbU
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!hashValue.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void V2Form::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void V2Form::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    issuerName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerName.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    baseCertificateID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    baseCertificateID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    objectDigestInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    objectDigestInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool V2Form::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool V2Form::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -394,38 +395,38 @@ bool V2Form::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!issuerName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerName.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!baseCertificateID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!baseCertificateID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigestInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!objectDigestInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void AttCertValidityPeriod::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void AttCertValidityPeriod::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    notBeforeTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    notBeforeTime.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    notAfterTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    notAfterTime.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool AttCertValidityPeriod::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool AttCertValidityPeriod::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -436,55 +437,55 @@ bool AttCertValidityPeriod::Decode(const std::byte *pIn, size_t cbIn, size_t &cb
         break;
     }
 
-    if (!notBeforeTime.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!notBeforeTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!notAfterTime.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!notAfterTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void AttributeCertificateInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void AttributeCertificateInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    holder.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    holder.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signature.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    attrCertValidityPeriod.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    attrCertValidityPeriod.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerUniqueID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool AttributeCertificateInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -495,69 +496,69 @@ bool AttributeCertificateInfo::Decode(const std::byte *pIn, size_t cbIn, size_t 
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!holder.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!holder.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!holder.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!holder.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!attrCertValidityPeriod.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!attrCertValidityPeriod.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), attributes))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), attributes))
         return false;
 
     sh.Update();
-    if (!issuerUniqueID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void AttributeCertificate::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void AttributeCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    acinfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    acinfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool AttributeCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool AttributeCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -568,44 +569,44 @@ bool AttributeCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbU
         break;
     }
 
-    if (!acinfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!acinfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CertID::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerNameHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerNameHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerKeyHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerKeyHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CertID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -616,42 +617,42 @@ bool CertID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerNameHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerNameHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerKeyHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerKeyHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void RevokedInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void RevokedInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    revocationTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    revocationTime.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    revocationReason.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    revocationReason.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool RevokedInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool RevokedInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -662,43 +663,43 @@ bool RevokedInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!revocationTime.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!revocationTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!revocationReason.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!revocationReason.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void SingleResponse::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SingleResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    certID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    certStatus.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certStatus.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    thisUpdate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    thisUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    nextUpdate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    nextUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    singleExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    singleExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SingleResponse::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SingleResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -709,49 +710,49 @@ bool SingleResponse::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!certID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certStatus.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certStatus.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!thisUpdate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!thisUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nextUpdate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!nextUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!singleExtensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!singleExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void PKIStatusInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void PKIStatusInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    status.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    status.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    statusString.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    statusString.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    failInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    failInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool PKIStatusInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool PKIStatusInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -762,38 +763,38 @@ bool PKIStatusInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!status.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!status.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!statusString.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!statusString.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!failInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!failInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void ContentInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void ContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    contentType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    contentType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    content.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    content.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool ContentInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool ContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -804,37 +805,37 @@ bool ContentInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!contentType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!contentType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!content.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!content.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CrlIdentifier::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CrlIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    crlissuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlissuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    crlIssuedTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlIssuedTime.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    crlNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CrlIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CrlIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -845,38 +846,38 @@ bool CrlIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!crlissuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlissuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlIssuedTime.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlIssuedTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CrlValidatedID::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CrlValidatedID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    crlHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    crlIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CrlValidatedID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CrlValidatedID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -887,34 +888,34 @@ bool CrlValidatedID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!crlHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlIdentifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void MessageImprint::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void MessageImprint::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    hashedMessage.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashedMessage.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool MessageImprint::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool MessageImprint::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -925,34 +926,34 @@ bool MessageImprint::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!hashedMessage.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashedMessage.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void UserNotice::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void UserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    noticeRef.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    noticeRef.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    explicitText.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    explicitText.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool UserNotice::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool UserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -963,34 +964,34 @@ bool UserNotice::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!noticeRef.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!noticeRef.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!explicitText.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!explicitText.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void NoticeReference::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void NoticeReference::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    organization.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    organization.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool NoticeReference::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1001,34 +1002,34 @@ bool NoticeReference::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!organization.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!organization.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), noticeNumbers))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), noticeNumbers))
         return false;
 
     return true;
 }
 
-void OcspIdentifier::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OcspIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    ocspResponderID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    ocspResponderID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    producedAt.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    producedAt.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OcspIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OcspIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1039,37 +1040,37 @@ bool OcspIdentifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!ocspResponderID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!ocspResponderID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!producedAt.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!producedAt.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CrlOcspRef::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CrlOcspRef::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    ocspids.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    ocspids.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherRev.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRev.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CrlOcspRef::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1080,38 +1081,38 @@ bool CrlOcspRef::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), crlids))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crlids))
         return false;
 
     sh.Update();
-    if (!ocspids.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!ocspids.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRev.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRev.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OtherRevRefs::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherRevRefs::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    otherRevRefType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevRefType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherRevRefs.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevRefs.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherRevRefs::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherRevRefs::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1122,42 +1123,42 @@ bool OtherRevRefs::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!otherRevRefType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevRefType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevRefs.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevRefs.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OcspListID::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OcspListID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, pOut, cbOut, cbUsed);
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, out, cbUsed);
 }
 
-void RevocationValues::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void RevocationValues::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherRevVals.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevVals.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool RevocationValues::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1168,38 +1169,38 @@ bool RevocationValues::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), crlVals))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crlVals))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), ocspVals))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), ocspVals))
         return false;
 
     sh.Update();
-    if (!otherRevVals.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevVals.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OtherRevVals::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherRevVals::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    otherRevValType.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevValType.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherRevVals.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevVals.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherRevVals::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherRevVals::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1210,40 +1211,40 @@ bool OtherRevVals::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!otherRevValType.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevValType.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevVals.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevVals.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void BasicOCSPResponse::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void BasicOCSPResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    tbsResponseData.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    tbsResponseData.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signature.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool BasicOCSPResponse::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1254,51 +1255,51 @@ bool BasicOCSPResponse::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed
         break;
     }
 
-    if (!tbsResponseData.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!tbsResponseData.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), certs))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
         return false;
 
     return true;
 }
 
-void ResponseData::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void ResponseData::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    responderID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    responderID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    producedAt.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    producedAt.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool ResponseData::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1309,46 +1310,46 @@ bool ResponseData::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!responderID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!responderID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!producedAt.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!producedAt.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), responses))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), responses))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void SigningCertificateV2::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SigningCertificateV2::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SigningCertificateV2::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SigningCertificateV2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1359,34 +1360,34 @@ bool SigningCertificateV2::Decode(const std::byte *pIn, size_t cbIn, size_t &cbU
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), certs))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), policies))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), policies))
         return false;
 
     return true;
 }
 
-void SubjectPublicKeyInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SubjectPublicKeyInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    algorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    algorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    subjectPublicKey.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    subjectPublicKey.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SubjectPublicKeyInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1397,37 +1398,37 @@ bool SubjectPublicKeyInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbU
         break;
     }
 
-    if (!algorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!algorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subjectPublicKey.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!subjectPublicKey.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void Certificate::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Certificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    tbsCertificate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    tbsCertificate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Certificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Certificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1438,62 +1439,62 @@ bool Certificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!tbsCertificate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!tbsCertificate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void TBSCertificate::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void TBSCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signature.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    validity.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    validity.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    subject.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    subject.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    subjectPublicKeyInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    subjectPublicKeyInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerUniqueID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    subjectUniqueID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    subjectUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool TBSCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool TBSCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1506,57 +1507,57 @@ bool TBSCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
 
     // A V3 cert should always have this, anything with extensions must be v3
     // If it is missing, it implies v1 (value of 0)
-    if (*(sh.DataPtr(pIn)) == std::byte{0xA0})
+    if (sh.DataPtr(in)[0] == std::byte{0xA0})
     {
-        if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+        if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
             return false;
     }
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!validity.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!validity.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subject.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!subject.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subjectPublicKeyInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!subjectPublicKeyInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
     // The following may not be present, and may need to be skipped
-    if (*(sh.DataPtr(pIn)) == std::byte{0xA1})
+    if (sh.DataPtr(in)[0] == std::byte{0xA1})
     {
-        if (!issuerUniqueID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+        if (!issuerUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (*(sh.DataPtr(pIn)) == std::byte{0xA2})
+    if (sh.DataPtr(in)[0] == std::byte{0xA2})
     {
-        if (!subjectUniqueID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+        if (!subjectUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (*(sh.DataPtr(pIn)) == std::byte{0xA3})
+    if (sh.DataPtr(in)[0] == std::byte{0xA3})
     {
-        if (!extensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+        if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
             return false;
 
         sh.Update();
@@ -1565,27 +1566,27 @@ bool TBSCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     return true;
 }
 
-void CertificateList::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CertificateList::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    tbsCertList.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    tbsCertList.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CertificateList::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CertificateList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1596,53 +1597,53 @@ bool CertificateList::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!tbsCertList.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!tbsCertList.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void TBSCertList::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void TBSCertList::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signature.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    thisUpdate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    thisUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    nextUpdate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    nextUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    revokedCertificates.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    revokedCertificates.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    crlExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool TBSCertList::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool TBSCertList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1654,64 +1655,64 @@ bool TBSCertList::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     }
 
     // Version is optional
-    if (*sh.DataPtr(pIn) == static_cast<std::byte>(DerType::Integer))
+    if (sh.DataPtr(in)[0] == static_cast<std::byte>(DerType::Integer))
     {
-        if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+        if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!thisUpdate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!thisUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
 
     // This is also optional, and may not be present
-    if (nextUpdate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (nextUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
     {
         sh.Update();
     }
 
     // These are optional, and may not be present
-    if (revokedCertificates.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (revokedCertificates.Decode(sh.DataPtr(in), sh.CurrentSize()))
         sh.Update();
 
     if (sh.IsAllUsed()) // extensions are optional
         return true;
 
-    if (!crlExtensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void PolicyInformation::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void PolicyInformation::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    policyIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    policyIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool PolicyInformation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1722,7 +1723,7 @@ bool PolicyInformation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed
         break;
     }
 
-    if (!policyIdentifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!policyIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -1731,7 +1732,7 @@ bool PolicyInformation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed
 
     size_t cbSize = 0;
     size_t cbPrefix = 0;
-    bool ret = DecodeSequenceOf(sh.DataPtr(pIn), sh.DataSize(), cbPrefix, cbSize, policyQualifiers);
+    bool ret = DecodeSequenceOf(sh.DataPtr(in), cbPrefix, cbSize, policyQualifiers);
 
     if (ret)
     {
@@ -1742,24 +1743,24 @@ bool PolicyInformation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed
     return ret;
 }
 
-void ESSCertID::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void ESSCertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    certHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool ESSCertID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool ESSCertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1770,34 +1771,34 @@ bool ESSCertID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!certHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void SigningCertificate::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SigningCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SigningCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SigningCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1808,37 +1809,37 @@ bool SigningCertificate::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUse
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), certs))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), policies))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), policies))
         return false;
 
     return true;
 }
 
-void ESSCertIDv2::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void ESSCertIDv2::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    hashAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    certHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool ESSCertIDv2::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool ESSCertIDv2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1849,38 +1850,38 @@ bool ESSCertIDv2::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void PolicyQualifierInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void PolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    policyQualifierId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    policyQualifierId.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    qualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    qualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool PolicyQualifierInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool PolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1891,34 +1892,34 @@ bool PolicyQualifierInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUs
         break;
     }
 
-    if (!policyQualifierId.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!policyQualifierId.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!qualifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!qualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void IssuerAndSerialNumber::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void IssuerAndSerialNumber::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    issuer.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool IssuerAndSerialNumber::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1929,41 +1930,41 @@ bool IssuerAndSerialNumber::Decode(const std::byte *pIn, size_t cbIn, size_t &cb
         break;
     }
 
-    if (!issuer.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
 
-    if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void Extension::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Extension::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    extnID.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extnID.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
     if (critical.GetValue())
     {
-        critical.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+        critical.Encode(eh.DataPtr(out), eh.CurrentSize());
         eh.Update();
     }
 
-    extnValue.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extnValue.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Extension::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Extension::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1974,39 +1975,39 @@ bool Extension::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!extnID.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extnID.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
     // This might not be present
-    if (!critical.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!critical.Decode(sh.DataPtr(in), sh.CurrentSize()))
     {
         // Ought to be false by default, but this is more readable
         critical.SetValue(false);
     }
 
     sh.Update();
-    if (!extnValue.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extnValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CertStatus::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CertStatus::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    revoked.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    revoked.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CertStatus::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CertStatus::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2017,20 +2018,20 @@ bool CertStatus::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!revoked.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!revoked.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-bool DisplayText::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool DisplayText::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    if (cbIn < 2)
+    if (in.size() < 2)
         return false;
 
 // Disable unused enum values warning, it adds a lot of noise here and only specific types are supported
 #pragma warning(disable : 4061)
-    switch (static_cast<DerType>(pIn[0]))
+    switch (static_cast<DerType>(in[0]))
     {
     case DerType::VisibleString:
         type = DisplayTextType::Visible;
@@ -2049,42 +2050,42 @@ bool DisplayText::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     }
 #pragma warning(default : 4061)
 
-    return value.Decode(pIn, cbIn, cbUsed);
+    return value.Decode(in, cbUsed);
 }
 
-void SignerInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SignerInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    sid.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    sid.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    digestAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    digestAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signatureAlgorithm.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    signature.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    signature.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SignerInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2095,54 +2096,54 @@ bool SignerInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sid.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!sid.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!digestAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!digestAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), signedAttrs))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), signedAttrs))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), unsignedAttrs))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), unsignedAttrs))
         return false;
 
     return true;
 }
 
-void OtherCertificateFormat::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherCertificateFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    otherCertFormat.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherCertFormat.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherCert.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherCert.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherCertificateFormat::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherCertificateFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2153,34 +2154,34 @@ bool OtherCertificateFormat::Decode(const std::byte *pIn, size_t cbIn, size_t &c
         break;
     }
 
-    if (!otherCertFormat.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherCertFormat.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherCert.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherCert.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void EDIPartyName::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void EDIPartyName::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    nameAssigner.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    nameAssigner.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    partyName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    partyName.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool EDIPartyName::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool EDIPartyName::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2191,37 +2192,37 @@ bool EDIPartyName::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!nameAssigner.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!nameAssigner.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!partyName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!partyName.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void RevocationEntry::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void RevocationEntry::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    userCertificate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    userCertificate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    revocationDate.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    revocationDate.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    crlEntryExtensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    crlEntryExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool RevocationEntry::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2235,18 +2236,18 @@ bool RevocationEntry::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     // We have an optional sequence of RevocationEntry object
     // and won't know if there really is a RevocationEntry until
     // we get here
-    if (*sh.DataPtr(pIn) != static_cast<std::byte>(DerType::Integer))
+    if (sh.DataPtr(in)[0] != static_cast<std::byte>(DerType::Integer))
     {
         cbUsed = 0;
         sh.Reset(); // This keeps us from throwing
         return false;
     }
 
-    if (!userCertificate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!userCertificate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!revocationDate.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!revocationDate.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2254,30 +2255,30 @@ bool RevocationEntry::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
     if (sh.IsAllUsed()) // crlEntryExtensions are optional
         return true;
 
-    if (!crlEntryExtensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!crlEntryExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OtherRevocationInfoFormat::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherRevocationInfoFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    otherRevInfoFormat.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevInfoFormat.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    otherRevInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherRevInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherRevocationInfoFormat::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2288,43 +2289,43 @@ bool OtherRevocationInfoFormat::Decode(const std::byte *pIn, size_t cbIn, size_t
         break;
     }
 
-    if (!otherRevInfoFormat.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevInfoFormat.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherRevInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void SignedData::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SignedData::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    encapContentInfo.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    encapContentInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SignedData::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2335,50 +2336,50 @@ bool SignedData::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), digestAlgorithms))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), digestAlgorithms))
         return false;
 
     sh.Update();
-    if (!encapContentInfo.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!encapContentInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), certificates))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certificates))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), crls))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crls))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), signerInfos))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), signerInfos))
         return false;
 
     return true;
 }
 
-void SigPolicyQualifierInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SigPolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    sigPolicyQualifierId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    sigPolicyQualifierId.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    sigQualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    sigQualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SigPolicyQualifierInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2389,37 +2390,37 @@ bool SigPolicyQualifierInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &c
         break;
     }
 
-    if (!sigPolicyQualifierId.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!sigPolicyQualifierId.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sigQualifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!sigQualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void SignaturePolicyId::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SignaturePolicyId::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    sigPolicyId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    sigPolicyId.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    sigPolicyHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    sigPolicyHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SignaturePolicyId::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2430,38 +2431,38 @@ bool SignaturePolicyId::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed
         break;
     }
 
-    if (!sigPolicyId.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!sigPolicyId.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sigPolicyHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!sigPolicyHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), sigPolicyQualifiers))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), sigPolicyQualifiers))
         return false;
 
     return true;
 }
 
-void SPUserNotice::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SPUserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    noticeRef.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    noticeRef.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    explicitText.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    explicitText.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SPUserNotice::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SPUserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2472,34 +2473,34 @@ bool SPUserNotice::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!noticeRef.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!noticeRef.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!explicitText.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!explicitText.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CommitmentTypeQualifier::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CommitmentTypeQualifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    commitmentTypeIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    commitmentTypeIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    qualifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    qualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CommitmentTypeQualifier::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2510,34 +2511,34 @@ bool CommitmentTypeQualifier::Decode(const std::byte *pIn, size_t cbIn, size_t &
         break;
     }
 
-    if (!commitmentTypeIdentifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!commitmentTypeIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!qualifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!qualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void CommitmentTypeIndication::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void CommitmentTypeIndication::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    commitmentTypeId.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    commitmentTypeId.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool CommitmentTypeIndication::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2548,37 +2549,37 @@ bool CommitmentTypeIndication::Decode(const std::byte *pIn, size_t cbIn, size_t 
         break;
     }
 
-    if (!commitmentTypeId.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!commitmentTypeId.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), commitmentTypeQualifier))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), commitmentTypeQualifier))
         return false;
 
     return true;
 }
 
-void SignerLocation::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SignerLocation::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    countryName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    countryName.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    localityName.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    localityName.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SignerLocation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2589,38 +2590,38 @@ bool SignerLocation::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!countryName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!countryName.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!localityName.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!localityName.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), postalAdddress))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), postalAdddress))
         return false;
 
     return true;
 }
 
-void SignerAttribute::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void SignerAttribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    certifiedAttributes.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certifiedAttributes.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool SignerAttribute::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2631,46 +2632,46 @@ bool SignerAttribute::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize(), claimedAttributes))
+    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), claimedAttributes))
         return false;
 
     sh.Update();
-    if (!certifiedAttributes.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certifiedAttributes.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void TimeStampReq::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void TimeStampReq::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    messageImprint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    messageImprint.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    reqPolicy.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    reqPolicy.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    nonce.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    nonce.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    certReq.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    certReq.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool TimeStampReq::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool TimeStampReq::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2681,50 +2682,50 @@ bool TimeStampReq::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!messageImprint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!messageImprint.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!reqPolicy.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!reqPolicy.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nonce.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!nonce.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certReq.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!certReq.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void TimeStampResp::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void TimeStampResp::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    status.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    status.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    timeStampToken.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    timeStampToken.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool TimeStampResp::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool TimeStampResp::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2735,58 +2736,58 @@ bool TimeStampResp::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!status.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!status.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!timeStampToken.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!timeStampToken.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void TSTInfo::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void TSTInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    version.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    version.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    policy.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    policy.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    messageImprint.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    messageImprint.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    serialNumber.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    genTime.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    genTime.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    accuracy.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    accuracy.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    ordering.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    ordering.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    nonce.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    nonce.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    tsa.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    tsa.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    extensions.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool TSTInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool TSTInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2797,66 +2798,66 @@ bool TSTInfo::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!policy.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!policy.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!messageImprint.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!messageImprint.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!genTime.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!genTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!accuracy.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!accuracy.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!ordering.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!ordering.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nonce.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!nonce.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!tsa.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!tsa.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OtherCertId::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OtherCertId::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    otherCertHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    otherCertHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    issuerSerial.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OtherCertId::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OtherCertId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2867,34 +2868,34 @@ bool OtherCertId::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!otherCertHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!otherCertHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void OcspResponsesID::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void OcspResponsesID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    ocspIdentifier.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    ocspIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    ocspRepHash.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    ocspRepHash.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool OcspResponsesID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool OcspResponsesID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2905,34 +2906,34 @@ bool OcspResponsesID::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!ocspIdentifier.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!ocspIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!ocspRepHash.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!ocspRepHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void Validity::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void Validity::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    notBefore.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    notBefore.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    notAfter.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    notAfter.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool Validity::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool Validity::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2943,34 +2944,34 @@ bool Validity::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
         break;
     }
 
-    if (!notBefore.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!notBefore.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!notAfter.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!notAfter.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;
 }
 
-void AttributeTypeAndValue::Encode(std::byte *pOut, size_t cbOut, size_t &cbUsed)
+void AttributeTypeAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
     EncodeHelper eh(cbUsed);
 
-    eh.Init(EncodedSize(), pOut, cbOut, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
-    type.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    type.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Update();
 
-    value.Encode(eh.DataPtr(pOut), eh.DataSize(), eh.CurrentSize());
+    value.Encode(eh.DataPtr(out), eh.CurrentSize());
     eh.Finalize();
 }
 
-bool AttributeTypeAndValue::Decode(const std::byte *pIn, size_t cbIn, size_t &cbUsed)
+bool AttributeTypeAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
     SequenceHelper sh(cbUsed);
 
-    switch (sh.Init(pIn, cbIn, this->cbData))
+    switch (sh.Init(in, this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2981,11 +2982,11 @@ bool AttributeTypeAndValue::Decode(const std::byte *pIn, size_t cbIn, size_t &cb
         break;
     }
 
-    if (!type.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!type.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!value.Decode(sh.DataPtr(pIn), sh.DataSize(), sh.CurrentSize()))
+    if (!value.Decode(sh.DataPtr(in), sh.CurrentSize()))
         return false;
 
     return true;

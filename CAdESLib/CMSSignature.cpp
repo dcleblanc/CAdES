@@ -3,7 +3,7 @@
 
 #include "Common.h"
 
-void ContentTypeAttribute::ContentType(const char* oid)
+void ContentTypeAttribute::ContentType(std::string oid)
 {
 	ObjectIdentifier oi(oid);
 	AnyType any;
@@ -21,10 +21,10 @@ void SigningTimeAttribute::SetTime()
 	attr.AddAttributeValue(any);
 }
 
-void MessageDigestAttribute::SetDigest(const std::byte* pDigest, size_t cbDigest)
+void MessageDigestAttribute::SetDigest(std::span<const std::byte> digest)
 {
 	OctetString os;
-	os.SetValue(pDigest, cbDigest);
+	os.SetValue(digest);
 
 	AnyType any;
 	any.SetValue(os);

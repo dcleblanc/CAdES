@@ -1,4 +1,5 @@
 cmake_minimum_required (VERSION 3.13)
 project( get_crl )
-add_executable(get_crl get_crl.cpp )
-target_link_libraries( get_crl CAdESLib )
+add_executable(get_crl get_crl.cpp)
+target_include_directories(get_crl PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries( get_crl PUBLIC CAdESLib )

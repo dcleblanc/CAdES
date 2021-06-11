@@ -1,4 +1,5 @@
-#include "../CAdESLib/Common.h"
+#include <CAdESLib/Common.h>
+#include <algorithm>
 
 enum class LoadResult
 {
@@ -8,37 +9,36 @@ enum class LoadResult
     DecodeError
 };
 
-template <typename T> 
-LoadResult LoadObjectFromFile(const char* szFile, T& obj)
+template <typename T>
+LoadResult LoadObjectFromFile(std::string szFile, T &obj)
 {
-	std::ifstream stm(szFile, std::ios::in | std::ios::binary);
-	std::vector<std::byte> contents((std::istreambuf_iterator<char>(stm)), std::istreambuf_iterator<char>());
+    std::basic_ifstream<std::byte> inFileStream(szFile, std::ios::in | std::ios::binary);
 
-	if (!stm.is_open())
-	{
-		return LoadResult::FileOpenFail;
-	}
+    if (!inFileStream.is_open())
+    {
+        return LoadResult::FileOpenFail;
+    }
+    std::vector<std::byte> contents;
+    std::copy(std::istreambuf_iterator<std::byte>(inFileStream), std::istreambuf_iterator<std::byte>(), std::back_inserter(contents));
+    size_t cbUsed = 0;
+    bool fDecode = false;
 
-	size_t cbUsed = 0;
-	bool fDecode = false;
+    try
+    {
+        fDecode = obj.Decode(contents, cbUsed);
+    }
+    catch (...)
+    {
+        return LoadResult::ParseError;
+    }
 
-	try
-	{
-		fDecode = obj.Decode(&contents[0], contents.size(), cbUsed);
-	}
-	catch (...)
-	{
-		return LoadResult::ParseError;
-	}
+    if (!fDecode || cbUsed != contents.size())
+        return LoadResult::DecodeError;
 
-	if (!fDecode || cbUsed != contents.size())
-		return LoadResult::DecodeError;
-
-	return LoadResult::Success;
-
+    return LoadResult::Success;
 }
 
-bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
+bool LoadCertificateFromFile(std::string szFile, Certificate &cert)
 {
     LoadResult result = LoadObjectFromFile(szFile, cert);
 
@@ -58,13 +58,12 @@ bool LoadCertificateFromFile(const char* szFile, Certificate& cert)
     case LoadResult::FileOpenFail:
         std::cout << "Cannot open input file: " << szFile << std::endl;
         break;
-    
     }
 
     return false;
 }
 
-bool LoadCRLFromFile(const char* szFile, CertificateList& crl)
+bool LoadCRLFromFile(std::string szFile, CertificateList &crl)
 {
     LoadResult result = LoadObjectFromFile(szFile, crl);
 
@@ -84,44 +83,45 @@ bool LoadCRLFromFile(const char* szFile, CertificateList& crl)
     case LoadResult::FileOpenFail:
         std::cout << "Cannot open input file: " << szFile << std::endl;
         break;
-    
     }
 
     return false;
 }
 
 template <typename T>
-void DecodeExtension(T& t, const std::vector<std::byte>& extensionBytes)
+void DecodeExtension(T &t, const std::vector<std::byte> &extensionBytes)
 {
     size_t cbExtension = extensionBytes.size();
     size_t cbUsed = 0;
 
-    if (cbExtension > 0 && t.Decode(&extensionBytes[0], cbExtension, cbUsed) && cbUsed == cbExtension)
+    if (cbExtension > 0 && t.Decode(extensionBytes, cbUsed) && cbUsed == cbExtension)
         return;
 
     throw std::exception(); // Malformed extension
 }
 
-void WriteGeneralName(const GeneralName& name)
+void WriteGeneralName(const GeneralName &name)
 {
     GeneralNameType type = name.GetType();
 
-    switch(type)
+#pragma warning(disable : 4061)
+    switch (type)
     {
-        case GeneralNameType::uniformResourceIdentifier:
-            break;
-            
-        case GeneralNameType::OtherName:
-        case GeneralNameType::rfc822Name:
-        case GeneralNameType::dNSName:
-        case GeneralNameType::x400Address:
-        case GeneralNameType::directoryName:
-        case GeneralNameType::ediPartyName:
-        case GeneralNameType::iPAddress:
-        case GeneralNameType::registeredID:
-        default:
-            return;
+    case GeneralNameType::uniformResourceIdentifier:
+        break;
+
+    case GeneralNameType::OtherName:
+    case GeneralNameType::rfc822Name:
+    case GeneralNameType::dNSName:
+    case GeneralNameType::x400Address:
+    case GeneralNameType::directoryName:
+    case GeneralNameType::ediPartyName:
+    case GeneralNameType::iPAddress:
+    case GeneralNameType::registeredID:
+    default:
+        return;
     }
+#pragma warning(default : 4061)
 
     IA5String uri;
     std::string str;
@@ -134,44 +134,44 @@ void WriteGeneralName(const GeneralName& name)
     std::cout << "CRL URI: " << str << std::endl;
 }
 
-void WriteDistributionPoint(const DistributionPoint& point)
+void WriteDistributionPoint(const DistributionPoint &point)
 {
-        if (point.HasDistributionPoint())
+    if (point.HasDistributionPoint())
+    {
+        const DistributionPointName &distName = point.GetDistributionPoint();
+
+        if (distName.HasFullName())
         {
-            const DistributionPointName& distName = point.GetDistributionPoint();
+            const GeneralNames &fullName = distName.GetFullName();
 
-            if (distName.HasFullName())
+            for (const GeneralName &name : fullName.GetNames())
             {
-                const GeneralNames& fullName = distName.GetFullName();
-
-                for (const GeneralName& name : fullName.GetNames())
-                {
-                    WriteGeneralName(name);
-                }
+                WriteGeneralName(name);
             }
-
-            // It is atypical for the distribution point name to be
-            // relative to the CRL issuer, and if we encountered one, not sure how to 
-            // download the CRL
-            // if (distName.HasNameRelativeToCRLIssuer())
         }
 
-        // Ignore reason flags, not typically present
-        // if (point.HasReasonFlags())
+        // It is atypical for the distribution point name to be
+        // relative to the CRL issuer, and if we encountered one, not sure how to
+        // download the CRL
+        // if (distName.HasNameRelativeToCRLIssuer())
+    }
 
-        // The CRL issuer is in the case where the cert issuer and the CRL issuer 
-        // are not the same. Ignore this for now
-        // if (point.HasCRLIssuer())
+    // Ignore reason flags, not typically present
+    // if (point.HasReasonFlags())
+
+    // The CRL issuer is in the case where the cert issuer and the CRL issuer
+    // are not the same. Ignore this for now
+    // if (point.HasCRLIssuer())
 }
 
-void WriteCRLDistributionPoints(const std::vector<std::byte>& extensionBytes)
+void WriteCRLDistributionPoints(const std::vector<std::byte> &extensionBytes)
 {
     CrlDistributionPoints distPoints;
     DecodeExtension(distPoints, extensionBytes);
 
-    const std::vector<DistributionPoint>& distPointVector = distPoints.GetDistributionPoints();
+    const std::vector<DistributionPoint> &distPointVector = distPoints.GetDistributionPoints();
 
-    for (const DistributionPoint& point : distPointVector)
+    for (const DistributionPoint &point : distPointVector)
     {
         WriteDistributionPoint(point);
     }
@@ -183,26 +183,26 @@ struct crl_options
     bool revoked;
 };
 
-void PrintCRL( const CertificateList& crl, const crl_options& opts )
+void PrintCRL(const CertificateList &crl, const crl_options &opts)
 {
     // Not interested in the signature or algorithm for the moment
-    const TBSCertList& tbs_cert_list = crl.tbsCertList;
+    const TBSCertList &tbs_cert_list = crl.tbsCertList;
 
-    const Integer& version = tbs_cert_list.version;
+    const Integer &version = tbs_cert_list.version;
     uint32_t ulversion = 0;
-    if(!version.GetValue(ulversion))
+    if (!version.GetValue(ulversion))
     {
         std::cout << "Version: v1" << std::endl;
     }
     else
     {
-        if( ulversion == 1 )
+        if (ulversion == 1)
             std::cout << "Version: v2" << std::endl;
         else
             std::cout << "Version: Unknown - " << ulversion << std::endl;
     }
 
-    const AlgorithmIdentifier& alg_id = tbs_cert_list.signature;
+    const AlgorithmIdentifier &alg_id = tbs_cert_list.signature;
     std::cout << "Signature Alg: " << alg_id.AlgorithmLabel() << std::endl;
 
     // Issuer
@@ -212,49 +212,48 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
 
     std::cout << "This Update: " << tbs_cert_list.thisUpdate.GetValue() << std::endl;
     std::cout << "Next Update: " << tbs_cert_list.nextUpdate.GetValue() << std::endl;
-    
-    const Extensions& crlExtensions = tbs_cert_list.crlExtensions.GetInnerType();
 
-    for( size_t i = 0; i < crlExtensions.Count(); ++i )
+    const Extensions &crlExtensions = tbs_cert_list.crlExtensions.GetInnerType();
+
+    for (size_t i = 0; i < crlExtensions.Count(); ++i)
     {
-        const Extension& ext = crlExtensions.GetExtension(i);
-        const char* label = ext.ExtensionIdLabel();
+        const Extension &ext = crlExtensions.GetExtension(i);
+        const auto label = ext.ExtensionIdLabel();
 
-        if( label != nullptr )
+        if (!label.empty())
         {
-            const std::vector<std::byte>& extensionBytes = ext.GetExtensionValue().GetValue();
+            const std::vector<std::byte> &extensionBytes = ext.GetExtensionValue().GetValue();
 
-            if( strcmp(label, "authorityKeyIdentifier") == 0 )
+            if (label == "authorityKeyIdentifier")
             {
                 AuthorityKeyIdentifier aki;
                 DecodeExtension(aki, extensionBytes);
 
                 if (aki.HasKeyIdentifier())
                 {
-                    const OctetString& keyIdentifier = aki.GetKeyIdentifier();
+                    const OctetString &keyIdentifier = aki.GetKeyIdentifier();
                     std::cout << "KeyIdentifier: " << keyIdentifier << std::endl;
                 }
                 continue;
             }
-            else if( strcmp(label, "cRLNumber") == 0 )
+            else if (label == "cRLNumber")
             {
                 Integer number;
-                DecodeExtension( number, extensionBytes );
+                DecodeExtension(number, extensionBytes);
                 std::cout << "CRL Number: " << number << std::endl;
                 continue;
             }
-            else if( strcmp(label, "issuingDistributionPoint") == 0 )
+            else if (label == "issuingDistributionPoint")
             {
                 IssuingDistributionPoint distPoint;
                 DecodeExtension(distPoint, extensionBytes);
-
             }
-            else if( strcmp(label, "microsoft_certsrvCAVersion") == 0 )
+            else if (label == "microsoft_certsrvCAVersion")
             {
                 // Ignore
                 continue;
             }
-            else if( strcmp(label, "microsoft_certsrvnNextPublish") == 0 )
+            else if (label == "microsoft_certsrvnNextPublish")
             {
                 // Ignore
                 continue;
@@ -267,7 +266,7 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
         }
         else
         {
-            const ObjectIdentifier& oid = ext.GetOid();
+            const ObjectIdentifier &oid = ext.GetOid();
             std::string oid_string;
             oid.ToString(oid_string);
 
@@ -276,30 +275,30 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
         }
     }
 
-    if( opts.revoked == false )
+    if (opts.revoked == false)
         return;
 
     // Now the individual records
-    const RevokedCertificates& revoked_certs = tbs_cert_list.revokedCertificates;
+    const RevokedCertificates &revoked_certs = tbs_cert_list.revokedCertificates;
 
-    for( size_t i = 0; i < revoked_certs.GetCount(); ++i )
+    for (size_t i = 0; i < revoked_certs.GetCount(); ++i)
     {
-        const RevocationEntry& entry = revoked_certs.GetRevocationEntry(i);
-        const Extensions& entry_extensions = entry.crlEntryExtensions;
+        const RevocationEntry &entry = revoked_certs.GetRevocationEntry(i);
+        const Extensions &entry_extensions = entry.crlEntryExtensions;
 
-        for( size_t j = 0; j < entry_extensions.Count(); ++j )
+        for (size_t j = 0; j < entry_extensions.Count(); ++j)
         {
-            const Extension& ext = entry_extensions.GetExtension(j);
-            const char* label = ext.ExtensionIdLabel();
+            const Extension &ext = entry_extensions.GetExtension(j);
+            auto label = ext.ExtensionIdLabel();
 
-            if( label != nullptr )
+            if (!label.empty())
             {
                 std::cout << "Entry Extension Label: " << label << std::endl;
                 std::cout << "Entry Extension Oid: " << ext.ExtensionIdOidString() << std::endl;
             }
             else
             {
-                const ObjectIdentifier& oid = ext.GetOid();
+                const ObjectIdentifier &oid = ext.GetOid();
                 std::string oid_string;
                 oid.ToString(oid_string);
 
@@ -310,30 +309,30 @@ void PrintCRL( const CertificateList& crl, const crl_options& opts )
     }
 }
 
-int32_t main(int32_t argc, char* argv[])
+int32_t main(int32_t argc, char *argv[])
 {
-    const char* szFile = nullptr;
+    std::string szFile = nullptr;
     bool is_cert = true;
     crl_options opts = {};
     bool badarg = false;
 
-    if( argc > 1 )
+    if (argc > 1)
     {
-        szFile = argv[argc-1];
+        szFile = argv[argc - 1];
     }
 
-    for( int32_t i = 1; i < argc - 1; ++i )
+    for (int32_t i = 1; i < argc - 1; ++i)
     {
-        if( strcmp("-crl", argv[i]) == 0 )
+        if (strcmp("-crl", argv[i]) == 0)
         {
             is_cert = false;
             continue;
         }
-        else if( strcmp("-cn", argv[i]) == 0 )
+        else if (strcmp("-cn", argv[i]) == 0)
         {
             opts.common_name = true;
         }
-        else if( strcmp("-revoked", argv[i]) == 0 )
+        else if (strcmp("-revoked", argv[i]) == 0)
         {
             opts.revoked = true;
         }
@@ -343,7 +342,7 @@ int32_t main(int32_t argc, char* argv[])
         }
     }
 
-    if( argc == 1 || badarg )
+    if (argc == 1 || badarg)
     {
         std::cout << "Usage is get_crl [path to cert]" << std::endl;
         std::cout << "Usage is get_crl -crl [path to crl]" << std::endl;
@@ -351,22 +350,22 @@ int32_t main(int32_t argc, char* argv[])
         return -1;
     }
 
-    if( is_cert )
+    if (is_cert)
     {
         Certificate cert;
 
-        if(LoadCertificateFromFile(szFile, cert))
+        if (LoadCertificateFromFile(szFile, cert))
         {
-            const TBSCertificate& tbs_cert = cert.GetTBSCertificate();
+            const TBSCertificate &tbs_cert = cert.GetTBSCertificate();
             size_t extension_count = tbs_cert.GetExtensionCount();
 
-            for( size_t i = 0; i < extension_count; ++i )
+            for (size_t i = 0; i < extension_count; ++i)
             {
-                const Extension& ext = tbs_cert.GetExtension(i);
+                const Extension &ext = tbs_cert.GetExtension(i);
 
-                if( strcmp(id_ce_cRLDistributionPoints, ext.ExtensionIdOidString()) == 0 )
+                if (id_ce_cRLDistributionPoints == ext.ExtensionIdOidString())
                 {
-                    const std::vector<std::byte>& extensionBytes = ext.GetExtensionValue().GetValue();
+                    const std::vector<std::byte> &extensionBytes = ext.GetExtensionValue().GetValue();
                     WriteCRLDistributionPoints(extensionBytes);
                 }
             }
@@ -379,13 +378,11 @@ int32_t main(int32_t argc, char* argv[])
     else
     {
         CertificateList crl;
-        if(LoadCRLFromFile(szFile, crl))
+        if (LoadCRLFromFile(szFile, crl))
         {
             PrintCRL(crl, opts);
         }
     }
-    
-    
 
     return 0;
 }

@@ -6,6 +6,13 @@
 // disable the byte padding added after data member warning
 #pragma warning(disable : 4820)
 
+// disable unreferenced inlined function removed
+#pragma warning(disable : 4514)
+
+// TODO: verify
+// disable Spectre mitigation warning
+#pragma warning(disable : 5045)
+
 #include <string>
 #include <set>
 #include <vector>

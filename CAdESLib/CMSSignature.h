@@ -3,13 +3,15 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include <span>
+
 // Core CMS Signature attributes
 class ContentTypeAttribute
 {
 public:
 	ContentTypeAttribute() : attr(id_contentType) {}
 
-	void ContentType(const char* oid);
+	void ContentType(std::string oid);
 
 private:
 	Attribute attr;
@@ -31,7 +33,7 @@ class MessageDigestAttribute
 public:
 	MessageDigestAttribute() : attr(id_messageDigest) {}
 
-	void SetDigest(const std::byte* pDigest, size_t cbDigest);
+	void SetDigest(std::span<const std::byte> digest);
 
 private:
 	Attribute attr;
