@@ -212,18 +212,15 @@ class RDNSequence final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         // This is a sequence of sets of AttributeTypeAndValue
         for (size_t item = 0; item < name.size(); ++item)
         {
             name[item].Encode(eh.DataPtr(out), eh.CurrentSize());
-            eh.Update();
         }
-
-        eh.Finalize();
     }
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
@@ -715,11 +712,11 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) final
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
         EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     const std::vector<ObjectIdentifier> &GetEkus() const { return ekus; }
@@ -1050,15 +1047,15 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         fullName.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         nameRelativeToCRLIssuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
@@ -1114,18 +1111,18 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         distributionPoint.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         reasons.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         cRLIssuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
@@ -1328,27 +1325,27 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         distributionPoint.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         onlyContainsUserCerts.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         onlyContainsCACerts.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         onlySomeReasons.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         indirectCRL.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         onlyContainsAttributeCerts.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     const DistributionPointName &GetDistributionPoint() const { return distributionPoint.GetInnerType(); }
@@ -1423,18 +1420,18 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         keyIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         authorityCertIssuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         authorityCertSerialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
@@ -1513,15 +1510,15 @@ class AccessDescription : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         accessMethod.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         accessLocation.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
@@ -1735,18 +1732,18 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         objId.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         majorVersion.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         minorVersion.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     bool Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1838,15 +1835,15 @@ public:
 
     virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override
     {
-        EncodeHelper eh(cbUsed);
+        EncodeHelper eh(out, cbUsed);
 
-        eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+        eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
         cA.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
+        
 
         pathLenConstraint.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Finalize();
+        
     }
 
     bool Decode(std::span<const std::byte> in, size_t &cbUsed)

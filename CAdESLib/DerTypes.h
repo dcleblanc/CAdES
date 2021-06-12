@@ -26,6 +26,8 @@
 #include <array>
 #include <span>
 #include "Common.h"
+#include <codecvt>
+#include <locale>
 enum class DerClass
 {
 	Universal = 0,
@@ -370,6 +372,42 @@ protected:
 		return true;
 	}
 
+	void EncodeVector(DerType type, const std::span<const std::byte> in, std::span<std::byte> out, size_t &cbUsed)
+	{
+		// If it is empty, encode as Null
+		if (in.size() == 0)
+		{
+			if (out.size() < 2)
+				throw std::overflow_error("Overflow in EncodeVector");
+
+			out[0] = static_cast<std::byte>(DerType::Null);
+			out[1] = std::byte{0};
+			cbUsed = 2;
+			return;
+		}
+
+		size_t cbUsedSize = 0;
+		size_t cbNeeded = in.size() + 1; // Data, plus tag
+		std::byte encodedSize[sizeof(int64_t)];
+
+		EncodeSize(in.size(), std::span{encodedSize}, cbUsedSize);
+
+		// Note - cbUsedSize guaranteed to be <= 8, int overflow not possible
+		cbNeeded += cbUsedSize;
+
+		if (cbNeeded > out.size())
+			throw std::length_error("Insufficient Buffer");
+
+		out[0] = static_cast<std::byte>(type);
+		size_t offset = 1;
+		memcpy_s(out.data() + offset, out.size() - offset, &encodedSize, cbUsedSize);
+		offset += cbUsedSize;
+		memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size());
+
+		cbUsed = offset + in.size();
+		return;
+	}
+
 	// Don't calculate the data size more than once
 	size_t cbData;
 
@@ -384,12 +422,12 @@ private:
 		value = in;
 	}
 
-	template<typename Char, typename Traits>
-	void DecodeInner(std::span<const std::byte> in, std::basic_string<Char, Traits>& value)
+	template<typename CharType>
+	void DecodeInner(std::span<const std::byte> in, std::basic_string<CharType>& value)
 	{
-		auto pIn = reinterpret_cast<const Char *>(in.data());
-		auto stringView = std::basic_string_view<Char, Traits>{pIn, in.size()};
-		value = std::basic_string<Char, Traits>{stringView.begin(), stringView.end()};
+		auto pIn = reinterpret_cast<const CharType *>(in.data());
+		auto stringView = std::basic_string_view<CharType>{pIn, in.size()};
+		value = std::basic_string<CharType>{stringView.begin(), stringView.end()};
 	}
 };
 
@@ -406,12 +444,8 @@ class SequenceHelper
 public:
 	SequenceHelper(size_t &_cbUsed) : dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed), isNull(false) {}
 
-	// Note - because CheckExit throws, the destructor must also be marked as throwing
-	// or we will land in terminate and not the catch block.
-	~SequenceHelper() noexcept(false)
+	~SequenceHelper()
 	{
-		Update();
-		CheckExit();
 		cbUsed += prefixSize;
 	}
 
@@ -435,12 +469,12 @@ public:
 		return DecodeResult::Success;
 	}
 
-	void CheckExit() noexcept(false)
-	{
-		// if it isn't an error return, then make sure we've consumed all the data
-		if (!isNull && cbUsed != dataSize)
-			throw std::runtime_error("Parsing error");
-	}
+	// void CheckExit() noexcept(false)
+	// {
+	// 	// if it isn't an error return, then make sure we've consumed all the data
+	// 	if (!isNull && cbUsed != dataSize)
+	// 		throw std::runtime_error("Parsing error");
+	// }
 
 	std::span<const std::byte> DataPtr(std::span<const std::byte> in) const { return in.subspan(cbUsed + prefixSize); }
 
@@ -481,12 +515,12 @@ private:
 class EncodeHelper
 {
 public:
-	EncodeHelper(size_t &_cbUsed) : offset(0), cbNeeded(0), cbCurrent(0), cbUsed(_cbUsed) {}
+	EncodeHelper(std::span<std::byte> out, size_t &_cbUsed) : out(out), cbUsed(_cbUsed) {}
 
 	EncodeHelper &operator=(const EncodeHelper) = delete;
 	~EncodeHelper() = default;
 
-	void Init(size_t _cbNeeded, std::span<std::byte> out, std::byte type, size_t cbData)
+	void Init(size_t _cbNeeded, std::byte type, size_t cbData)
 	{
 		cbNeeded = _cbNeeded;
 		if (cbNeeded > out.size() || out.size() < 2)
@@ -497,31 +531,14 @@ public:
 		offset = 1;
 
 		EncodeSize(cbData, DataPtr(out), cbUsed);
-		Update();
 	}
 
-	// This MUST be called before going out of scope
-	// the method may throw, and if the throw were to happen in the destructor
-	// it can't be caught, and debugging becomes difficult
-	void Finalize()
-	{
-		Update();
-		CheckExit();
-		cbUsed = offset;
-	}
-
-	void Update()
-	{
-		offset += cbCurrent;
-		cbCurrent = 0;
-	}
-
-	void CheckExit()
-	{
-		if (offset != cbNeeded)
-			throw std::runtime_error("Size needed not equal to size used");
-		// std::cout << "Size needed not equal to size used" << std::endl;
-	}
+	// void CheckExit()
+	// {
+	// 	if (offset != cbNeeded)
+	// 		throw std::runtime_error("Size needed not equal to size used");
+	// 	// std::cout << "Size needed not equal to size used" << std::endl;
+	// }
 
 	std::span<std::byte> DataPtr(std::span<std::byte> in) const { return in.subspan(offset); }
 
@@ -536,6 +553,7 @@ public:
 	size_t &CurrentSize() { return cbCurrent; }
 
 private:
+	std::span<std::byte> out;
 	size_t offset;
 	size_t cbNeeded;
 	size_t cbCurrent;
@@ -569,7 +587,7 @@ class ContextSpecificHolder<T, type, OptionType::Explicit>
 public:
 	ContextSpecificHolder() : hasData(false) {}
 
-	size_t EncodedSize()
+	size_t EncodedSize() const
 	{
 		size_t innerSize = innerType.EncodedSize();
 
@@ -808,8 +826,8 @@ public:
 	static std::ostream &Output(std::ostream &os, const AnyType &o);
 	static std::wostream &Output(std::wostream &os, const AnyType &o);
 
-	template <typename Char, typename Traits>
-	friend std::basic_ostream<Char, Traits> &operator<<(std::basic_ostream<Char, Traits> &os, const AnyType &o)
+	template <typename CharType>
+	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const AnyType &o)
 	{
 		return Output(os, o);
 	}
@@ -834,8 +852,8 @@ public:
 		return type.Decode(encodedValue, cbUsed) && cbUsed == encodedValue.size();
 	}
 
-	template <typename T, typename Char, typename Traits>
-	bool OutputFromType(std::basic_ostream<Char, Traits> &os) const
+	template <typename T, typename CharType>
+	bool OutputFromType(std::basic_ostream<CharType> &os) const
 	{
 		T t;
 		bool fConverted = ConvertToType(t);
@@ -1310,10 +1328,10 @@ public:
 		return fRet;
 	}
 
-	template <typename Char, typename Traits>
-	friend std::basic_ostream<Char, Traits> &operator<<(std::basic_ostream<Char, Traits> &os, const ObjectIdentifier &obj)
+	template <typename CharType>
+	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const ObjectIdentifier &obj)
 	{
-		std::basic_string<Char> s;
+		std::basic_string<CharType> s;
 		obj.ToString(s);
 
 		os << s;
@@ -1523,8 +1541,8 @@ public:
 	virtual void Encode(std::span<std::byte> out, size_t &cbUsed) override;
 	virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override;
 
-	template <typename Char, typename Traits>
-	friend std::basic_ostream<Char, Traits> &operator<<(std::basic_ostream<Char, Traits> &os, const Time &str)
+	template <typename CharType>
+	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const Time &str)
 	{
 		os << str.value.c_str();
 		return os;
@@ -1579,17 +1597,19 @@ public:
 		return DerBase::Decode(in, DerType::IA5String, cbUsed, value);
 	}
 
-	friend std::ostream &operator<<(std::ostream &os, const IA5String &str)
+	template <typename CharType>
+	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const IA5String &str)
 	{
-		os << str.value;
+		std::wstring_convert<std::codecvt<CharType, char, std::mbstate_t>> conv;
+		os << conv.from_bytes(str.value);
 		return os;
 	}
 
-	friend std::wostream &operator<<(std::wostream &os, const IA5String &str)
-	{
-		os << utf8ToUtf16(str.value);
-		return os;
-	}
+	// friend std::wostream &operator<<(std::wostream &os, const IA5String &str)
+	// {
+	// 	os << utf8ToUtf16(str.value);
+	// 	return os;
+	// }
 
 	const std::string &ToString() const { return value; }
 
@@ -1823,18 +1843,14 @@ private:
 class BMPString final : public DerBase
 {
 public:
-	friend std::ostream &operator<<(std::ostream &os, const BMPString &str)
+	template <typename CharType>
+	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const BMPString &str)
 	{
-		std::string converted_str;
+		std::wstring_convert<std::codecvt_utf16<CharType>> conv;
 
-		ConvertWstringToString(str.value, converted_str);
-		os << converted_str;
-		return os;
-	}
+		std::basic_string<CharType> converted_str;
 
-	friend std::wostream &operator<<(std::wostream &os, const BMPString &str)
-	{
-		os << str.value;
+		os << conv.from_bytes(str.value);
 		return os;
 	}
 

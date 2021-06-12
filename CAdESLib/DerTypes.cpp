@@ -1,5 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#include "DerTypes.h"
 #include "Common.h"
 
 std::ostream &operator<<(std::ostream &os, const DerTypeContainer &type)
@@ -456,42 +459,6 @@ bool PrintableString::SetValue(std::string str)
 
 namespace
 {
-	void EncodeVector(DerType type, const std::span<const std::byte> in, std::span<std::byte> out, size_t& cbUsed)
-	{
-		// If it is empty, encode as Null
-		if (in.size() == 0)
-		{
-			if (out.size() < 2)
-				throw std::overflow_error("Overflow in EncodeVector");
-
-			out[0] = static_cast<std::byte>(DerType::Null);
-			out[1] = std::byte{0};
-			cbUsed = 2;
-			return;
-		}
-
-		size_t cbUsedSize = 0;
-		size_t cbNeeded = in.size() + 1; // Data, plus tag
-		std::byte encodedSize[sizeof(int64_t)];
-
-		EncodeSize(in.size(), std::span{encodedSize}, cbUsedSize);
-
-		// Note - cbUsedSize guaranteed to be <= 8, int overflow not possible
-		cbNeeded += cbUsedSize;
-
-		if (cbNeeded > out.size())
-			throw std::length_error("Insufficient Buffer");
-
-		out[0] = static_cast<std::byte>(type);
-		size_t offset = 1;
-		memcpy_s(out.data() + offset, out.size() - offset, &encodedSize, cbUsedSize);
-		offset += cbUsedSize;
-		memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size());
-
-		cbUsed = offset + in.size();
-		return;
-	}
-
 	template <typename T>
 	void EncodeString(DerType type, std::basic_string<T> in, std::span<std::byte> out, size_t& cbUsed)
 	{

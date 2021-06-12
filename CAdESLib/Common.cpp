@@ -1,12 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#if defined _WIN32
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
-#endif
-
 #include "Common.h"
-// This lives here, not in Common.h because it has its own warning behavior for the functions below
+#include <locale>
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include <codecvt>
 
 static const int32_t lib_version = 0x0100;
@@ -15,23 +12,10 @@ int32_t get_version() { return lib_version; }
 
 // Also put some conversion utilities here
 
-std::wstring utf8ToUtf16(const std::string& utf8Str)
+std::wstring utf8ToUtf16(const std::string utf8Str)
 {
-	// We don't expect any really interesting utf8 characters
-	// Try doing this cheaply
-	std::wstring out;
-	out.reserve(utf8Str.length());
-
-	for (char c : utf8Str)
-	{
-		out += (static_cast<wchar_t>(c));
-	}
-
-	return out;
-	/*
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> conv;
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
 	return conv.from_bytes(utf8Str);
-	*/
 }
 
 void ConvertWstringToString(const std::wstring& in, std::string& out)

@@ -11,8 +11,7 @@ const std::string hashOids[] =
         id_sha224,
         id_sha256,
         id_sha384,
-        id_sha512
-    };
+        id_sha512};
 
 AlgorithmIdentifier::AlgorithmIdentifier(HashAlgorithm alg) : algorithm(hashOids[static_cast<ptrdiff_t>(alg)])
 {
@@ -21,18 +20,13 @@ AlgorithmIdentifier::AlgorithmIdentifier(HashAlgorithm alg) : algorithm(hashOids
 
 void Accuracy::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     seconds.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
-
     millis.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
-
     micros.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Accuracy::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -66,15 +60,13 @@ bool Accuracy::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void AlgorithmIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     algorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     parameters.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -108,15 +100,13 @@ bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void Attribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     attrType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -148,15 +138,13 @@ bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void EncapsulatedContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     eContentType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     eContent.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -186,18 +174,15 @@ bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in, size_t &cbUs
 
 void IssuerSerial::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serial.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerUID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool IssuerSerial::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -231,21 +216,17 @@ bool IssuerSerial::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void ObjectDigestInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     digestedObjectType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherObjectTypeID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     digestAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     objectDigest.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool ObjectDigestInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -283,18 +264,15 @@ bool ObjectDigestInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void Holder::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     baseCertificateID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     entityName.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     objectDigestInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Holder::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -328,15 +306,13 @@ bool Holder::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherHashAlgAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     hashValue.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -366,18 +342,15 @@ bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void V2Form::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     issuerName.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     baseCertificateID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     objectDigestInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool V2Form::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -411,15 +384,13 @@ bool V2Form::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void AttCertValidityPeriod::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     notBeforeTime.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     notAfterTime.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool AttCertValidityPeriod::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -449,36 +420,27 @@ bool AttCertValidityPeriod::Decode(std::span<const std::byte> in, size_t &cbUsed
 
 void AttributeCertificateInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     holder.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signature.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     attrCertValidityPeriod.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -540,18 +502,15 @@ bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbU
 
 void AttributeCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     acinfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool AttributeCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -585,21 +544,17 @@ bool AttributeCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerNameHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerKeyHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -637,15 +592,13 @@ bool CertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void RevokedInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     revocationTime.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     revocationReason.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool RevokedInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -675,24 +628,19 @@ bool RevokedInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SingleResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     certID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     certStatus.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     thisUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     nextUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     singleExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SingleResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -734,18 +682,15 @@ bool SingleResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void PKIStatusInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     status.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     statusString.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     failInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool PKIStatusInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -779,15 +724,13 @@ bool PKIStatusInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void ContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     contentType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     content.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool ContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -817,18 +760,15 @@ bool ContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CrlIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     crlissuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     crlIssuedTime.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     crlNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CrlIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -862,15 +802,13 @@ bool CrlIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CrlValidatedID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     crlHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     crlIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CrlValidatedID::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -900,15 +838,13 @@ bool CrlValidatedID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void MessageImprint::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     hashedMessage.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool MessageImprint::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -938,15 +874,13 @@ bool MessageImprint::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void UserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     noticeRef.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     explicitText.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool UserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -976,15 +910,13 @@ bool UserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void NoticeReference::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     organization.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1014,15 +946,13 @@ bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OcspIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     ocspResponderID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     producedAt.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OcspIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1052,18 +982,15 @@ bool OcspIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CrlOcspRef::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     ocspids.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherRev.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1097,15 +1024,13 @@ bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherRevRefs::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     otherRevRefType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherRevRefs.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherRevRefs::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1140,18 +1065,15 @@ void OcspListID::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 void RevocationValues::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherRevVals.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1185,15 +1107,13 @@ bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherRevVals::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     otherRevValType.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherRevVals.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherRevVals::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1223,21 +1143,17 @@ bool OtherRevVals::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void BasicOCSPResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     tbsResponseData.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signature.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1275,24 +1191,19 @@ bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void ResponseData::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     responderID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     producedAt.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1334,15 +1245,13 @@ bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SigningCertificateV2::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SigningCertificateV2::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1372,15 +1281,13 @@ bool SigningCertificateV2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SubjectPublicKeyInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     algorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     subjectPublicKey.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1410,18 +1317,15 @@ bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void Certificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     tbsCertificate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Certificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1455,39 +1359,29 @@ bool Certificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void TBSCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signature.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     validity.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     subject.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     subjectPublicKeyInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     subjectUniqueID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool TBSCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1568,18 +1462,15 @@ bool TBSCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CertificateList::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     tbsCertList.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureValue.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CertificateList::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1613,30 +1504,23 @@ bool CertificateList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void TBSCertList::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signature.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     thisUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     nextUpdate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     revokedCertificates.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     crlExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool TBSCertList::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1697,15 +1581,13 @@ bool TBSCertList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void PolicyInformation::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     policyIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1745,15 +1627,13 @@ bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void ESSCertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     certHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool ESSCertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1783,15 +1663,13 @@ bool ESSCertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SigningCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SigningCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1821,18 +1699,15 @@ bool SigningCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void ESSCertIDv2::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     hashAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     certHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool ESSCertIDv2::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1866,15 +1741,13 @@ bool ESSCertIDv2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void PolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     policyQualifierId.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     qualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool PolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1904,15 +1777,13 @@ bool PolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void IssuerAndSerialNumber::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     issuer.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1943,21 +1814,18 @@ bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in, size_t &cbUsed
 
 void Extension::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     extnID.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     if (critical.GetValue())
     {
         critical.Encode(eh.DataPtr(out), eh.CurrentSize());
-        eh.Update();
     }
 
     extnValue.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Extension::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -1995,12 +1863,11 @@ bool Extension::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CertStatus::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     revoked.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CertStatus::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2055,30 +1922,23 @@ bool DisplayText::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SignerInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     sid.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     digestAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signatureAlgorithm.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     signature.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2128,15 +1988,13 @@ bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherCertificateFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     otherCertFormat.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherCert.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherCertificateFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2166,15 +2024,13 @@ bool OtherCertificateFormat::Decode(std::span<const std::byte> in, size_t &cbUse
 
 void EDIPartyName::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     nameAssigner.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     partyName.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool EDIPartyName::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2204,18 +2060,15 @@ bool EDIPartyName::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void RevocationEntry::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     userCertificate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     revocationDate.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     crlEntryExtensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2263,15 +2116,13 @@ bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherRevocationInfoFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     otherRevInfoFormat.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     otherRevInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2301,24 +2152,19 @@ bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in, size_t &cb
 
 void SignedData::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     encapContentInfo.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2364,15 +2210,13 @@ bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SigPolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     sigPolicyQualifierId.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     sigQualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2402,18 +2246,15 @@ bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUse
 
 void SignaturePolicyId::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     sigPolicyId.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     sigPolicyHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2447,15 +2288,13 @@ bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SPUserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     noticeRef.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     explicitText.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SPUserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2485,15 +2324,13 @@ bool SPUserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void CommitmentTypeQualifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     commitmentTypeIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     qualifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2523,15 +2360,13 @@ bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in, size_t &cbUs
 
 void CommitmentTypeIndication::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     commitmentTypeId.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2561,18 +2396,15 @@ bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbU
 
 void SignerLocation::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     countryName.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     localityName.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2606,15 +2438,13 @@ bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void SignerAttribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     certifiedAttributes.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2644,27 +2474,21 @@ bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void TimeStampReq::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     messageImprint.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     reqPolicy.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     nonce.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     certReq.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool TimeStampReq::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2710,15 +2534,13 @@ bool TimeStampReq::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void TimeStampResp::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     status.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     timeStampToken.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool TimeStampResp::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2748,39 +2570,29 @@ bool TimeStampResp::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void TSTInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     version.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     policy.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     messageImprint.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     serialNumber.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     genTime.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     accuracy.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     ordering.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     nonce.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     tsa.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     extensions.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool TSTInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2842,15 +2654,13 @@ bool TSTInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OtherCertId::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     otherCertHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     issuerSerial.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OtherCertId::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2880,15 +2690,13 @@ bool OtherCertId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void OcspResponsesID::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     ocspIdentifier.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     ocspRepHash.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool OcspResponsesID::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2918,15 +2726,13 @@ bool OcspResponsesID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void Validity::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     notBefore.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     notAfter.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool Validity::Decode(std::span<const std::byte> in, size_t &cbUsed)
@@ -2956,15 +2762,13 @@ bool Validity::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
 void AttributeTypeAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 {
-    EncodeHelper eh(cbUsed);
+    EncodeHelper eh(out, cbUsed);
 
-    eh.Init(EncodedSize(), out, static_cast<std::byte>(DerType::ConstructedSequence), cbData);
+    eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence), cbData);
 
     type.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Update();
 
     value.Encode(eh.DataPtr(out), eh.CurrentSize());
-    eh.Finalize();
 }
 
 bool AttributeTypeAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)

@@ -32,7 +32,7 @@
 
 // Utilities implemented in Common.cpp
 // This may involve deprecated functionality
-std::wstring utf8ToUtf16(const std::string& utf8Str);
+std::wstring utf8ToUtf16(const std::string utf8Str);
 void ConvertWstringToString(const std::wstring& in, std::string& out);
 
 #ifndef _WIN32
