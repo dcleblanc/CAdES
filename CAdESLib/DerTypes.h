@@ -23,11 +23,10 @@
 		Private = 3
 	};
 */
-#include <array>
-#include <span>
+
 #include "Common.h"
-#include <codecvt>
-#include <locale>
+#include "Oids.h"
+
 enum class DerClass
 {
 	Universal = 0,
@@ -824,8 +823,6 @@ public:
 	virtual size_t SetDataSize() override;
 
 	static std::ostream &Output(std::ostream &os, const AnyType &o);
-	static std::wostream &Output(std::wostream &os, const AnyType &o);
-
 	template <typename CharType>
 	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const AnyType &o)
 	{
@@ -852,8 +849,8 @@ public:
 		return type.Decode(encodedValue, cbUsed) && cbUsed == encodedValue.size();
 	}
 
-	template <typename T, typename CharType>
-	bool OutputFromType(std::basic_ostream<CharType> &os) const
+	template <typename T>
+	bool OutputFromType(std::ostream &os) const
 	{
 		T t;
 		bool fConverted = ConvertToType(t);
@@ -1597,11 +1594,9 @@ public:
 		return DerBase::Decode(in, DerType::IA5String, cbUsed, value);
 	}
 
-	template <typename CharType>
-	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const IA5String &str)
+	friend std::ostream &operator<<(std::ostream &os, const IA5String &str)
 	{
-		std::wstring_convert<std::codecvt<CharType, char, std::mbstate_t>> conv;
-		os << conv.from_bytes(str.value);
+		os << str.value;
 		return os;
 	}
 
@@ -1843,14 +1838,10 @@ private:
 class BMPString final : public DerBase
 {
 public:
-	template <typename CharType>
-	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const BMPString &str)
+	friend std::ostream &operator<<(std::ostream &os, const BMPString &str)
 	{
-		std::wstring_convert<std::codecvt_utf16<CharType>> conv;
-
-		std::basic_string<CharType> converted_str;
-
-		os << conv.from_bytes(str.value);
+		auto stringValue = ConvertWstringToString(str.value);
+		os << stringValue;
 		return os;
 	}
 

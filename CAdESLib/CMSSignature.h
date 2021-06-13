@@ -3,7 +3,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include <span>
+#include "Common.h"
+#include "DerTypes.h"
+#include "CAdES.h"
 
 // Core CMS Signature attributes
 class ContentTypeAttribute

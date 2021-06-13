@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "DerEncode.h"
 #include "Common.h"
 #include "CAdES.h"
-#include "DerEncode.h"
 
 void EncodeSize(size_t size, std::span<std::byte> out, size_t &cbUsed)
 {

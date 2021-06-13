@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "CAdES.h"
+
 #include "Common.h"
+#include "DerTypes.h"
+#include "Oids.h"
 
 const std::string hashOids[] =
     {

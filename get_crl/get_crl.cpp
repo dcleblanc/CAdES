@@ -1,4 +1,6 @@
 #include <CAdESLib/Common.h>
+#include <CAdESLib/DerTypes.h>
+#include <CAdESLib/CAdES.h>
 #include <algorithm>
 
 enum class LoadResult

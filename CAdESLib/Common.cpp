@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "Common.h"
-#include <locale>
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#include "Common.h"
+
 #include <codecvt>
+#include <locale>
 
 static const int32_t lib_version = 0x0100;
 // Define something so that the linker won't complain about no public symbols from this compilation unit
@@ -18,7 +19,7 @@ std::wstring utf8ToUtf16(const std::string utf8Str)
 	return conv.from_bytes(utf8Str);
 }
 
-void ConvertWstringToString(const std::wstring& in, std::string& out)
+std::string ConvertWstringToString(const std::wstring in)
 {
 	// It appears that this may be deprecated at some point
 	// see https://stackoverflow.com/questions/42946335/deprecated-header-codecvt-replacement
@@ -29,7 +30,7 @@ void ConvertWstringToString(const std::wstring& in, std::string& out)
 	std::wstring_convert<convert_type, wchar_t> converter;
 
 	// use converter (.to_bytes: wstr->str, .from_bytes: str->wstr)
-	out = converter.to_bytes(in);
+	return converter.to_bytes(in);
 }
 
 #ifndef _WIN32

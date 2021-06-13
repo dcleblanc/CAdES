@@ -1,7 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "CMSSignature.h"
+
 #include "Common.h"
+#include "DerTypes.h"
+#include "CAdES.h"
 
 void ContentTypeAttribute::ContentType(std::string oid)
 {

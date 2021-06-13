@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include <span>
+#include "Common.h"
 
 // Attributes from https://www.ietf.org/rfc/rfc5280.txt
 

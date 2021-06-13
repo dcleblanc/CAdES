@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #include "DerTypes.h"
 #include "Common.h"
 
@@ -896,96 +895,6 @@ std::ostream &AnyType::Output(std::ostream &os, const AnyType &o)
 		for (size_t pos = 0; pos < o.encodedValue.size(); ++pos)
 		{
 			os << std::setfill('0') << std::setw(2) << std::hex << (unsigned short)o.encodedValue[pos];
-		}
-	}
-
-	return os;
-}
-
-std::wostream &AnyType::Output(std::wostream &os, const AnyType &o)
-{
-	DerType type = o.GetDerType();
-	bool fConverted = true;
-
-#pragma warning(disable : 4061)
-	switch (type)
-	{
-	case DerType::Boolean:
-		fConverted = o.OutputFromType<Boolean>(os);
-		break;
-
-	case DerType::Integer:
-		fConverted = o.OutputFromType<Integer>(os);
-		break;
-
-	case DerType::BitString:
-		fConverted = o.OutputFromType<BitString>(os);
-		break;
-
-	case DerType::OctetString:
-		fConverted = o.OutputFromType<OctetString>(os);
-		break;
-
-	case DerType::Null:
-		os << L"null";
-		fConverted = true;
-		break;
-
-	case DerType::ObjectIdentifier:
-		fConverted = o.OutputFromType<ObjectIdentifier>(os);
-		break;
-
-	case DerType::UTF8String:
-		fConverted = o.OutputFromType<UTF8String>(os);
-		break;
-
-	case DerType::PrintableString:
-		fConverted = o.OutputFromType<PrintableString>(os);
-		break;
-
-	case DerType::T61String: // aka TeletexString
-		fConverted = o.OutputFromType<T61String>(os);
-		break;
-
-	case DerType::IA5String:
-		fConverted = o.OutputFromType<IA5String>(os);
-		break;
-
-	case DerType::VisibleString:
-		fConverted = o.OutputFromType<VisibleString>(os);
-		break;
-
-	case DerType::GeneralString:
-		fConverted = o.OutputFromType<GeneralString>(os);
-		break;
-
-	case DerType::BMPString:
-		fConverted = o.OutputFromType<BMPString>(os);
-		break;
-
-	case DerType::ObjectDescriptor:
-	case DerType::External:
-	case DerType::Real:
-	case DerType::Enumerated:
-	case DerType::EmbeddedPDV:
-	case DerType::RelativeOid:
-	case DerType::Reserved1:
-	case DerType::Reserved2:
-	case DerType::NumericString:
-	case DerType::GraphicString:
-	case DerType::CharacterString:
-	case DerType::UniversalString:
-	default:
-		fConverted = false;
-		break;
-	}
-#pragma warning(default : 4061)
-
-	if (!fConverted)
-	{
-		for (auto byteValue : o.encodedValue)
-		{
-			os << std::setfill(L'0') << std::setw(2) << std::hex << (uint8_t)byteValue;
 		}
 	}
 

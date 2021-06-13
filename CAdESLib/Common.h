@@ -25,15 +25,16 @@
 #include <fstream>
 #include <assert.h>
 #include <time.h>
-#include <cstring>
 #include <cstddef>
 #include <algorithm>
 #include <functional>
+#include <span>
+#include <array>
 
 // Utilities implemented in Common.cpp
 // This may involve deprecated functionality
 std::wstring utf8ToUtf16(const std::string utf8Str);
-void ConvertWstringToString(const std::wstring& in, std::string& out);
+std::string ConvertWstringToString(const std::wstring in);
 
 #ifndef _WIN32
 #include <cstdarg>
@@ -61,15 +62,6 @@ int32_t sprintf_s(
 #define _countof(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 #endif
-
-#include "Oids.h"
-#include "DerTypes.h"
-#include "DerEncode.h"
-#include "CAdES.h"
-#include "CMSSignature.h"
-#include <cstddef>
-#include <array>
-#include <span>
 
 // Once there is more to it, move these to a header 
 // that can be used to abstract out platform crypto differences

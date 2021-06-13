@@ -31,6 +31,11 @@
 
 */
 
+#include "Common.h"
+#include "DerTypes.h"
+#include "DerEncode.h"
+#include "Oids.h"
+
 typedef ObjectIdentifier ContentType;
 
 enum class CertVersionValue

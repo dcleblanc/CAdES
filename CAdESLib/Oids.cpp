@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#include "Oids.h"
+
 #include "Common.h"
+#include "DerTypes.h"
 
 #define REGENERATE_TABLE
 #ifdef REGENERATE_TABLE

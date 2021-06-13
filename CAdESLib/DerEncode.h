@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 #pragma once
 
+#include "Common.h"
+
 template <typename T>
 size_t GetEncodedSize(std::vector<T> &in) // Non-const reference, because EncodedSize will set cbData
 {
