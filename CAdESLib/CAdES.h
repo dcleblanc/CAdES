@@ -234,7 +234,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1068,7 +1068,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1135,7 +1135,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1275,7 +1275,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1441,7 +1441,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1528,7 +1528,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1756,7 +1756,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;
@@ -1856,7 +1856,7 @@ public:
     {
         DerDecode decoder{in, cbData};
 
-        switch (decoder.Init(this->cbData))
+        switch (decoder.Init())
         {
         case DecodeResult::Failed:
             return false;

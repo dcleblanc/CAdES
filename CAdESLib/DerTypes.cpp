@@ -476,7 +476,7 @@ namespace
 		size_t cbNeeded = (in.size() + 1) * charSize; // Data, plus tag
 		std::byte encodedSize[sizeof(int64_t)];
 
-		EncodeSize(in.size() * charSize, encodedSize);
+		EncodeHelper::EncodeSize(in.size() * charSize, encodedSize);
 
 		// Note - cbDataSize guaranteed to be <= 8, int32_t overflow not possible
 		// cbNeeded += cbData;

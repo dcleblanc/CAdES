@@ -109,7 +109,7 @@ public:
 
 public:
     DerDecode(std::span<const std::byte> in, size_t &cbUsed) 
-    : in(in), prefixSize(0), cbUsed(cbUsed)
+    : in(in), remaining(in), prefixSize(0), cbUsed(cbUsed)
     {
     }
 
@@ -118,9 +118,11 @@ public:
         cbUsed += prefixSize;
     }
 
+    DerDecode (const DerDecode &) = delete;
     DerDecode &operator=(const DerDecode &) = delete;
+    DerDecode &operator=(DerDecode &&) = delete;
 
-    DecodeResult Init(size_t &dataSize)
+    DecodeResult Init()
     {
         auto isNull = false;
         // This checks internally to see if the data size is within bounds of in.size()
@@ -134,11 +136,10 @@ public:
             return DecodeResult::EmptySequence;
 
         prefixSize = cbUsed;
-        cbUsed = dataSize - prefixSize; // Let cbUsed now track just the amount of remaining data
         return DecodeResult::Success;
     }
 
-    std::span<const std::byte> RemainingData() const { return in.subspan(cbUsed + prefixSize); }
+    std::span<const std::byte> RemainingData() const { return remaining; }
 
     template <typename T>
     bool DecodeSet(std::vector<T> &out)
@@ -154,23 +155,32 @@ public:
     }
 
     template <typename T>
-    bool DecodeSet(size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
-    {
-        return DecodeSetOrSequenceOf(DerType::ConstructedSet, cbPrefix, cbSize, out);
-    }
-
-    template <typename T>
     bool DecodeSequenceOf(size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
     {
         return DecodeSetOrSequenceOf(DerType::ConstructedSequence, cbPrefix, cbSize, out);
     }
 
+    bool IsAllUsed() const { return cbUsed == in.size(); }
+
+    // Used to help work with optional cases
+    // where we don't know that it was optional until we decode into it
+    void Reset()
+    {
+        prefixSize = 0;
+    }
+
+private:
+    std::span<const std::byte> in;
+    std::span<const std::byte> remaining;
+    size_t prefixSize;
+    size_t &cbUsed;
+
     // This checks whether the tag is for a sequence, as expected, and if it is,
-    // adjusts in and in.size() to only include the sequence
+    // adjusts remaining.size() to only include the sequence
     bool DecodeSequenceOrSet(DerType type, bool &isNull)
     {
         // Avoid complications -
-        if (DerDecode::DecodeNull(in, cbUsed))
+        if (DecodeNull(in, cbUsed))
         {
             isNull = true;
             return true;
@@ -181,14 +191,14 @@ public:
         // Validate the sequence
         size_t cbPrefix = 0;
 
-        if (!DerDecode::CheckDecode(in, type, cbPrefix))
+        if (!CheckDecode(in, type, cbPrefix))
         {
             cbUsed = 0;
             return false;
         }
 
-        // Adjust these to start at the beginning of the sequence
-        cbUsed = cbPrefix;
+        // Adjust remaining data to start at the beginning of the sequence
+        remaining = remaining.subspan(cbPrefix);
         return true;
     }
 
@@ -248,19 +258,4 @@ public:
             }
         }
     }
-
-    bool IsAllUsed() const { return cbUsed == in.size(); }
-
-    // Used to help work with optional cases
-    // where we don't know that it was optional until we decode into it
-    void Reset()
-    {
-        prefixSize = 0;
-    }
-
-private:
-    std::span<const std::byte> in;
-    std::span<const std::byte> remaining;
-    size_t prefixSize;
-    size_t &cbUsed;
 };

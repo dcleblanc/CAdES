@@ -6,7 +6,7 @@
 #include "CAdES.h"
 #include "DerDecode.h"
 
-void EncodeSize(size_t size, std::span<std::byte> out)
+void EncodeHelper::EncodeSize(size_t size, std::span<std::byte> out)
 {
 	// When size fits within a byte and does not have its high bit set, encode it directly
 	if (size <= 0x7f)

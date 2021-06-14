@@ -37,7 +37,7 @@ bool Accuracy::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -75,7 +75,7 @@ bool AlgorithmIdentifier::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -88,8 +88,6 @@ bool AlgorithmIdentifier::Decode(std::span<const std::byte> in)
 
     if (!algorithm.Decode(decoder.RemainingData()))
         return false;
-
-    
 
     if (decoder.IsAllUsed())
         return true;
@@ -115,7 +113,7 @@ bool Attribute::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -153,7 +151,7 @@ bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -191,7 +189,7 @@ bool IssuerSerial::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -235,7 +233,7 @@ bool ObjectDigestInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -281,7 +279,7 @@ bool Holder::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -294,11 +292,9 @@ bool Holder::Decode(std::span<const std::byte> in)
 
     if (!baseCertificateID.Decode(decoder.RemainingData()))
         return false;
-
     
     if (!entityName.Decode(decoder.RemainingData()))
         return false;
-
     
     if (!objectDigestInfo.Decode(decoder.RemainingData()))
         return false;
@@ -321,7 +317,7 @@ bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -359,7 +355,7 @@ bool V2Form::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -399,7 +395,7 @@ bool AttCertValidityPeriod::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -449,7 +445,7 @@ bool AttributeCertificateInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -519,7 +515,7 @@ bool AttributeCertificate::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -563,7 +559,7 @@ bool CertID::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -607,7 +603,7 @@ bool RevokedInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -649,7 +645,7 @@ bool SingleResponse::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -699,7 +695,7 @@ bool PKIStatusInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -739,7 +735,7 @@ bool ContentInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -777,7 +773,7 @@ bool CrlIdentifier::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -817,7 +813,7 @@ bool CrlValidatedID::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -853,7 +849,7 @@ bool MessageImprint::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -889,7 +885,7 @@ bool UserNotice::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -925,7 +921,7 @@ bool NoticeReference::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -961,7 +957,7 @@ bool OcspIdentifier::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -999,7 +995,7 @@ bool CrlOcspRef::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1039,7 +1035,7 @@ bool OtherRevRefs::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1082,7 +1078,7 @@ bool RevocationValues::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1122,7 +1118,7 @@ bool OtherRevVals::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1162,7 +1158,7 @@ bool BasicOCSPResponse::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1212,7 +1208,7 @@ bool ResponseData::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1260,7 +1256,7 @@ bool SigningCertificateV2::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1296,7 +1292,7 @@ bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1334,7 +1330,7 @@ bool Certificate::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1390,7 +1386,7 @@ bool TBSCertificate::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1479,7 +1475,7 @@ bool CertificateList::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1529,7 +1525,7 @@ bool TBSCertList::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1596,7 +1592,7 @@ bool PolicyInformation::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1642,7 +1638,7 @@ bool ESSCertID::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1678,7 +1674,7 @@ bool SigningCertificate::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1716,7 +1712,7 @@ bool ESSCertIDv2::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1756,7 +1752,7 @@ bool PolicyQualifierInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1792,7 +1788,7 @@ bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1834,7 +1830,7 @@ bool Extension::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1876,7 +1872,7 @@ bool CertStatus::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -1947,7 +1943,7 @@ bool SignerInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2003,7 +1999,7 @@ bool OtherCertificateFormat::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2039,7 +2035,7 @@ bool EDIPartyName::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2077,7 +2073,7 @@ bool RevocationEntry::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2131,7 +2127,7 @@ bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2173,7 +2169,7 @@ bool SignedData::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2225,7 +2221,7 @@ bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2263,7 +2259,7 @@ bool SignaturePolicyId::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2303,7 +2299,7 @@ bool SPUserNotice::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2339,7 +2335,7 @@ bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2375,7 +2371,7 @@ bool CommitmentTypeIndication::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2413,7 +2409,7 @@ bool SignerLocation::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2453,7 +2449,7 @@ bool SignerAttribute::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2497,7 +2493,7 @@ bool TimeStampReq::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2549,7 +2545,7 @@ bool TimeStampResp::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2601,7 +2597,7 @@ bool TSTInfo::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2669,7 +2665,7 @@ bool OtherCertId::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2705,7 +2701,7 @@ bool OcspResponsesID::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2741,7 +2737,7 @@ bool Validity::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;
@@ -2777,7 +2773,7 @@ bool AttributeTypeAndValue::Decode(std::span<const std::byte> in)
 {
     DerDecode decoder{in, cbData};
 
-    switch (decoder.Init(this->cbData))
+    switch (decoder.Init())
     {
     case DecodeResult::Failed:
         return false;

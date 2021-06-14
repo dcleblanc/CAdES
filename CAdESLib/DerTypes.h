@@ -25,8 +25,10 @@
 */
 
 #include "Common.h"
+
 #include "Oids.h"
 #include "DerDecode.h"
+#include "DerEncode.h"
 
 class DerTypeContainer
 {
@@ -78,7 +80,6 @@ inline size_t GetSizeBytes(uint64_t size)
 	return ~static_cast<size_t>(0);
 }
 
-void EncodeSize(size_t size, std::span<std::byte> out);
 void DebugDer(std::ostream &outFile, std::span<const std::byte> in, uint32_t level = 0);
 
 template <typename T>
@@ -102,7 +103,7 @@ void EncodeSetOrSequenceOf(DerType type, std::vector<T> &in, std::span<std::byte
 	size_t cbVector = GetEncodedSize(in);
 
 	offset = 1;
-	EncodeSize(cbVector, out.subspan(offset));
+	EncodeHelper::EncodeSize(cbVector, out.subspan(offset));
 	offset += cbInternal;
 
 	for (uint32_t i = 0; i < in.size(); ++i)
@@ -178,7 +179,7 @@ protected:
 		size_t cbNeeded = in.size() + 1; // Data, plus tag
 		std::byte encodedSize[sizeof(int64_t)];
 
-		EncodeSize(in.size(), std::span{encodedSize});
+		EncodeHelper::EncodeSize(in.size(), std::span{encodedSize});
 
 		// Note - cbDataSize guaranteed to be <= 8, int overflow not possible
 		cbNeeded += cbDataSize;
@@ -217,53 +218,6 @@ private:
 		auto stringView = std::basic_string_view<CharType>{pIn, in.size()};
 		value = std::basic_string<CharType>{stringView.begin(), stringView.end()};
 	}
-};
-
-class EncodeHelper
-{
-public:
-	EncodeHelper(std::span<std::byte> out) : out(out) {}
-
-	EncodeHelper &operator=(const EncodeHelper) = delete;
-	~EncodeHelper() = default;
-
-	void Init(size_t _cbNeeded, std::byte type)
-	{
-		cbNeeded = _cbNeeded;
-		if (cbNeeded > out.size() || out.size() < 2)
-			throw std::overflow_error("Overflow in Encode");
-
-		// Set the type
-		out[0] = type;
-		offset = 1;
-
-		EncodeSize(cbNeeded, DataPtr(out));
-	}
-
-	// void CheckExit()
-	// {
-	// 	if (offset != cbNeeded)
-	// 		throw std::runtime_error("Size needed not equal to size used");
-	// 	// std::cout << "Size needed not equal to size used" << std::endl;
-	// }
-
-	std::span<std::byte> DataPtr(std::span<std::byte> in) const { return in.subspan(offset); }
-
-	size_t DataSize()
-	{
-		if (offset > cbNeeded)
-			throw std::overflow_error("Integer overflow in data size");
-
-		return cbNeeded - offset;
-	}
-
-	size_t &CurrentSize() { return cbCurrent; }
-
-private:
-	std::span<std::byte> out;
-	size_t offset;
-	size_t cbNeeded;
-	size_t cbCurrent;
 };
 
 /*
@@ -359,7 +313,7 @@ public:
 		size_t offset = 1;
 
 		out[0] = type;
-		EncodeSize(innerSize, out.subspan(offset));
+		EncodeHelper::EncodeSize(innerSize, out.subspan(offset));
 
 		innerType.Encode(out.subspan(offset));
 	}
@@ -610,7 +564,7 @@ public:
 		auto in = value.GetBuffer();
 		DerDecode decoder{in, cbData};
 
-		switch (decoder.Init(this->cbData))
+		switch (decoder.Init())
 		{
 		case DecodeResult::Failed:
 			return false;
