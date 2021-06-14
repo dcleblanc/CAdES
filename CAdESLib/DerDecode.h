@@ -111,7 +111,8 @@ public:
 class SequenceHelper
 {
 public:
-    SequenceHelper(std::span<const std::byte> in, size_t &_cbUsed) : in(in), dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed), isNull(false)
+    SequenceHelper(std::span<const std::byte> in, size_t &_cbUsed) 
+    : in(in), dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed)
     {
     }
 
@@ -124,8 +125,9 @@ public:
 
     DecodeResult Init(size_t &_dataSize)
     {
+        auto isNull = false;
         // This checks internally to see if the data size is within bounds of in.size()
-        if (!DecodeSequence(cbUsed, dataSize, isNull))
+        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, dataSize, isNull))
             return DecodeResult::Failed;
 
         if (isNull)
@@ -140,7 +142,7 @@ public:
         return DecodeResult::Success;
     }
 
-    std::span<const std::byte> DataPtr(std::span<const std::byte> in) const { return in.subspan(cbUsed + prefixSize); }
+    std::span<const std::byte> RemainingData() const { return in.subspan(cbUsed + prefixSize); }
 
     template <typename T>
     bool DecodeSet(size_t &cbUsed, std::vector<T> &out)
@@ -165,11 +167,6 @@ public:
     bool DecodeSequenceOf(size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
     {
         return DecodeSetOrSequenceOf(DerType::ConstructedSequence, cbPrefix, cbSize, out);
-    }
-
-    bool DecodeSequence(size_t &cbUsed, size_t &size, bool &isNull)
-    {
-        return DecodeSequenceOrSet(DerType::ConstructedSequence, size, isNull);
     }
 
     // This checks whether the tag is for a sequence, as expected, and if it is,
@@ -290,5 +287,4 @@ private:
     size_t prefixSize;
     size_t cbCurrent;
     size_t &cbUsed;
-    bool isNull;
 };

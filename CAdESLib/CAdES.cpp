@@ -48,15 +48,15 @@ bool Accuracy::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!seconds.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!seconds.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!millis.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!millis.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!micros.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!micros.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -88,7 +88,7 @@ bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!algorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!algorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -96,7 +96,7 @@ bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
     if (sh.IsAllUsed())
         return true;
 
-    if (!parameters.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!parameters.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -128,7 +128,7 @@ bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!attrType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!attrType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -166,11 +166,11 @@ bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in, size_t &cbUs
         break;
     }
 
-    if (!eContentType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!eContentType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!eContent.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!eContent.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -204,15 +204,15 @@ bool IssuerSerial::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serial.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serial.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerUID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerUID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -248,19 +248,19 @@ bool ObjectDigestInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!digestedObjectType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!digestedObjectType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherObjectTypeID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherObjectTypeID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!digestAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!digestAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigest.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!objectDigest.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -294,15 +294,15 @@ bool Holder::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!baseCertificateID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!baseCertificateID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!entityName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!entityName.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigestInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!objectDigestInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -334,11 +334,11 @@ bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!hashValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashValue.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -372,15 +372,15 @@ bool V2Form::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!issuerName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerName.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!baseCertificateID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!baseCertificateID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!objectDigestInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!objectDigestInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -412,11 +412,11 @@ bool AttCertValidityPeriod::Decode(std::span<const std::byte> in, size_t &cbUsed
         break;
     }
 
-    if (!notBeforeTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!notBeforeTime.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!notAfterTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!notAfterTime.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -462,31 +462,31 @@ bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbU
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!holder.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!holder.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!holder.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!holder.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signature.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!attrCertValidityPeriod.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!attrCertValidityPeriod.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -494,11 +494,11 @@ bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbU
         return false;
 
     sh.Update();
-    if (!issuerUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerUniqueID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -532,15 +532,15 @@ bool AttributeCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!acinfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!acinfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -576,19 +576,19 @@ bool CertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerNameHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerNameHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerKeyHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerKeyHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -620,11 +620,11 @@ bool RevokedInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!revocationTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!revocationTime.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!revocationReason.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!revocationReason.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -662,23 +662,23 @@ bool SingleResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!certID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certStatus.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certStatus.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!thisUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!thisUpdate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nextUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!nextUpdate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!singleExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!singleExtensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -712,15 +712,15 @@ bool PKIStatusInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!status.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!status.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!statusString.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!statusString.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!failInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!failInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -752,11 +752,11 @@ bool ContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!contentType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!contentType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!content.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!content.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -790,15 +790,15 @@ bool CrlIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!crlissuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlissuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlIssuedTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlIssuedTime.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -830,11 +830,11 @@ bool CrlValidatedID::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!crlHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!crlIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlIdentifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -866,11 +866,11 @@ bool MessageImprint::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!hashedMessage.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashedMessage.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -902,11 +902,11 @@ bool UserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!noticeRef.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!noticeRef.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!explicitText.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!explicitText.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -938,7 +938,7 @@ bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!organization.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!organization.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -974,11 +974,11 @@ bool OcspIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!ocspResponderID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!ocspResponderID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!producedAt.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!producedAt.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1016,11 +1016,11 @@ bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!ocspids.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!ocspids.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRev.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRev.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1052,11 +1052,11 @@ bool OtherRevRefs::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!otherRevRefType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevRefType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevRefs.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevRefs.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1103,7 +1103,7 @@ bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!otherRevVals.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevVals.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1135,11 +1135,11 @@ bool OtherRevVals::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!otherRevValType.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevValType.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevVals.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevVals.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1175,15 +1175,15 @@ bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!tbsResponseData.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!tbsResponseData.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signature.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -1225,15 +1225,15 @@ bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!responderID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!responderID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!producedAt.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!producedAt.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -1241,7 +1241,7 @@ bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1309,11 +1309,11 @@ bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!algorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!algorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subjectPublicKey.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!subjectPublicKey.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1347,15 +1347,15 @@ bool Certificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!tbsCertificate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!tbsCertificate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1405,57 +1405,57 @@ bool TBSCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
     // A V3 cert should always have this, anything with extensions must be v3
     // If it is missing, it implies v1 (value of 0)
-    if (sh.DataPtr(in)[0] == std::byte{0xA0})
+    if (sh.RemainingData()[0] == std::byte{0xA0})
     {
-        if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
     }
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signature.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!validity.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!validity.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subject.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!subject.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!subjectPublicKeyInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!subjectPublicKeyInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
     // The following may not be present, and may need to be skipped
-    if (sh.DataPtr(in)[0] == std::byte{0xA1})
+    if (sh.RemainingData()[0] == std::byte{0xA1})
     {
-        if (!issuerUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!issuerUniqueID.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (sh.DataPtr(in)[0] == std::byte{0xA2})
+    if (sh.RemainingData()[0] == std::byte{0xA2})
     {
-        if (!subjectUniqueID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!subjectUniqueID.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (sh.DataPtr(in)[0] == std::byte{0xA3})
+    if (sh.RemainingData()[0] == std::byte{0xA3})
     {
-        if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!extensions.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
@@ -1492,15 +1492,15 @@ bool CertificateList::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!tbsCertList.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!tbsCertList.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signatureValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureValue.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1543,41 +1543,41 @@ bool TBSCertList::Decode(std::span<const std::byte> in, size_t &cbUsed)
     }
 
     // Version is optional
-    if (sh.DataPtr(in)[0] == static_cast<std::byte>(DerType::Integer))
+    if (sh.RemainingData()[0] == static_cast<std::byte>(DerType::Integer))
     {
-        if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
     }
 
-    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signature.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!thisUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!thisUpdate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
 
     // This is also optional, and may not be present
-    if (nextUpdate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (nextUpdate.Decode(sh.RemainingData(), sh.CurrentSize()))
     {
         sh.Update();
     }
 
     // These are optional, and may not be present
-    if (revokedCertificates.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (revokedCertificates.Decode(sh.RemainingData(), sh.CurrentSize()))
         sh.Update();
 
     if (sh.IsAllUsed()) // extensions are optional
         return true;
 
-    if (!crlExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlExtensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1609,7 +1609,7 @@ bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!policyIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!policyIdentifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -1655,11 +1655,11 @@ bool ESSCertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!certHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1729,15 +1729,15 @@ bool ESSCertIDv2::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!hashAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!hashAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1769,11 +1769,11 @@ bool PolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!policyQualifierId.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!policyQualifierId.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!qualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!qualifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1805,12 +1805,12 @@ bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in, size_t &cbUsed
         break;
     }
 
-    if (!issuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuer.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
 
-    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1847,19 +1847,19 @@ bool Extension::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!extnID.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extnID.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
     // This might not be present
-    if (!critical.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!critical.Decode(sh.RemainingData(), sh.CurrentSize()))
     {
         // Ought to be false by default, but this is more readable
         critical.SetValue(false);
     }
 
     sh.Update();
-    if (!extnValue.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extnValue.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1889,7 +1889,7 @@ bool CertStatus::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!revoked.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!revoked.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -1960,15 +1960,15 @@ bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sid.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!sid.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!digestAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!digestAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -1976,11 +1976,11 @@ bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!signatureAlgorithm.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signatureAlgorithm.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!signature.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!signature.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2016,11 +2016,11 @@ bool OtherCertificateFormat::Decode(std::span<const std::byte> in, size_t &cbUse
         break;
     }
 
-    if (!otherCertFormat.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherCertFormat.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherCert.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherCert.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2052,11 +2052,11 @@ bool EDIPartyName::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!nameAssigner.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!nameAssigner.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!partyName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!partyName.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2093,18 +2093,18 @@ bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
     // We have an optional sequence of RevocationEntry object
     // and won't know if there really is a RevocationEntry until
     // we get here
-    if (sh.DataPtr(in)[0] != static_cast<std::byte>(DerType::Integer))
+    if (sh.RemainingData()[0] != static_cast<std::byte>(DerType::Integer))
     {
         cbUsed = 0;
         sh.Reset(); // This keeps us from throwing
         return false;
     }
 
-    if (!userCertificate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!userCertificate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!revocationDate.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!revocationDate.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2112,7 +2112,7 @@ bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
     if (sh.IsAllUsed()) // crlEntryExtensions are optional
         return true;
 
-    if (!crlEntryExtensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!crlEntryExtensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2144,11 +2144,11 @@ bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in, size_t &cb
         break;
     }
 
-    if (!otherRevInfoFormat.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevInfoFormat.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!otherRevInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherRevInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2186,7 +2186,7 @@ bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2194,7 +2194,7 @@ bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!encapContentInfo.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!encapContentInfo.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2238,11 +2238,11 @@ bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUse
         break;
     }
 
-    if (!sigPolicyQualifierId.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!sigPolicyQualifierId.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sigQualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!sigQualifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2276,11 +2276,11 @@ bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!sigPolicyId.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!sigPolicyId.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!sigPolicyHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!sigPolicyHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2316,11 +2316,11 @@ bool SPUserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!noticeRef.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!noticeRef.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!explicitText.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!explicitText.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2352,11 +2352,11 @@ bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in, size_t &cbUs
         break;
     }
 
-    if (!commitmentTypeIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!commitmentTypeIdentifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!qualifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!qualifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2388,7 +2388,7 @@ bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbU
         break;
     }
 
-    if (!commitmentTypeId.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!commitmentTypeId.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2426,11 +2426,11 @@ bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!countryName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!countryName.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!localityName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!localityName.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
@@ -2470,7 +2470,7 @@ bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!certifiedAttributes.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certifiedAttributes.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2510,27 +2510,27 @@ bool TimeStampReq::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!messageImprint.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!messageImprint.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!reqPolicy.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!reqPolicy.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nonce.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!nonce.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!certReq.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!certReq.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2562,11 +2562,11 @@ bool TimeStampResp::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!status.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!status.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!timeStampToken.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!timeStampToken.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2614,43 +2614,43 @@ bool TSTInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!version.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!version.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!policy.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!policy.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!messageImprint.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!messageImprint.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!serialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!serialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!genTime.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!genTime.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!accuracy.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!accuracy.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!ordering.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!ordering.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!nonce.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!nonce.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!tsa.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!tsa.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!extensions.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!extensions.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2682,11 +2682,11 @@ bool OtherCertId::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!otherCertHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!otherCertHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!issuerSerial.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!issuerSerial.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2718,11 +2718,11 @@ bool OcspResponsesID::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!ocspIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!ocspIdentifier.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!ocspRepHash.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!ocspRepHash.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2754,11 +2754,11 @@ bool Validity::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!notBefore.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!notBefore.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!notAfter.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!notAfter.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;
@@ -2790,11 +2790,11 @@ bool AttributeTypeAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed
         break;
     }
 
-    if (!type.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!type.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     sh.Update();
-    if (!value.Decode(sh.DataPtr(in), sh.CurrentSize()))
+    if (!value.Decode(sh.RemainingData(), sh.CurrentSize()))
         return false;
 
     return true;

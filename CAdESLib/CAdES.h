@@ -246,10 +246,10 @@ public:
         }
 
         // This is a sequence of sets of AttributeTypeAndValue
-        for (size_t item = 0; sh.DataSize() > 0; ++item)
+        for (size_t item = 0; sh.RemainingData().size() > 0; ++item)
         {
             RelativeDistinguishedName rdn;
-            if (!rdn.Decode(sh.DataPtr(in), sh.CurrentSize()))
+            if (!rdn.Decode(sh.RemainingData(), sh.CurrentSize()))
                 return false;
 
             name.push_back(rdn);
@@ -1082,14 +1082,14 @@ public:
             break;
         }
 
-        if (!fullName.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!fullName.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
         if (sh.IsAllUsed())
             return true;
 
-        if (!nameRelativeToCRLIssuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!nameRelativeToCRLIssuer.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;
@@ -1149,21 +1149,21 @@ public:
             break;
         }
 
-        if (!distributionPoint.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!distributionPoint.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
         if (sh.IsAllUsed())
             return true;
 
-        if (!reasons.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!reasons.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
         if (sh.IsAllUsed())
             return true;
 
-        if (!cRLIssuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!cRLIssuer.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;
@@ -1297,37 +1297,37 @@ public:
             onlyContainsAttributeCerts are all FALSE, then either the
             distributionPoint field or the onlySomeReasons field MUST be present.
         */
-        if (distributionPoint.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (distributionPoint.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         if (sh.IsAllUsed())
             return true;
 
-        if (onlyContainsUserCerts.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (onlyContainsUserCerts.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         if (sh.IsAllUsed())
             return true;
 
-        if (onlyContainsCACerts.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (onlyContainsCACerts.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         if (sh.IsAllUsed())
             return true;
 
-        if (onlySomeReasons.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (onlySomeReasons.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         if (sh.IsAllUsed())
             return true;
 
-        if (indirectCRL.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (indirectCRL.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         if (sh.IsAllUsed())
             return true;
 
-        if (onlyContainsAttributeCerts.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (onlyContainsAttributeCerts.Decode(sh.RemainingData(), sh.CurrentSize()))
             sh.Update();
 
         return true;
@@ -1459,21 +1459,21 @@ public:
             break;
         }
 
-        if (!keyIdentifier.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!keyIdentifier.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
         if (sh.IsAllUsed())
             return true;
 
-        if (!authorityCertIssuer.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!authorityCertIssuer.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
         if (sh.IsAllUsed())
             return true;
 
-        if (!authorityCertSerialNumber.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!authorityCertSerialNumber.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;
@@ -1546,11 +1546,11 @@ public:
             break;
         }
 
-        if (!accessMethod.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!accessMethod.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
-        if (!accessLocation.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!accessLocation.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;
@@ -1774,15 +1774,15 @@ public:
             break;
         }
 
-        if (!objId.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!objId.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
-        if (!majorVersion.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!majorVersion.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         sh.Update();
-        if (!minorVersion.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!minorVersion.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;
@@ -1876,9 +1876,9 @@ public:
             return true;
         }
 
-        if (cA.IsPresent(sh.DataPtr(in)[0]))
+        if (cA.IsPresent(sh.RemainingData()[0]))
         {
-            if (!cA.Decode(sh.DataPtr(in),  sh.CurrentSize()))
+            if (!cA.Decode(sh.RemainingData(),  sh.CurrentSize()))
                 return false;
 
             sh.Update();
@@ -1891,7 +1891,7 @@ public:
             (cA.GetInnerType()).SetValue(false);
         }
 
-        if (!pathLenConstraint.Decode(sh.DataPtr(in), sh.CurrentSize()))
+        if (!pathLenConstraint.Decode(sh.RemainingData(), sh.CurrentSize()))
             return false;
 
         return true;

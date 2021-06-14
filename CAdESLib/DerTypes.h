@@ -647,7 +647,7 @@ public:
 			break;
 		}
 
-		return inner.Decode(sh.DataPtr(in), sh.CurrentSize());
+		return inner.Decode(sh.RemainingData(), sh.CurrentSize());
 	}
 
 	std::span<const std::byte> GetInnerBuffer(size_t &innerSize) const
