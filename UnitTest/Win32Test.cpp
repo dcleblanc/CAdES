@@ -88,7 +88,7 @@ void OidTest()
 		size_t cbRead = 0;
 		std::string s;
 
-		oiOut.Decode(buf2, cbUsed, cbRead);
+		oiOut.Decode(buf2,cbRead);
 		oiOut.ToString(s);
 
 		if (s != testOids[i])

@@ -6,7 +6,7 @@
 #include "CAdES.h"
 #include "DerDecode.h"
 
-void EncodeSize(size_t size, std::span<std::byte> out, size_t &cbUsed)
+void EncodeSize(size_t size, std::span<std::byte> out)
 {
 	// When size fits within a byte and does not have its high bit set, encode it directly
 	if (size <= 0x7f)
@@ -16,7 +16,6 @@ void EncodeSize(size_t size, std::span<std::byte> out, size_t &cbUsed)
 			throw std::out_of_range("Target output buffer must have space for at least one byte");
 		}
 		out[0] = static_cast<std::byte>(size);
-		cbUsed = 1;
 		return;
 	}
 
@@ -68,8 +67,6 @@ public:
 			return os;
 		}
 
-		size_t cbUsed = 0;
-
 #pragma warning(disable : 4061)
 		switch (typeContainer.type)
 		{
@@ -98,7 +95,7 @@ public:
 		case DerType::Boolean:
 		{
 			Boolean x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -107,7 +104,7 @@ public:
 		case DerType::Integer:
 		{
 			Integer x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -116,7 +113,7 @@ public:
 		case DerType::BitString:
 		{
 			BitString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -125,7 +122,7 @@ public:
 		case DerType::OctetString:
 		{
 			OctetString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -134,7 +131,7 @@ public:
 		case DerType::Null:
 		{
 			Null x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -143,7 +140,7 @@ public:
 		case DerType::ObjectIdentifier:
 		{
 			ObjectIdentifier x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -152,7 +149,7 @@ public:
 		case DerType::Enumerated:
 		{
 			Enumerated x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -161,7 +158,7 @@ public:
 		case DerType::UTF8String:
 		{
 			UTF8String x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -170,7 +167,7 @@ public:
 		case DerType::PrintableString:
 		{
 			PrintableString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -179,7 +176,7 @@ public:
 		case DerType::T61String:
 		{
 			T61String x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -188,7 +185,7 @@ public:
 		case DerType::IA5String:
 		{
 			IA5String x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -197,7 +194,7 @@ public:
 		case DerType::UTCTime:
 		{
 			UTCTime x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -206,7 +203,7 @@ public:
 		case DerType::GeneralizedTime:
 		{
 			GeneralizedTime x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -215,7 +212,7 @@ public:
 		case DerType::VisibleString:
 		{
 			VisibleString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -224,7 +221,7 @@ public:
 		case DerType::GeneralString:
 		{
 			GeneralString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}
@@ -233,7 +230,7 @@ public:
 		case DerType::BMPString:
 		{
 			BMPString x;
-			if (!x.Decode(type.type, cbUsed))
+			if (!x.Decode(type.type))
 				throw std::exception(); // Decode error
 			os << x;
 		}

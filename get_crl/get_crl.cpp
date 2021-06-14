@@ -22,19 +22,18 @@ LoadResult LoadObjectFromFile(std::string szFile, T &obj)
     }
     std::vector<std::byte> contents;
     std::copy(std::istreambuf_iterator<std::byte>(inFileStream), std::istreambuf_iterator<std::byte>(), std::back_inserter(contents));
-    size_t cbUsed = 0;
     bool fDecode = false;
 
     try
     {
-        fDecode = obj.Decode(contents, cbUsed);
+        fDecode = obj.Decode(contents);
     }
     catch (...)
     {
         return LoadResult::ParseError;
     }
 
-    if (!fDecode || cbUsed != contents.size())
+    if (!fDecode)
         return LoadResult::DecodeError;
 
     return LoadResult::Success;
@@ -94,9 +93,8 @@ template <typename T>
 void DecodeExtension(T &t, const std::vector<std::byte> &extensionBytes)
 {
     size_t cbExtension = extensionBytes.size();
-    size_t cbUsed = 0;
 
-    if (cbExtension > 0 && t.Decode(extensionBytes, cbUsed) && cbUsed == cbExtension)
+    if (cbExtension > 0 && t.Decode(extensionBytes))
         return;
 
     throw std::exception(); // Malformed extension

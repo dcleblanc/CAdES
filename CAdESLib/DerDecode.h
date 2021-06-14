@@ -14,8 +14,9 @@ class DerDecode
 {
 public:
     // Basic check for any type
-    inline static bool CheckDecode(std::span<const std::byte> in, DerType type, size_t &size, size_t &cbPrefix)
+    inline static bool CheckDecode(std::span<const std::byte> in, DerType type, size_t &cbPrefix)
     {
+        size_t size = 0;
         // Check for sufficient incoming bytes
         if (in.size() >= 3 &&
             // If it is context-specific, allow it, else verify that it is the type we expect
@@ -30,7 +31,6 @@ public:
         else if (in.size() == 2 && in[1] == std::byte{0})
         {
             // Zero length sequence, which can happen if the first member has a default, and the remaining are optional
-            size = 2;
             cbPrefix = 2;
             return true;
         }
@@ -106,28 +106,25 @@ public:
         size = static_cast<size_t>(tmp);
         return true;
     }
-};
 
-class SequenceHelper
-{
 public:
-    SequenceHelper(std::span<const std::byte> in, size_t &_cbUsed) 
-    : in(in), dataSize(0), prefixSize(0), cbCurrent(0), cbUsed(_cbUsed)
+    DerDecode(std::span<const std::byte> in, size_t &cbUsed) 
+    : in(in), prefixSize(0), cbUsed(cbUsed)
     {
     }
 
-    ~SequenceHelper()
+    ~DerDecode()
     {
         cbUsed += prefixSize;
     }
 
-    SequenceHelper &operator=(const SequenceHelper &) = delete;
+    DerDecode &operator=(const DerDecode &) = delete;
 
-    DecodeResult Init(size_t &_dataSize)
+    DecodeResult Init(size_t &dataSize)
     {
         auto isNull = false;
         // This checks internally to see if the data size is within bounds of in.size()
-        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, dataSize, isNull))
+        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, isNull))
             return DecodeResult::Failed;
 
         if (isNull)
@@ -137,15 +134,14 @@ public:
             return DecodeResult::EmptySequence;
 
         prefixSize = cbUsed;
-        _dataSize = dataSize;
-        cbUsed = 0; // Let cbUsed now track just the amount of remaining data
+        cbUsed = dataSize - prefixSize; // Let cbUsed now track just the amount of remaining data
         return DecodeResult::Success;
     }
 
     std::span<const std::byte> RemainingData() const { return in.subspan(cbUsed + prefixSize); }
 
     template <typename T>
-    bool DecodeSet(size_t &cbUsed, std::vector<T> &out)
+    bool DecodeSet(std::vector<T> &out)
     {
         size_t cbPrefix = 0;
         size_t cbSize = 0;
@@ -171,7 +167,7 @@ public:
 
     // This checks whether the tag is for a sequence, as expected, and if it is,
     // adjusts in and in.size() to only include the sequence
-    bool DecodeSequenceOrSet(DerType type, size_t &size, bool &isNull)
+    bool DecodeSequenceOrSet(DerType type, bool &isNull)
     {
         // Avoid complications -
         if (DerDecode::DecodeNull(in, cbUsed))
@@ -183,10 +179,9 @@ public:
         isNull = false;
 
         // Validate the sequence
-        size = 0;
         size_t cbPrefix = 0;
 
-        if (!DerDecode::CheckDecode(in, type, size, cbPrefix))
+        if (!DerDecode::CheckDecode(in, type, cbPrefix))
         {
             cbUsed = 0;
             return false;
@@ -205,7 +200,7 @@ public:
 
         out.clear();
         cbUsed = cbPrefix;
-        if (!DecodeSequenceOrSet(type, cbSize, isNull))
+        if (!DecodeSequenceOrSet(type, isNull))
         {
             cbPrefix = 0;
             cbSize = 0;
@@ -230,7 +225,7 @@ public:
             if (offset > in.size())
                 throw std::overflow_error("Integer overflow");
 
-            if (!t.Decode(in.subspan(offset), cbElement))
+            if (!t.Decode(in.subspan(offset)))
             {
                 // Accomodate the case where we have to decode into the
                 // sequence to see if the element is optional
@@ -254,37 +249,18 @@ public:
         }
     }
 
-    size_t DataSize()
-    {
-        if (cbUsed > dataSize)
-            throw std::overflow_error("Integer overflow in data size");
-
-        return dataSize - cbUsed;
-    }
-
-    void Update()
-    {
-        cbUsed += cbCurrent;
-
-        cbCurrent = 0;
-    }
-
-    size_t &CurrentSize() { return cbCurrent; }
-    bool IsAllUsed() const { return cbUsed == dataSize; }
+    bool IsAllUsed() const { return cbUsed == in.size(); }
 
     // Used to help work with optional cases
     // where we don't know that it was optional until we decode into it
     void Reset()
     {
-        dataSize = 0;
         prefixSize = 0;
-        cbCurrent = 0;
     }
 
 private:
     std::span<const std::byte> in;
-    size_t dataSize;
+    std::span<const std::byte> remaining;
     size_t prefixSize;
-    size_t cbCurrent;
     size_t &cbUsed;
 };

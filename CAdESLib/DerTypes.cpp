@@ -305,7 +305,7 @@ void ObjectIdentifier::SetValue(std::string szOid)
 	const char * tmp = szOid.c_str();
 	const char* next = nullptr;
 	std::byte buf[8];
-	size_t cbUsed = 0;
+	cbData = 0;
 
 	// The first two are special
 	auto first = GetNextLong(tmp, next);
@@ -316,24 +316,24 @@ void ObjectIdentifier::SetValue(std::string szOid)
 	tmp = next;
 	auto second = GetNextLong(tmp, next);
 
-	EncodeLong(first * 40 + second, buf, cbUsed);
+	EncodeLong(first * 40 + second, buf);
 
-	// std::copy(buf, buf + cbUsed, value.begin());
+	// std::copy(buf, buf + cbData, value.begin());
 
 	// Now keep going to get the rest of the OID
 	while (next != nullptr)
 	{
 		tmp = next;
 		GetNextLong(tmp, next);
-		EncodeLong(first, buf, cbUsed);
+		EncodeLong(first, buf);
 		//TODO: FIX
-		//value.insert(value.end(), buf, buf + cbUsed);
+		//value.insert(value.end(), buf, buf + cbData);
 	}
 
 	SetOidIndex();
 }
 
-void ObjectIdentifier::EncodeLong(uint64_t in, std::span<std::byte> out, size_t& cbUsed)
+void ObjectIdentifier::EncodeLong(uint64_t in, std::span<std::byte> out)
 {
 	// Need to encode the bytes to base 128
 	// any byte after the first needs to have high bit set
@@ -343,7 +343,7 @@ void ObjectIdentifier::EncodeLong(uint64_t in, std::span<std::byte> out, size_t&
 		if (out.size() < 1)
 			throw std::invalid_argument("Output buffer too small");
 
-		cbUsed = 1;
+		cbData = 1;
 		out[0] = static_cast<std::byte>(in);
 		return;
 	}
@@ -352,7 +352,7 @@ void ObjectIdentifier::EncodeLong(uint64_t in, std::span<std::byte> out, size_t&
 	// We know we need the last byte
 	buf[7] = static_cast<std::byte>(in & 0x7f);
 	in >>= 7;
-	cbUsed = 1;
+	cbData = 1;
 
 	int32_t i;
 
@@ -360,17 +360,17 @@ void ObjectIdentifier::EncodeLong(uint64_t in, std::span<std::byte> out, size_t&
 	{
 		buf[i] = static_cast<std::byte>((in & 0x7f) | 0x80);
 		in >>= 7;
-		cbUsed++;
+		cbData++;
 
 		if (in == 0)
 			break;
 	}
 
-	if (out.size() < cbUsed)
+	if (out.size() < cbData)
 		throw std::invalid_argument("Output buffer too small");
 
-	auto data = std::span{buf}.subspan(sizeof(buf) - cbUsed);
-	memcpy_s(out.data(), out.size(), data.data(), cbUsed);
+	auto data = std::span{buf}.subspan(sizeof(buf) - cbData);
+	memcpy_s(out.data(), out.size(), data.data(), cbData);
 	return;
 }
 
@@ -459,7 +459,7 @@ bool PrintableString::SetValue(std::string str)
 namespace
 {
 	template <typename T>
-	void EncodeString(DerType type, std::basic_string<T> in, std::span<std::byte> out, size_t& cbUsed)
+	void EncodeString(DerType type, std::basic_string<T> in, std::span<std::byte> out)
 	{
 		// If it is empty, encode as Null
 		if (in.size() == 0)
@@ -476,26 +476,26 @@ namespace
 		size_t cbNeeded = (in.size() + 1) * charSize; // Data, plus tag
 		std::byte encodedSize[sizeof(int64_t)];
 
-		EncodeSize(in.size() * charSize, encodedSize, cbUsed);
+		EncodeSize(in.size() * charSize, encodedSize);
 
-		// Note - cbUsedSize guaranteed to be <= 8, int32_t overflow not possible
-		cbNeeded += cbUsed;
+		// Note - cbDataSize guaranteed to be <= 8, int32_t overflow not possible
+		// cbNeeded += cbData;
 
 		if (cbNeeded > out.size())
 			throw std::length_error("Insufficient Buffer");
 
 		out[0] = static_cast<std::byte>(type);
-		size_t offset = 1;
-		memcpy_s(out.data() + offset, out.size() - offset, encodedSize, cbUsed);
-		offset += cbUsed;
-		memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size() * charSize);
+		// size_t offset = 1;
+		// memcpy_s(out.data() + offset, out.size() - offset, encodedSize, cbData);
+		// offset += cbData;
+		// memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size() * charSize);
 
-		cbUsed = offset + in.size() * charSize;
+		// cbData = offset + in.size() * charSize;
 		return;
 	}
 }
 
-void Boolean::Encode(std::span<std::byte> out, size_t &cbUsed)
+void Boolean::Encode(std::span<std::byte> out)
 {
 	if (out.size() < 3)
 	{
@@ -504,16 +504,16 @@ void Boolean::Encode(std::span<std::byte> out, size_t &cbUsed)
 	out[0] = static_cast<std::byte>(DerType::Boolean);
 	out[1] = std::byte{1};
 	out[2] = b != std::byte{0} ? std::byte{0xff} : std::byte{0};
-	cbUsed = 3;
+	cbData = 3;
 }
 
-bool Boolean::Decode(std::span<const std::byte> in, size_t& cbUsed)
+bool Boolean::Decode(std::span<const std::byte> in)
 {
 	size_t size = 0;
 	size_t cbPrefix = 0;
-	if (!DerDecode::CheckDecode(in, DerType::Boolean, size, cbPrefix))
+	if (!DerDecode::CheckDecode(in, DerType::Boolean, cbPrefix))
 	{
-		return DerDecode::DecodeNull(in, cbUsed);
+		return DerDecode::DecodeNull(in, cbData);
 	}
 
 	// Now check specifics for this type
@@ -521,26 +521,26 @@ bool Boolean::Decode(std::span<const std::byte> in, size_t& cbUsed)
 		throw std::exception(); // Incorrect decode
 
 	b = in[2] != std::byte{0} ? std::byte{0xff} : std::byte{0};
-	cbUsed = 3;
+	cbData = 3;
 	return true;
 }
 
-void Integer::Encode(std::span<std::byte> out, size_t& cbUsed)
+void Integer::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::Integer, value, out, cbUsed);
+	EncodeVector(DerType::Integer, value, out);
 }
 
-void BitString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void BitString::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::BitString, value, out, cbUsed);
+	EncodeVector(DerType::BitString, value, out);
 }
 
-void OctetString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void OctetString::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::OctetString, value, out, cbUsed);
+	EncodeVector(DerType::OctetString, value, out);
 }
 
-void Enumerated::Encode(std::span<std::byte> out, size_t& cbUsed)
+void Enumerated::Encode(std::span<std::byte> out)
 {
 	if (out.size() < 3)
 		throw std::overflow_error("Overflow in Enumerated::Encode");
@@ -548,33 +548,33 @@ void Enumerated::Encode(std::span<std::byte> out, size_t& cbUsed)
 	out[0] = static_cast<std::byte>(DerType::Enumerated);
 	out[1] = std::byte{1};
 	out[2] = value;
-	cbUsed = 3;
+	cbData = 3;
 }
 
-void ObjectIdentifier::Encode(std::span<std::byte> out, size_t& cbUsed)
+void ObjectIdentifier::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::ObjectIdentifier, value, out, cbUsed);
+	EncodeVector(DerType::ObjectIdentifier, value, out);
 }
 
-void UTCTime::Encode(std::span<std::byte> out, size_t& cbUsed)
+void UTCTime::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::UTCTime, value, out, cbUsed);
+	EncodeString<char>(DerType::UTCTime, value, out);
 }
 
-void GeneralizedTime::Encode(std::span<std::byte> out, size_t& cbUsed)
+void GeneralizedTime::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::GeneralizedTime, value, out, cbUsed);
+	EncodeString<char>(DerType::GeneralizedTime, value, out);
 }
 
-void Time::Encode(std::span<std::byte> out, size_t& cbUsed)
+void Time::Encode(std::span<std::byte> out)
 {
 	if (out.size() < 2)
 		throw std::overflow_error("Overflow in EncodeString");
 
 	if (type == TimeType::GeneralizedTime)
-		EncodeString<char>(DerType::GeneralizedTime, value, out, cbUsed);
+		EncodeString<char>(DerType::GeneralizedTime, value, out);
 	else if (type == TimeType::UTCTime)
-		EncodeString<char>(DerType::UTCTime, value, out, cbUsed);
+		EncodeString<char>(DerType::UTCTime, value, out);
 	else
 	{
 		out[0] = static_cast<std::byte>(DerType::Null);
@@ -582,7 +582,7 @@ void Time::Encode(std::span<std::byte> out, size_t& cbUsed)
 	}
 }
 
-bool Time::Decode(std::span<const std::byte> in, size_t& cbUsed)
+bool Time::Decode(std::span<const std::byte> in)
 {
 	// Sort out which of the two we have
 	if (in.size() < 2)
@@ -596,13 +596,13 @@ bool Time::Decode(std::span<const std::byte> in, size_t& cbUsed)
 	{
 	case DerType::GeneralizedTime:
 	case DerType::UTCTime:
-		fRet = DerBase::Decode(in, dertype, cbUsed, value);
+		fRet = DerBase::Decode(in, dertype,value);
 		break;
 
 	case DerType::Null:
 		if (in[1] == std::byte{0})
 		{
-			cbUsed = 2;
+			cbData = 2;
 			type = TimeType::NotSet;
 			return true;
 		}
@@ -615,7 +615,7 @@ bool Time::Decode(std::span<const std::byte> in, size_t& cbUsed)
 
 	if (!fRet)
 	{
-		cbUsed = 0;
+		cbData = 0;
 		type = TimeType::NotSet;
 		return fRet;
 	}
@@ -675,44 +675,44 @@ bool Time::ToString(std::string &out) const
 	return true;
 }
 
-void IA5String::Encode(std::span<std::byte> out, size_t& cbUsed)
+void IA5String::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::IA5String, value, out, cbUsed);
+	EncodeString<char>(DerType::IA5String, value, out);
 }
 
-void GeneralString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void GeneralString::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::GeneralString, value, out, cbUsed);
+	EncodeString<char>(DerType::GeneralString, value, out);
 }
 
-void PrintableString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void PrintableString::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::PrintableString, value, out, cbUsed);
+	EncodeString<char>(DerType::PrintableString, value, out);
 }
 
-void T61String::Encode(std::span<std::byte> out, size_t& cbUsed)
+void T61String::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::T61String, value, out, cbUsed);
+	EncodeString<char>(DerType::T61String, value, out);
 }
 
-void UTF8String::Encode(std::span<std::byte> out, size_t& cbUsed)
+void UTF8String::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::UTF8String, value, out, cbUsed);
+	EncodeString<char>(DerType::UTF8String, value, out);
 }
 
-void VisibleString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void VisibleString::Encode(std::span<std::byte> out)
 {
-	EncodeString<char>(DerType::VisibleString, value, out, cbUsed);
+	EncodeString<char>(DerType::VisibleString, value, out);
 }
 
-void UniversalString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void UniversalString::Encode(std::span<std::byte> out)
 {
-	EncodeString<char32_t>(DerType::UniversalString, value, out, cbUsed);
+	EncodeString<char32_t>(DerType::UniversalString, value, out);
 }
 
-void BMPString::Encode(std::span<std::byte> out, size_t& cbUsed)
+void BMPString::Encode(std::span<std::byte> out)
 {
-	EncodeString<wchar_t>(DerType::BMPString, value, out, cbUsed);
+	EncodeString<wchar_t>(DerType::BMPString, value, out);
 }
 
 // Shouldn't need this for this class, but everything needs it implemented
