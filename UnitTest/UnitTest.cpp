@@ -1,7 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "../CAdESLib/Common.h"
+#include <CAdESLib/Common.h>
+#include <CAdESLib/DerTypes.h>
+#include <CAdESLib/CAdES.h>
+#include <CAdESLib/DerDecode.h>
 #include <stdio.h>
 #include <fstream>
 #include <sstream>
@@ -174,7 +177,7 @@ void EncodeSizeTest()
 
 		if (f == true)
 		{
-			f = DecodeSize(buf, sizeof(buf), result, cbRead);
+			f = DerDecode::DecodeSize(buf, sizeof(buf), result, cbRead);
 
 			if (!f || result != values[i].value || cbRead != cbUsed)
 				throw std::exception("DecodeSize failed");
@@ -183,7 +186,7 @@ void EncodeSizeTest()
 
 	// This should also fail
 	memset(buf, 0xff, sizeof(buf));
-	f = DecodeSize(buf, sizeof(buf), result, cbRead);
+	f = DerDecode::DecodeSize(buf, sizeof(buf), result, cbRead);
 
 	if (f == true)
 		throw std::exception("DecodeSize failed");
@@ -205,7 +208,7 @@ bool ParseDer(const std::byte* pIn, size_t cbIn)
 			printf("Unknown type - %x\n", pIn[pos]);
 		}
 
-		if (!DecodeSize(pIn + pos + 1, cbIn - (pos + 1), size, cbSize) || cbIn - pos + 1 < size)
+		if (!DerDecode::DecodeSize(pIn + pos + 1, cbIn - (pos + 1), size, cbSize) || cbIn - pos + 1 < size)
 			throw std::exception("ruh, roh");
 
 		pos += cbSize + 1;

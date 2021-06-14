@@ -1,0 +1,5 @@
+cmake_minimum_required (VERSION 3.13)
+project( UnitTests )
+add_executable(UnitTests UnitTest.cpp Win32Test.cpp)
+target_include_directories(UnitTests PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries( UnitTests PUBLIC CAdESLib )

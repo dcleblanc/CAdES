@@ -35,6 +35,7 @@
 #include "DerTypes.h"
 #include "DerEncode.h"
 #include "Oids.h"
+#include "DerDecode.h"
 
 typedef ObjectIdentifier ContentType;
 
@@ -168,7 +169,8 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        return DecodeSet(in, cbUsed, attrs);
+        SequenceHelper sh{in, cbUsed};
+        return sh.DecodeSet(cbUsed, attrs);
     }
 
     // Note - this is declared as AttributeTypeAndValue, where the value could actually be anything,
@@ -230,9 +232,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -704,7 +706,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf<ObjectIdentifier>(in, cbPrefix, cbSize, ekus);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf<ObjectIdentifier>(cbPrefix, cbSize, ekus);
 
         if (ret)
         {
@@ -1022,7 +1025,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf<GeneralName>(in, cbPrefix, cbSize, names);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf<GeneralName>(cbPrefix, cbSize, names);
 
         if (ret)
         {
@@ -1065,9 +1069,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1132,9 +1136,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1226,7 +1230,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, cRLDistributionPoints);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, cRLDistributionPoints);
 
         if (ret)
         {
@@ -1271,9 +1276,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1441,9 +1446,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1528,9 +1533,9 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1578,7 +1583,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, accessDescriptions);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, accessDescriptions);
 
         if (ret)
         {
@@ -1660,7 +1666,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, keyPurposes);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, keyPurposes);
 
         if (ret)
         {
@@ -1696,7 +1703,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, certPolicies);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, certPolicies);
 
         if (ret)
         {
@@ -1753,9 +1761,9 @@ public:
 
     bool Decode(std::span<const std::byte> in, size_t &cbUsed)
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -1853,9 +1861,9 @@ public:
 
     bool Decode(std::span<const std::byte> in, size_t &cbUsed)
     {
-        SequenceHelper sh(cbUsed);
+        SequenceHelper sh{in, cbUsed};
 
-        switch (sh.Init(in, this->cbData))
+        switch (sh.Init(this->cbData))
         {
         case DecodeResult::Failed:
             return false;
@@ -2387,7 +2395,8 @@ public:
         // Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, values);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, values);
 
         if (ret)
         {
@@ -3003,7 +3012,8 @@ public:
     {
         size_t cbPrefix = 0;
         size_t cbSize = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, entries);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, entries);
 
         if (ret)
         {
@@ -3350,7 +3360,8 @@ public:
     {
         size_t cbSize = 0;
         size_t cbPrefix = 0;
-        bool ret = DecodeSequenceOf(in, cbPrefix, cbSize, certificatePolicies);
+        SequenceHelper sh{in, cbUsed};
+        bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, certificatePolicies);
 
         if (ret)
         {
@@ -3761,7 +3772,8 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        return DecodeSet(in, cbUsed, values);
+        SequenceHelper sh{in, cbUsed};
+        return sh.DecodeSet(cbUsed, values);
     }
 
 protected:
@@ -4040,7 +4052,8 @@ public:
 
     virtual bool Decode(std::span<const std::byte> in, size_t &cbUsed) override
     {
-        return DecodeSet(in, cbUsed, ocspResponses);
+        SequenceHelper sh{in, cbUsed};
+        return sh.DecodeSet(cbUsed, ocspResponses);
     }
 
 private:

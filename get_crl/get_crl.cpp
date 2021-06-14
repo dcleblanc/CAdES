@@ -313,7 +313,7 @@ void PrintCRL(const CertificateList &crl, const crl_options &opts)
 
 int32_t main(int32_t argc, char *argv[])
 {
-    std::string szFile = nullptr;
+    std::string szFile;
     bool is_cert = true;
     crl_options opts = {};
     bool badarg = false;

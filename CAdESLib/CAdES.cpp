@@ -35,9 +35,9 @@ void Accuracy::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Accuracy::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -75,9 +75,9 @@ void AlgorithmIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool AlgorithmIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -115,9 +115,9 @@ void Attribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -132,7 +132,7 @@ bool Attribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (DecodeSet(sh.DataPtr(in), sh.CurrentSize(), attrValues))
+    if (sh.DecodeSet(sh.CurrentSize(), attrValues))
     {
         return true;
     }
@@ -153,9 +153,9 @@ void EncapsulatedContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool EncapsulatedContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -191,9 +191,9 @@ void IssuerSerial::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool IssuerSerial::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -235,9 +235,9 @@ void ObjectDigestInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool ObjectDigestInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -281,9 +281,9 @@ void Holder::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Holder::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -321,9 +321,9 @@ void OtherHashAlgAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherHashAlgAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -359,9 +359,9 @@ void V2Form::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool V2Form::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -399,9 +399,9 @@ void AttCertValidityPeriod::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool AttCertValidityPeriod::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -449,9 +449,9 @@ void AttributeCertificateInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -490,7 +490,7 @@ bool AttributeCertificateInfo::Decode(std::span<const std::byte> in, size_t &cbU
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), attributes))
+    if (!sh.DecodeSet(sh.CurrentSize(), attributes))
         return false;
 
     sh.Update();
@@ -519,9 +519,9 @@ void AttributeCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool AttributeCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -563,9 +563,9 @@ void CertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -607,9 +607,9 @@ void RevokedInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool RevokedInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -649,9 +649,9 @@ void SingleResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SingleResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -699,9 +699,9 @@ void PKIStatusInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool PKIStatusInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -739,9 +739,9 @@ void ContentInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool ContentInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -777,9 +777,9 @@ void CrlIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CrlIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -817,9 +817,9 @@ void CrlValidatedID::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CrlValidatedID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -853,9 +853,9 @@ void MessageImprint::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool MessageImprint::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -889,9 +889,9 @@ void UserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool UserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -925,9 +925,9 @@ void NoticeReference::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -942,7 +942,7 @@ bool NoticeReference::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), noticeNumbers))
+    if (!sh.DecodeSet(sh.CurrentSize(), noticeNumbers))
         return false;
 
     return true;
@@ -961,9 +961,9 @@ void OcspIdentifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OcspIdentifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -999,9 +999,9 @@ void CrlOcspRef::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1012,7 +1012,7 @@ bool CrlOcspRef::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crlids))
+    if (!sh.DecodeSet(sh.CurrentSize(), crlids))
         return false;
 
     sh.Update();
@@ -1039,9 +1039,9 @@ void OtherRevRefs::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherRevRefs::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1082,9 +1082,9 @@ void RevocationValues::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1095,11 +1095,11 @@ bool RevocationValues::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crlVals))
+    if (!sh.DecodeSet(sh.CurrentSize(), crlVals))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), ocspVals))
+    if (!sh.DecodeSet(sh.CurrentSize(), ocspVals))
         return false;
 
     sh.Update();
@@ -1122,9 +1122,9 @@ void OtherRevVals::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherRevVals::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1162,9 +1162,9 @@ void BasicOCSPResponse::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1187,7 +1187,7 @@ bool BasicOCSPResponse::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
+    if (!sh.DecodeSet(sh.CurrentSize(), certs))
         return false;
 
     return true;
@@ -1212,9 +1212,9 @@ void ResponseData::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1237,7 +1237,7 @@ bool ResponseData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), responses))
+    if (!sh.DecodeSet(sh.CurrentSize(), responses))
         return false;
 
     sh.Update();
@@ -1260,9 +1260,9 @@ void SigningCertificateV2::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SigningCertificateV2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1273,11 +1273,11 @@ bool SigningCertificateV2::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
+    if (!sh.DecodeSet(sh.CurrentSize(), certs))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), policies))
+    if (!sh.DecodeSet(sh.CurrentSize(), policies))
         return false;
 
     return true;
@@ -1296,9 +1296,9 @@ void SubjectPublicKeyInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SubjectPublicKeyInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1334,9 +1334,9 @@ void Certificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Certificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1390,9 +1390,9 @@ void TBSCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool TBSCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1479,9 +1479,9 @@ void CertificateList::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CertificateList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1529,9 +1529,9 @@ void TBSCertList::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool TBSCertList::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1596,9 +1596,9 @@ void PolicyInformation::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1618,7 +1618,7 @@ bool PolicyInformation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 
     size_t cbSize = 0;
     size_t cbPrefix = 0;
-    bool ret = DecodeSequenceOf(sh.DataPtr(in), cbPrefix, cbSize, policyQualifiers);
+    bool ret = sh.DecodeSequenceOf(cbPrefix, cbSize, policyQualifiers);
 
     if (ret)
     {
@@ -1642,9 +1642,9 @@ void ESSCertID::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool ESSCertID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1678,9 +1678,9 @@ void SigningCertificate::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SigningCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1691,11 +1691,11 @@ bool SigningCertificate::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certs))
+    if (!sh.DecodeSet(sh.CurrentSize(), certs))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), policies))
+    if (!sh.DecodeSet(sh.CurrentSize(), policies))
         return false;
 
     return true;
@@ -1716,9 +1716,9 @@ void ESSCertIDv2::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool ESSCertIDv2::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1756,9 +1756,9 @@ void PolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool PolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1792,9 +1792,9 @@ void IssuerAndSerialNumber::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool IssuerAndSerialNumber::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1834,9 +1834,9 @@ void Extension::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Extension::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1876,9 +1876,9 @@ void CertStatus::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CertStatus::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1947,9 +1947,9 @@ void SignerInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -1972,7 +1972,7 @@ bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), signedAttrs))
+    if (!sh.DecodeSet(sh.CurrentSize(), signedAttrs))
         return false;
 
     sh.Update();
@@ -1984,7 +1984,7 @@ bool SignerInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), unsignedAttrs))
+    if (!sh.DecodeSet(sh.CurrentSize(), unsignedAttrs))
         return false;
 
     return true;
@@ -2003,9 +2003,9 @@ void OtherCertificateFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherCertificateFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2039,9 +2039,9 @@ void EDIPartyName::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool EDIPartyName::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2077,9 +2077,9 @@ void RevocationEntry::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool RevocationEntry::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2131,9 +2131,9 @@ void OtherRevocationInfoFormat::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherRevocationInfoFormat::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2173,9 +2173,9 @@ void SignedData::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2190,7 +2190,7 @@ bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), digestAlgorithms))
+    if (!sh.DecodeSet(sh.CurrentSize(), digestAlgorithms))
         return false;
 
     sh.Update();
@@ -2198,15 +2198,15 @@ bool SignedData::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), certificates))
+    if (!sh.DecodeSet(sh.CurrentSize(), certificates))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), crls))
+    if (!sh.DecodeSet(sh.CurrentSize(), crls))
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), signerInfos))
+    if (!sh.DecodeSet(sh.CurrentSize(), signerInfos))
         return false;
 
     return true;
@@ -2225,9 +2225,9 @@ void SigPolicyQualifierInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SigPolicyQualifierInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2263,9 +2263,9 @@ void SignaturePolicyId::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2284,7 +2284,7 @@ bool SignaturePolicyId::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), sigPolicyQualifiers))
+    if (!sh.DecodeSet(sh.CurrentSize(), sigPolicyQualifiers))
         return false;
 
     return true;
@@ -2303,9 +2303,9 @@ void SPUserNotice::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SPUserNotice::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2339,9 +2339,9 @@ void CommitmentTypeQualifier::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CommitmentTypeQualifier::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2375,9 +2375,9 @@ void CommitmentTypeIndication::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2392,7 +2392,7 @@ bool CommitmentTypeIndication::Decode(std::span<const std::byte> in, size_t &cbU
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), commitmentTypeQualifier))
+    if (!sh.DecodeSet(sh.CurrentSize(), commitmentTypeQualifier))
         return false;
 
     return true;
@@ -2413,9 +2413,9 @@ void SignerLocation::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2434,7 +2434,7 @@ bool SignerLocation::Decode(std::span<const std::byte> in, size_t &cbUsed)
         return false;
 
     sh.Update();
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), postalAdddress))
+    if (!sh.DecodeSet(sh.CurrentSize(), postalAdddress))
         return false;
 
     return true;
@@ -2453,9 +2453,9 @@ void SignerAttribute::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2466,7 +2466,7 @@ bool SignerAttribute::Decode(std::span<const std::byte> in, size_t &cbUsed)
         break;
     }
 
-    if (!DecodeSet(sh.DataPtr(in), sh.CurrentSize(), claimedAttributes))
+    if (!sh.DecodeSet(sh.CurrentSize(), claimedAttributes))
         return false;
 
     sh.Update();
@@ -2497,9 +2497,9 @@ void TimeStampReq::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool TimeStampReq::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2549,9 +2549,9 @@ void TimeStampResp::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool TimeStampResp::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2601,9 +2601,9 @@ void TSTInfo::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool TSTInfo::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2669,9 +2669,9 @@ void OtherCertId::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OtherCertId::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2705,9 +2705,9 @@ void OcspResponsesID::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool OcspResponsesID::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2741,9 +2741,9 @@ void Validity::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool Validity::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;
@@ -2777,9 +2777,9 @@ void AttributeTypeAndValue::Encode(std::span<std::byte> out, size_t &cbUsed)
 
 bool AttributeTypeAndValue::Decode(std::span<const std::byte> in, size_t &cbUsed)
 {
-    SequenceHelper sh(cbUsed);
+    SequenceHelper sh{in, cbUsed};
 
-    switch (sh.Init(in, this->cbData))
+    switch (sh.Init(this->cbData))
     {
     case DecodeResult::Failed:
         return false;

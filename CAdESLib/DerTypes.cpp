@@ -511,9 +511,9 @@ bool Boolean::Decode(std::span<const std::byte> in, size_t& cbUsed)
 {
 	size_t size = 0;
 	size_t cbPrefix = 0;
-	if (!CheckDecode(in, DerType::Boolean, size, cbPrefix))
+	if (!DerDecode::CheckDecode(in, DerType::Boolean, size, cbPrefix))
 	{
-		return DecodeNull(in, cbUsed);
+		return DerDecode::DecodeNull(in, cbUsed);
 	}
 
 	// Now check specifics for this type
@@ -725,7 +725,7 @@ size_t AnyType::SetDataSize()
 	size_t tmp = 0;
 	size_t cbRead = 0;
 
-	if (!::DecodeSize(std::span{encodedValue}.subspan(1), tmp, cbRead))
+	if (!DerDecode::DecodeSize(std::span{encodedValue}.subspan(1), tmp, cbRead))
 		throw std::exception(); // Error in DecodeSize
 
 	cbData = static_cast<size_t>(tmp);
@@ -752,7 +752,7 @@ bool AnyType::ToString(std::string &out) const
 	{
 		size_t valueSize = 0;
 		size_t cbRead = 0;
-		if (DecodeSize(std::span{encodedValue}.subspan(1), valueSize, cbRead))
+		if (DerDecode::DecodeSize(std::span{encodedValue}.subspan(1), valueSize, cbRead))
 		{
 			const char *sz = reinterpret_cast<const char *>(encodedValue.data() + 1 + cbRead);
 			out.reserve(valueSize);
@@ -790,7 +790,7 @@ bool AnyType::ToString(std::wstring &out) const
 	{
 		size_t valueSize = 0;
 		size_t cbRead = 0;
-		if (DecodeSize((std::span{encodedValue}).subspan(1),  valueSize, cbRead))
+		if (DerDecode::DecodeSize((std::span{encodedValue}).subspan(1), valueSize, cbRead))
 		{
 			// This could be a non-null terminated character string
 			const char* sz = reinterpret_cast<const char*>(encodedValue.data() + 1 + cbRead);

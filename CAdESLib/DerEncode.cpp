@@ -4,6 +4,7 @@
 #include "DerEncode.h"
 #include "Common.h"
 #include "CAdES.h"
+#include "DerDecode.h"
 
 void EncodeSize(size_t size, std::span<std::byte> out, size_t &cbUsed)
 {
@@ -41,61 +42,6 @@ void EncodeSize(size_t size, std::span<std::byte> out, size_t &cbUsed)
 		out[offset] = static_cast<std::byte>(tempSize & 0xFF);
 		offset--;
 	}
-}
-
-bool DecodeSize(std::span<const std::byte> in, size_t &size, size_t &cbRead)
-{
-	uint32_t i = 0;
-
-	size = 0;
-	cbRead = 0;
-
-	if (in.size() == 0)
-	{
-		return false;
-	}
-
-	// Detect short form
-	if ((in[0] & std::byte{0x80}) == std::byte{0})
-	{
-		size = std::to_integer<size_t>(in[0]);
-		cbRead = 1;
-		return true;
-	}
-
-	auto bytesToDecode = std::to_integer<size_t>(in[0] & ~std::byte{0x80});
-	uint64_t tmp = 0;
-
-	// Decode a maximum of 8 bytes, which adds up to a 56-bit number
-	// That's MUCH bigger than anything we could possibly decode
-	// And bytes to decode has to be at least one, or it isn't legal
-	// Note - the case of 1 happens when you have a length between 128 and 255,
-	// so the high bit is set, which precludes short form, resulting in a pattern of 0x81, 0x8b
-	// to encode the value of 139.
-	if (bytesToDecode > 8 || bytesToDecode + 1 > in.size() || bytesToDecode == 0)
-		return false;
-
-	cbRead = bytesToDecode + 1;
-
-	for (i = 1; i < cbRead; ++i)
-	{
-		tmp += std::to_integer<uint8_t>(in[i]);
-
-		if (i < bytesToDecode)
-			tmp <<= 8;
-	}
-
-	// We now have the size in a 64-bit value, check whether it fits in a size_t
-	// Arbitrarily say that max size is 1/2 SIZE_T_MAX
-	size_t maxSize = (~(static_cast<size_t>(0))) >> 1;
-
-	if (tmp > maxSize)
-	{
-		return false;
-	}
-
-	size = static_cast<size_t>(tmp);
-	return true;
 }
 
 /*
@@ -315,7 +261,7 @@ void DebugDer(std::ostream &outFile, std::span<const std::byte> in, uint32_t lev
 		DerTypeContainer type(in[offset]);
 		offset += 1;
 		auto innerSpan = in.subspan(offset);
-		if (!DecodeSize(innerSpan, size, cbRead))
+		if (!DerDecode::DecodeSize(innerSpan, size, cbRead))
 			throw std::exception(); // Corrupt input
 
 		offset += cbRead;
