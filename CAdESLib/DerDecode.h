@@ -13,8 +13,8 @@ enum class DecodeResult
 class DerDecode
 {
 public:
-    DerDecode(std::span<const std::byte> in, size_t &cbUsed)
-        : in(in), remaining(in), prefixSize(0), cbUsed(cbUsed)
+    DerDecode(std::span<const std::byte> in)
+        : in(in), remaining(in), prefixSize(0), cbUsed(0)
     {
     }
 
@@ -221,7 +221,7 @@ private:
     std::span<const std::byte> in;
     std::span<const std::byte> remaining;
     size_t prefixSize;
-    size_t &cbUsed;
+    size_t cbUsed;
 
     // This checks whether the tag is for a sequence, as expected, and if it is,
     // adjusts remaining.size() to only include the sequence

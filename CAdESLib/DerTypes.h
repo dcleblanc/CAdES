@@ -365,8 +365,7 @@ public:
 	template <ConstructibleDerivedType<DerBase> T>
 	bool ConvertToType(T &type) const
 	{
-		size_t decodedSize = 0;
-		DerDecode decoder{std::span{encodedValue}, decodedSize};
+		DerDecode decoder{std::span{encodedValue}};
 		return type.Decode(decoder);
 	}
 
@@ -436,7 +435,7 @@ public:
 	bool GetInnerType(AnyType &inner)
 	{
 		auto in = value.GetBuffer();
-		DerDecode decoder{in, cbData};
+		DerDecode decoder{in};
 
 		switch (decoder.InitSequenceOrSet())
 		{
@@ -452,17 +451,17 @@ public:
 		return inner.Decode(decoder);
 	}
 
-	std::span<const std::byte> GetInnerBuffer(size_t &innerSize) const
+	std::span<const std::byte> GetInnerBuffer() const
 	{
 		auto in = value.GetBuffer();
 		size_t cbPrefix = 0;
 
-		innerSize = 0;
+		size_t innerSize = 0;
 
 		if (!DerDecode::DecodeSize(in.subspan(1), innerSize, cbPrefix) || 1 + cbPrefix + innerSize > in.size())
 			throw std::out_of_range("Illegal size value");
 
-		return in.subspan(cbPrefix + 1);
+		return in.subspan(cbPrefix + 1, innerSize);
 	}
 
 protected:

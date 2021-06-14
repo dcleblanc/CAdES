@@ -488,7 +488,7 @@ public:
     // bool Decode(const OctetString &os)
     // {
     //     auto data = std::span{os.GetValue()};
-    //     DerDecode decoder{data, cbData};
+    //     DerDecode decoder{data};
     //     return os.Decode(decoder);
     // }
 
@@ -1001,9 +1001,8 @@ private:
         }
         else if (option == OptionType::Explicit)
         {
-            size_t innerSize = 0;
-            std::span<const std::byte> in = ChoiceType::GetInnerBuffer(innerSize);
-            DerDecode decoder(in, innerSize);
+            std::span<const std::byte> in = ChoiceType::GetInnerBuffer();
+            DerDecode decoder(in);
             return t.Decode(decoder);
         }
         return false;
@@ -2448,8 +2447,7 @@ public:
                 continue;
             }
 
-            size_t cbUsed = 0;
-            DerDecode decoder{extensionData, cbUsed};
+            DerDecode decoder{extensionData};
             if (oidString == id_ce_keyUsage)
             {
                 KeyUsage keyUsage;

@@ -23,10 +23,10 @@ LoadResult LoadObjectFromFile(std::string szFile, T &obj)
     std::vector<std::byte> contents;
     std::copy(std::istreambuf_iterator<std::byte>(inFileStream), std::istreambuf_iterator<std::byte>(), std::back_inserter(contents));
     bool fDecode = false;
-
     try
     {
-        fDecode = obj.Decode(contents);
+        DerDecode decoder{contents};
+        fDecode = obj.Decode(decoder);
     }
     catch (...)
     {
@@ -92,9 +92,10 @@ bool LoadCRLFromFile(std::string szFile, CertificateList &crl)
 template <typename T>
 void DecodeExtension(T &t, const std::vector<std::byte> &extensionBytes)
 {
-    size_t cbExtension = extensionBytes.size();
+    size_t cbExtension = 0;
+    DerDecode decoder{extensionBytes};
 
-    if (cbExtension > 0 && t.Decode(extensionBytes))
+    if (cbExtension > 0 && t.Decode(decoder))
         return;
 
     throw std::exception(); // Malformed extension
