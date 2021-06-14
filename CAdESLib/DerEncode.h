@@ -49,6 +49,70 @@ public:
 
 	static void EncodeSize(size_t size, std::span<std::byte> out);
 
+	template <typename T>
+	static void EncodeSetOrSequenceOf(DerType type, std::vector<T> &in, std::span<std::byte> out)
+	{
+		size_t cbInternal = 0;
+		size_t offset = 0;
+
+		if (in.size() == 0)
+		{
+			if (out.size() < 2)
+				throw std::overflow_error("Overflow in EncodeSetOrSequenceOf");
+
+			out[0] = static_cast<std::byte>(DerType::Null);
+			out[1] = std::byte{0};
+			return;
+		}
+
+		out[0] = static_cast<std::byte>(type);
+
+		size_t cbVector = GetEncodedSize(in);
+
+		offset = 1;
+		EncodeHelper::EncodeSize(cbVector, out.subspan(offset));
+		offset += cbInternal;
+
+		for (uint32_t i = 0; i < in.size(); ++i)
+		{
+			in[i].Encode(out.subspan(offset));
+			offset += cbInternal;
+		}
+	}
+
+	static void EncodeVector(DerType type, const std::span<const std::byte> in, std::span<std::byte> out)
+	{
+		// If it is empty, encode as Null
+		if (in.size() == 0)
+		{
+			if (out.size() < 2)
+				throw std::overflow_error("Overflow in EncodeVector");
+
+			out[0] = static_cast<std::byte>(DerType::Null);
+			out[1] = std::byte{0};
+			return;
+		}
+
+		size_t cbDataSize = 0;
+		size_t cbNeeded = in.size() + 1; // Data, plus tag
+		std::byte encodedSize[sizeof(int64_t)];
+
+		EncodeHelper::EncodeSize(in.size(), std::span{encodedSize});
+
+		// Note - cbDataSize guaranteed to be <= 8, int overflow not possible
+		cbNeeded += cbDataSize;
+
+		if (cbNeeded > out.size())
+			throw std::length_error("Insufficient Buffer");
+
+		out[0] = static_cast<std::byte>(type);
+		size_t offset = 1;
+		memcpy_s(out.data() + offset, out.size() - offset, &encodedSize, cbDataSize);
+		offset += cbDataSize;
+		memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size());
+		return;
+	}
+
 	// void CheckExit()
 	// {
 	// 	if (offset != cbNeeded)

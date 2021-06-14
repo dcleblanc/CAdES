@@ -106,7 +106,7 @@ void Attribute::Encode(std::span<std::byte> out)
 
     attrType.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(out));
 }
 
 bool Attribute::Decode(std::span<const std::byte> in)
@@ -434,7 +434,7 @@ void AttributeCertificateInfo::Encode(std::span<std::byte> out)
 
     attrCertValidityPeriod.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, attributes, eh.DataPtr(out));
 
     issuerUniqueID.Encode(eh.DataPtr(out));
 
@@ -914,7 +914,7 @@ void NoticeReference::Encode(std::span<std::byte> out)
 
     organization.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(out));
 }
 
 bool NoticeReference::Decode(std::span<const std::byte> in)
@@ -984,7 +984,7 @@ void CrlOcspRef::Encode(std::span<std::byte> out)
 
     eh.Init(out.size(), static_cast<std::byte>(DerType::ConstructedSequence));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, crlids, eh.DataPtr(out));
 
     ocspids.Encode(eh.DataPtr(out));
 
@@ -1058,7 +1058,7 @@ bool OtherRevRefs::Decode(std::span<const std::byte> in)
 
 void OcspListID::Encode(std::span<std::byte> out)
 {
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, out);
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspResponses, out);
 }
 
 void RevocationValues::Encode(std::span<std::byte> out)
@@ -1067,9 +1067,9 @@ void RevocationValues::Encode(std::span<std::byte> out)
 
     eh.Init(out.size(), static_cast<std::byte>(DerType::ConstructedSequence));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, crlVals, eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, ocspVals, eh.DataPtr(out));
 
     otherRevVals.Encode(eh.DataPtr(out));
 }
@@ -1151,7 +1151,7 @@ void BasicOCSPResponse::Encode(std::span<std::byte> out)
 
     signature.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
 }
 
 bool BasicOCSPResponse::Decode(std::span<const std::byte> in)
@@ -1199,7 +1199,7 @@ void ResponseData::Encode(std::span<std::byte> out)
 
     producedAt.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, responses, eh.DataPtr(out));
 
     extensions.Encode(eh.DataPtr(out));
 }
@@ -1247,9 +1247,9 @@ void SigningCertificateV2::Encode(std::span<std::byte> out)
 
     eh.Init(out.size(), static_cast<std::byte>(DerType::ConstructedSequence));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
 }
 
 bool SigningCertificateV2::Decode(std::span<const std::byte> in)
@@ -1585,7 +1585,7 @@ void PolicyInformation::Encode(std::span<std::byte> out)
 
     policyIdentifier.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(out));
 }
 
 bool PolicyInformation::Decode(std::span<const std::byte> in)
@@ -1665,9 +1665,9 @@ void SigningCertificate::Encode(std::span<std::byte> out)
 
     eh.Init(out.size(), static_cast<std::byte>(DerType::ConstructedSequence));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
 }
 
 bool SigningCertificate::Decode(std::span<const std::byte> in)
@@ -1930,13 +1930,13 @@ void SignerInfo::Encode(std::span<std::byte> out)
 
     digestAlgorithm.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, signedAttrs, eh.DataPtr(out));
 
     signatureAlgorithm.Encode(eh.DataPtr(out));
 
     signature.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(out));
 }
 
 bool SignerInfo::Decode(std::span<const std::byte> in)
@@ -2156,13 +2156,13 @@ void SignedData::Encode(std::span<std::byte> out)
 
     version.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, digestAlgorithms, eh.DataPtr(out));
 
     encapContentInfo.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, crls, eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(out));
 }
 
 bool SignedData::Decode(std::span<const std::byte> in)
@@ -2252,7 +2252,7 @@ void SignaturePolicyId::Encode(std::span<std::byte> out)
 
     sigPolicyHash.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(out));
 }
 
 bool SignaturePolicyId::Decode(std::span<const std::byte> in)
@@ -2364,7 +2364,7 @@ void CommitmentTypeIndication::Encode(std::span<std::byte> out)
 
     commitmentTypeId.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(out));
 }
 
 bool CommitmentTypeIndication::Decode(std::span<const std::byte> in)
@@ -2402,7 +2402,7 @@ void SignerLocation::Encode(std::span<std::byte> out)
 
     localityName.Encode(eh.DataPtr(out));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(out));
 }
 
 bool SignerLocation::Decode(std::span<const std::byte> in)
@@ -2440,7 +2440,7 @@ void SignerAttribute::Encode(std::span<std::byte> out)
 
     eh.Init(out.size(), static_cast<std::byte>(DerType::ConstructedSequence));
 
-    EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(out));
+    EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, claimedAttributes, eh.DataPtr(out));
 
     certifiedAttributes.Encode(eh.DataPtr(out));
 }

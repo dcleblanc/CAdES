@@ -164,7 +164,7 @@ class RelativeDistinguishedName final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, attrs, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, attrs, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -721,7 +721,7 @@ public:
         EncodeHelper eh(out);
 
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(out));
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(out));
         
     }
 
@@ -1015,7 +1015,7 @@ public:
     virtual void Encode(std::span<std::byte> out) override
     {
         SetDataSize();
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, names, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, names, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -1220,7 +1220,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, cRLDistributionPoints, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, cRLDistributionPoints, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -1569,7 +1569,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, accessDescriptions, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, accessDescriptions, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -1652,7 +1652,7 @@ class KeyPurposes : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, keyPurposes, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, keyPurposes, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -1689,7 +1689,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, certPolicies, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, certPolicies, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -2379,7 +2379,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, values, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, values, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -2996,7 +2996,7 @@ class RevokedCertificates final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSequence, entries, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, entries, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -3344,7 +3344,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, certificatePolicies, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certificatePolicies, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override
@@ -3758,7 +3758,7 @@ class PKIFreeText final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override
     {
-        EncodeSetOrSequenceOf(DerType::ConstructedSet, values, out);
+        EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, values, out);
     }
 
     virtual bool Decode(std::span<const std::byte> in) override

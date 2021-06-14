@@ -247,7 +247,7 @@ bool ObjectIdentifier::ToString(std::wstring &out) const
 		return false;
 
 	auto valueNum = std::to_integer<uint8_t>(value[0]);
-	
+
 	if (valueNum < 40)
 	{
 		tmp = L"0";
@@ -302,8 +302,8 @@ void ObjectIdentifier::SetValue(std::string szOid)
 	//value.clear();
 
 	// This is going to require a substantial parser
-	const char * tmp = szOid.c_str();
-	const char* next = nullptr;
+	const char *tmp = szOid.c_str();
+	const char *next = nullptr;
 	std::byte buf[8];
 	cbData = 0;
 
@@ -427,7 +427,7 @@ uint32_t ObjectIdentifier::GetNextLong(const char *start, const char *&next)
 
 bool PrintableString::SetValue(std::string str)
 {
-	for (auto& tmp: str)
+	for (auto &tmp : str)
 	{
 		if (!isalnum(tmp))
 		{
@@ -527,17 +527,17 @@ bool Boolean::Decode(std::span<const std::byte> in)
 
 void Integer::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::Integer, value, out);
+	EncodeHelper::EncodeVector(DerType::Integer, value, out);
 }
 
 void BitString::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::BitString, value, out);
+	EncodeHelper::EncodeVector(DerType::BitString, value, out);
 }
 
 void OctetString::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::OctetString, value, out);
+	EncodeHelper::EncodeVector(DerType::OctetString, value, out);
 }
 
 void Enumerated::Encode(std::span<std::byte> out)
@@ -553,7 +553,7 @@ void Enumerated::Encode(std::span<std::byte> out)
 
 void ObjectIdentifier::Encode(std::span<std::byte> out)
 {
-	EncodeVector(DerType::ObjectIdentifier, value, out);
+	EncodeHelper::EncodeVector(DerType::ObjectIdentifier, value, out);
 }
 
 void UTCTime::Encode(std::span<std::byte> out)
@@ -596,7 +596,7 @@ bool Time::Decode(std::span<const std::byte> in)
 	{
 	case DerType::GeneralizedTime:
 	case DerType::UTCTime:
-		fRet = DerBase::Decode(in, dertype,value);
+		fRet = DerDecode::Decode(in, dertype, value);
 		break;
 
 	case DerType::Null:
@@ -793,7 +793,7 @@ bool AnyType::ToString(std::wstring &out) const
 		if (DerDecode::DecodeSize((std::span{encodedValue}).subspan(1), valueSize, cbRead))
 		{
 			// This could be a non-null terminated character string
-			const char* sz = reinterpret_cast<const char*>(encodedValue.data() + 1 + cbRead);
+			const char *sz = reinterpret_cast<const char *>(encodedValue.data() + 1 + cbRead);
 			std::string s;
 			s.append(sz, valueSize);
 

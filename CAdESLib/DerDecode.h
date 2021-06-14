@@ -13,6 +13,21 @@ enum class DecodeResult
 class DerDecode
 {
 public:
+    template <typename T, typename Char = void, typename Traits = void>
+    static bool Decode(std::span<const std::byte> in, const DerType type, T &value)
+    {
+        size_t cbPrefix = 0;
+
+        if (!CheckDecode(in, type, cbPrefix))
+        {
+            // Allow Null, will correctly set cbData
+            return DerDecode::DecodeNull(in, cbPrefix);
+        }
+
+        DecodeInner(in.subspan(cbPrefix), value);
+        return true;
+    }
+
     // Basic check for any type
     inline static bool CheckDecode(std::span<const std::byte> in, DerType type, size_t &cbPrefix)
     {
@@ -257,5 +272,24 @@ private:
                 return true;
             }
         }
+    }
+
+private:
+    static void DecodeInner(std::span<const std::byte> in, std::vector<std::byte> &value)
+    {
+        value = std::vector<std::byte>{in.begin(), in.end()};
+    }
+
+    static void DecodeInner(std::span<const std::byte> in, std::span<const std::byte> &value)
+    {
+        value = in;
+    }
+
+    template <typename CharType>
+    static void DecodeInner(std::span<const std::byte> in, std::basic_string<CharType> &value)
+    {
+        auto pIn = reinterpret_cast<const CharType *>(in.data());
+        auto stringView = std::basic_string_view<CharType>{pIn, in.size()};
+        value = std::basic_string<CharType>{stringView.begin(), stringView.end()};
     }
 };
