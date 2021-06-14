@@ -13,37 +13,38 @@ enum class DecodeResult
 class DerDecode
 {
 public:
-    template <typename T, typename Char = void, typename Traits = void>
-    static bool Decode(std::span<const std::byte> in, const DerType type, T &value)
+    DerDecode(std::span<const std::byte> in, size_t &cbUsed)
+        : in(in), remaining(in), prefixSize(0), cbUsed(cbUsed)
     {
-        size_t cbPrefix = 0;
-
-        if (!CheckDecode(in, type, cbPrefix))
-        {
-            // Allow Null, will correctly set cbData
-            return DerDecode::DecodeNull(in, cbPrefix);
-        }
-
-        DecodeInner(in.subspan(cbPrefix), value);
-        return true;
     }
 
+    ~DerDecode() = default;// { cbUsed += prefixSize; }
+    DerDecode(DerDecode &&rhs) = default;
+    DerDecode(const DerDecode &) = default;
+    DerDecode &operator=(const DerDecode &rhs) = delete;
+    // {
+    //     in = rhs.in;
+    //     remaining = rhs.remaining;
+    //     cbUsed = rhs.cbUsed;
+    // }
+    DerDecode &operator=(DerDecode &&rhs) = delete;
+
     // Basic check for any type
-    inline static bool CheckDecode(std::span<const std::byte> in, DerType type, size_t &cbPrefix)
+    bool CheckDecode(std::span<const std::byte> bytesToValidate, DerType type, size_t &cbPrefix)
     {
         size_t size = 0;
         // Check for sufficient incoming bytes
-        if (in.size() >= 3 &&
+        if (bytesToValidate.size() >= 3 &&
             // If it is context-specific, allow it, else verify that it is the type we expect
-            (std::byte{0} != (in[0] & std::byte{0x80}) || in[0] == static_cast<std::byte>(type)))
+            (std::byte{0} != (bytesToValidate[0] & std::byte{0x80}) || bytesToValidate[0] == static_cast<std::byte>(type)))
         {
-            if (!DecodeSize(in.subspan(1), size, cbPrefix) || 1 + cbPrefix + size > in.size())
+            if (!DecodeSize(bytesToValidate.subspan(1), size, cbPrefix) || 1 + cbPrefix + size > bytesToValidate.size())
                 throw std::out_of_range("Illegal size value");
 
             cbPrefix++;
             return true;
         }
-        else if (in.size() == 2 && in[1] == std::byte{0})
+        else if (bytesToValidate.size() == 2 && bytesToValidate[1] == std::byte{0})
         {
             // Zero length sequence, which can happen if the first member has a default, and the remaining are optional
             cbPrefix = 2;
@@ -53,6 +54,72 @@ public:
         cbPrefix = 0;
         return false;
     }
+
+    template <typename T, typename Char = void, typename Traits = void>
+    bool Decode(const DerType type, T &value)
+    {
+        size_t cbPrefix = 0;
+
+        if (!CheckDecode(remaining, type, cbPrefix))
+        {
+            // Allow Null, will correctly set cbData
+            return DecodeNull(remaining, cbPrefix);
+        }
+        remaining = in.subspan(cbPrefix);
+        DecodeInner(remaining, value);
+        return true;
+    }
+
+    // This contains an encapsulated type, and it has a type
+    // that is defined by the context
+    template <typename T, std::byte type>
+    bool Decode(T& innerType, bool& hasData)
+    {
+        hasData = false;
+        // If this is an optional type, we could have used
+        // all the bytes on the previous item
+        if (remaining.size() == 0)
+            throw std::out_of_range("Insufficient buffer");
+
+        if (remaining[0] == type)
+        {
+            size_t cbPrefix = 0;
+
+            if (!CheckDecode(remaining, static_cast<const DerType>(remaining[0]), cbPrefix))
+            {
+                return false;
+            }
+
+            remaining = remaining.subspan(cbPrefix);
+            // Now, we can decode the inner type
+            if (innerType.Decode(*this))
+            {
+                hasData = true;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    DecodeResult InitSequenceOrSet()
+    {
+        auto isNull = false;
+        // This checks internally to see if the data size is within bounds of in.size()
+        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, isNull))
+            return DecodeResult::Failed;
+
+        if (isNull)
+            return DecodeResult::Null;
+
+        if (cbUsed == in.size())
+            return DecodeResult::EmptySequence;
+
+        return DecodeResult::Success;
+    }
+
+    std::span<const std::byte> InitialData() const { return in; }
+    std::span<const std::byte> RemainingData() const { return remaining; }
 
     // Check for types that have a vector or a type of string
     inline static bool DecodeNull(std::span<const std::byte> in, size_t &cbUsed)
@@ -122,40 +189,6 @@ public:
         return true;
     }
 
-public:
-    DerDecode(std::span<const std::byte> in, size_t &cbUsed) 
-    : in(in), remaining(in), prefixSize(0), cbUsed(cbUsed)
-    {
-    }
-
-    ~DerDecode()
-    {
-        cbUsed += prefixSize;
-    }
-
-    DerDecode (const DerDecode &) = delete;
-    DerDecode &operator=(const DerDecode &) = delete;
-    DerDecode &operator=(DerDecode &&) = delete;
-
-    DecodeResult Init()
-    {
-        auto isNull = false;
-        // This checks internally to see if the data size is within bounds of in.size()
-        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, isNull))
-            return DecodeResult::Failed;
-
-        if (isNull)
-            return DecodeResult::Null;
-
-        if (cbUsed == in.size())
-            return DecodeResult::EmptySequence;
-
-        prefixSize = cbUsed;
-        return DecodeResult::Success;
-    }
-
-    std::span<const std::byte> RemainingData() const { return remaining; }
-
     template <typename T>
     bool DecodeSet(std::vector<T> &out)
     {
@@ -195,7 +228,7 @@ private:
     bool DecodeSequenceOrSet(DerType type, bool &isNull)
     {
         // Avoid complications -
-        if (DecodeNull(in, cbUsed))
+        if (DecodeNull(remaining, cbUsed))
         {
             isNull = true;
             return true;
@@ -206,7 +239,7 @@ private:
         // Validate the sequence
         size_t cbPrefix = 0;
 
-        if (!CheckDecode(in, type, cbPrefix))
+        if (!CheckDecode(remaining, type, cbPrefix))
         {
             cbUsed = 0;
             return false;
@@ -250,7 +283,7 @@ private:
             if (offset > in.size())
                 throw std::overflow_error("Integer overflow");
 
-            if (!t.Decode(in.subspan(offset)))
+            if (!t.Decode(*this))
             {
                 // Accomodate the case where we have to decode into the
                 // sequence to see if the element is optional

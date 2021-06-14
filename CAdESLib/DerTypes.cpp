@@ -182,10 +182,10 @@ void BitString::SetValue(uint8_t unusedBits, std::span<const std::byte> data)
 bool ObjectIdentifier::ToString(std::string &out) const
 {
 	// If possible, just look it up in our table
-	std::string szOid = this->GetOidString();
+	std::string oid = this->GetOidString();
 
-	// if (szOid != nullptr)
-	// 	out = szOid;
+	// if (oid != nullptr)
+	// 	out = oid;
 
 	std::string tmp;
 	// size_t cbRead = 0;
@@ -234,10 +234,10 @@ bool ObjectIdentifier::ToString(std::string &out) const
 bool ObjectIdentifier::ToString(std::wstring &out) const
 {
 	// If possible, just look it up in our table
-	auto szOid = this->GetOidString();
+	auto oid = this->GetOidString();
 
-	if (!szOid.empty())
-		out = utf8ToUtf16(szOid);
+	if (!oid.empty())
+		out = utf8ToUtf16(oid);
 
 	std::wstring tmp;
 	size_t cbRead = 0;
@@ -282,7 +282,7 @@ bool ObjectIdentifier::ToString(std::wstring &out) const
 	return true;
 }
 
-void ObjectIdentifier::SetValue(std::string szOid)
+void ObjectIdentifier::SetValue(std::string oid)
 {
 	/*
 	Current encoding practice is to multiply the first number by 40, then add the second.
@@ -302,7 +302,7 @@ void ObjectIdentifier::SetValue(std::string szOid)
 	//value.clear();
 
 	// This is going to require a substantial parser
-	const char *tmp = szOid.c_str();
+	const char *tmp = oid.c_str();
 	const char *next = nullptr;
 	std::byte buf[8];
 	cbData = 0;
@@ -507,20 +507,20 @@ void Boolean::Encode(std::span<std::byte> out)
 	cbData = 3;
 }
 
-bool Boolean::Decode(std::span<const std::byte> in)
+bool Boolean::Decode(DerDecode decoder)
 {
 	size_t size = 0;
 	size_t cbPrefix = 0;
-	if (!DerDecode::CheckDecode(in, DerType::Boolean, cbPrefix))
+	if (!decoder.CheckDecode(decoder.RemainingData(), DerType::Boolean, cbPrefix))
 	{
-		return DerDecode::DecodeNull(in, cbData);
+		return DerDecode::DecodeNull(decoder.RemainingData(), cbData);
 	}
 
 	// Now check specifics for this type
 	if (cbPrefix + size != 3)
 		throw std::exception(); // Incorrect decode
 
-	b = in[2] != std::byte{0} ? std::byte{0xff} : std::byte{0};
+	b = decoder.RemainingData()[2] != std::byte{0} ? std::byte{0xff} : std::byte{0};
 	cbData = 3;
 	return true;
 }
@@ -582,13 +582,13 @@ void Time::Encode(std::span<std::byte> out)
 	}
 }
 
-bool Time::Decode(std::span<const std::byte> in)
+bool Time::Decode(DerDecode decoder)
 {
 	// Sort out which of the two we have
-	if (in.size() < 2)
+	if (decoder.RemainingData().size() < 2)
 		return false;
 
-	DerType dertype = static_cast<DerType>(in[0]);
+	DerType dertype = static_cast<DerType>(decoder.RemainingData()[0]);
 	bool fRet = false;
 
 #pragma warning(disable : 4061)
@@ -596,11 +596,11 @@ bool Time::Decode(std::span<const std::byte> in)
 	{
 	case DerType::GeneralizedTime:
 	case DerType::UTCTime:
-		fRet = DerDecode::Decode(in, dertype, value);
+		fRet = decoder.Decode(dertype, value);
 		break;
 
 	case DerType::Null:
-		if (in[1] == std::byte{0})
+		if (decoder.RemainingData()[1] == std::byte{0})
 		{
 			cbData = 2;
 			type = TimeType::NotSet;

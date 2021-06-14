@@ -233,7 +233,7 @@ namespace
     struct OidInfo
     {
         std::array<std::byte, 12> encodedOid;
-        std::string szOid;
+        std::string oid;
         std::string szOidLabel;
     };
 
@@ -419,7 +419,7 @@ std::string GetOidString(size_t index)
     if (index >= oidTable.size())
         return "";
 
-    return oidTable[index].szOid;
+    return oidTable[index].oid;
 }
 
 std::string GetOidLabel(size_t index)
@@ -601,14 +601,14 @@ void TestOidTable()
         // Now make sure that everything is going to round-trip, and the lower bound works
         ObjectIdentifier oi;
 
-        oi.SetValue(oid.szOid);
+        oi.SetValue(oid.oid);
         auto sz = oi.GetOidString();
-        if (sz.empty() || sz != oid.szOid)
+        if (sz.empty() || sz != oid.oid)
             throw std::runtime_error("Oid String decode error");
 
         // Flush out any entries without tags
         if (oid.szOidLabel.empty())
-            std::cout << "Missing label: " << oid.szOid << std::endl;
+            std::cout << "Missing label: " << oid.oid << std::endl;
     }
 
     CheckOids();
