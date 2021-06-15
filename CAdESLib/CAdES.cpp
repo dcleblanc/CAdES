@@ -71,8 +71,6 @@ void AlgorithmIdentifier::Encode(std::span<std::byte> out)
 
 bool AlgorithmIdentifier::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:

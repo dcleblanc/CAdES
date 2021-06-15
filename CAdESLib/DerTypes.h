@@ -458,10 +458,10 @@ public:
 
 		size_t innerSize = 0;
 
-		if (!DerDecode::DecodeSize(in.subspan(1), innerSize, cbPrefix) || 1 + cbPrefix + innerSize > in.size())
+		if (!DecodeSize(innerSize) || innerSize > remaining.size())
 			throw std::out_of_range("Illegal size value");
 
-		return in.subspan(cbPrefix + 1, innerSize);
+		return remaining;
 	}
 
 protected:
