@@ -3,8 +3,17 @@
 
 #pragma once
 
+#include "Common.h"
+
+#include "Oids.h"
+#include "DerDecode.h"
+#include "DerEncode.h"
+#include <type_traits>
+
 /* Start basic DER encoding types */
 
+class DerTypeContainer
+{
 /*
 	This is actually a bitfield, roughly defined as
 	struct DerType
@@ -24,15 +33,6 @@
 	};
 */
 
-#include "Common.h"
-
-#include "Oids.h"
-#include "DerDecode.h"
-#include "DerEncode.h"
-#include <type_traits>
-
-class DerTypeContainer
-{
 public:
 	DerTypeContainer(std::byte c)
 		: type(static_cast<DerType>(c & std::byte{0x1f})),
@@ -465,7 +465,7 @@ public:
 	}
 
 protected:
-	virtual size_t SetDataSize() override { return value.SetDataSize(); }
+	virtual size_t SetDataSize() override { return (cbData = value.SetDataSize()); }
 
 	AnyType value;
 	DerTypeContainer derType;

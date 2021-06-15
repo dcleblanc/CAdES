@@ -19,8 +19,8 @@ template <typename T>
 size_t GetDataSize(std::vector<T> &in)
 {
 	size_t ret = 0;
-	for(auto i: in)
-	{ 
+	for (auto i : in)
+	{
 		ret += i.EncodedSize();
 	}
 	return ret;
@@ -70,7 +70,7 @@ public:
 		size_t cbVector = GetEncodedSize(in);
 
 		offset = 1;
-		EncodeHelper::EncodeSize(cbVector, out.subspan(offset));
+		EncodeSize(cbVector, out.subspan(offset));
 		offset += cbInternal;
 
 		for (uint32_t i = 0; i < in.size(); ++i)
@@ -78,6 +78,41 @@ public:
 			in[i].Encode(out.subspan(offset));
 			offset += cbInternal;
 		}
+	}
+	template <typename T>
+	static void EncodeString(DerType type, std::basic_string<T> in, std::span<std::byte> out)
+	{
+		// If it is empty, encode as Null
+		if (in.size() == 0)
+		{
+			if (out.size() < 2)
+				throw std::overflow_error("Overflow in EncodeString");
+
+			out[0] = static_cast<std::byte>(DerType::Null);
+			out[1] = std::byte{0};
+			return;
+		}
+
+		const size_t charSize = sizeof(T);
+		size_t cbNeeded = (in.size() + 1) * charSize; // Data, plus tag
+		std::byte encodedSize[sizeof(int64_t)];
+
+		EncodeSize(in.size() * charSize, encodedSize);
+
+		// Note - cbDataSize guaranteed to be <= 8, int32_t overflow not possible
+		// cbNeeded += cbData;
+
+		if (cbNeeded > out.size())
+			throw std::length_error("Insufficient Buffer");
+
+		out[0] = static_cast<std::byte>(type);
+		// size_t offset = 1;
+		// memcpy_s(out.data() + offset, out.size() - offset, encodedSize, cbData);
+		// offset += cbData;
+		// memcpy_s(out.data() + offset, out.size() - offset, &in[0], in.size() * charSize);
+
+		// cbData = offset + in.size() * charSize;
+		return;
 	}
 
 	static void EncodeVector(DerType type, const std::span<const std::byte> in, std::span<std::byte> out)
@@ -97,7 +132,7 @@ public:
 		size_t cbNeeded = in.size() + 1; // Data, plus tag
 		std::byte encodedSize[sizeof(int64_t)];
 
-		EncodeHelper::EncodeSize(in.size(), std::span{encodedSize});
+		EncodeSize(in.size(), std::span{encodedSize});
 
 		// Note - cbDataSize guaranteed to be <= 8, int overflow not possible
 		cbNeeded += cbDataSize;

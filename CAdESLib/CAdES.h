@@ -99,7 +99,7 @@ private:
         size_t cbNeeded = 0; // For the set byte
 
         // First, calculate how much is needed for the set of attrValues
-        for (auto attrValue: attrValues)
+        for (auto&& attrValue: attrValues)
         {
             cbNeeded += attrValue.EncodedSize();
         }
@@ -180,7 +180,7 @@ public:
     {
         std::string tmp;
 
-        for (const AttributeTypeAndValue &attr : attrs)
+        for (const auto& attr : attrs)
         {
             std::string szLabel = attr.GetTypeLabel();
             std::string s;
@@ -231,8 +231,6 @@ public:
 
     virtual bool Decode(DerDecode decoder) override
     {
-        
-
         switch (decoder.InitSequenceOrSet())
         {
         case DecodeResult::Failed:
@@ -2955,7 +2953,7 @@ public:
 protected:
     virtual size_t SetDataSize() override
     {
-        return value.SetDataSize();
+        return (cbData = value.SetDataSize());
     }
 
 private:
@@ -3006,7 +3004,6 @@ public:
         if (ret)
         {
             cbData = cbSize;
-            // //cbUsed = cbSize + cbPrefix;
         }
 
         return ret;
@@ -3122,7 +3119,7 @@ public:
 protected:
     virtual size_t SetDataSize() override
     {
-        return cbData = value.SetDataSize();
+        return (cbData = value.SetDataSize());
     }
 
 private:

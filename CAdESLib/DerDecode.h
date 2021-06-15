@@ -18,15 +18,10 @@ public:
     {
     }
 
-    ~DerDecode() = default;// { cbUsed += prefixSize; }
+    ~DerDecode() = default;
     DerDecode(DerDecode &&rhs) = default;
     DerDecode(const DerDecode &) = default;
     DerDecode &operator=(const DerDecode &rhs) = delete;
-    // {
-    //     in = rhs.in;
-    //     remaining = rhs.remaining;
-    //     cbUsed = rhs.cbUsed;
-    // }
     DerDecode &operator=(DerDecode &&rhs) = delete;
 
     // Basic check for any type
@@ -66,7 +61,7 @@ public:
             return DecodeNull(remaining, cbPrefix);
         }
         remaining = in.subspan(cbPrefix);
-        DecodeInner(remaining, value);
+        DecodeInner(value);
         return true;
     }
 
@@ -112,7 +107,7 @@ public:
         if (isNull)
             return DecodeResult::Null;
 
-        if (cbUsed == in.size())
+        if (0 == remaining.size())
             return DecodeResult::EmptySequence;
 
         return DecodeResult::Success;
@@ -214,7 +209,7 @@ public:
     // where we don't know that it was optional until we decode into it
     void Reset()
     {
-        prefixSize = 0;
+        remaining = in;
     }
 
 private:
@@ -307,21 +302,20 @@ private:
         }
     }
 
-private:
-    static void DecodeInner(std::span<const std::byte> in, std::vector<std::byte> &value)
+    void DecodeInner(std::vector<std::byte> &value)
     {
-        value = std::vector<std::byte>{in.begin(), in.end()};
+        value = std::vector<std::byte>{remaining.begin(), remaining.end()};
     }
 
-    static void DecodeInner(std::span<const std::byte> in, std::span<const std::byte> &value)
+    void DecodeInner(std::span<const std::byte> &value)
     {
-        value = in;
+        value = remaining;
     }
 
     template <typename CharType>
-    static void DecodeInner(std::span<const std::byte> in, std::basic_string<CharType> &value)
+    void DecodeInner(std::basic_string<CharType> &value)
     {
-        auto pIn = reinterpret_cast<const CharType *>(in.data());
+        auto pIn = reinterpret_cast<const CharType *>(remaining.data());
         auto stringView = std::basic_string_view<CharType>{pIn, in.size()};
         value = std::basic_string<CharType>{stringView.begin(), stringView.end()};
     }

@@ -71,8 +71,6 @@ void AlgorithmIdentifier::Encode(std::span<std::byte> out)
 
 bool AlgorithmIdentifier::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -123,7 +121,6 @@ bool Attribute::Decode(DerDecode decoder)
     if (!attrType.Decode(decoder))
         return false;
 
-    
     if (decoder.DecodeSet(attrValues))
     {
         return true;
@@ -159,7 +156,6 @@ bool EncapsulatedContentInfo::Decode(DerDecode decoder)
     if (!eContentType.Decode(decoder))
         return false;
 
-    
     if (!eContent.Decode(decoder))
         return false;
 
@@ -181,8 +177,6 @@ void IssuerSerial::Encode(std::span<std::byte> out)
 
 bool IssuerSerial::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -197,11 +191,9 @@ bool IssuerSerial::Decode(DerDecode decoder)
     if (!issuer.Decode(decoder))
         return false;
 
-    
     if (!serial.Decode(decoder))
         return false;
 
-    
     if (!issuerUID.Decode(decoder))
         return false;
 
@@ -225,8 +217,6 @@ void ObjectDigestInfo::Encode(std::span<std::byte> out)
 
 bool ObjectDigestInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -241,15 +231,12 @@ bool ObjectDigestInfo::Decode(DerDecode decoder)
     if (!digestedObjectType.Decode(decoder))
         return false;
 
-    
     if (!otherObjectTypeID.Decode(decoder))
         return false;
 
-    
     if (!digestAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!objectDigest.Decode(decoder))
         return false;
 
@@ -271,8 +258,6 @@ void Holder::Encode(std::span<std::byte> out)
 
 bool Holder::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -286,10 +271,10 @@ bool Holder::Decode(DerDecode decoder)
 
     if (!baseCertificateID.Decode(decoder))
         return false;
-    
+
     if (!entityName.Decode(decoder))
         return false;
-    
+
     if (!objectDigestInfo.Decode(decoder))
         return false;
 
@@ -309,8 +294,6 @@ void OtherHashAlgAndValue::Encode(std::span<std::byte> out)
 
 bool OtherHashAlgAndValue::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -325,7 +308,6 @@ bool OtherHashAlgAndValue::Decode(DerDecode decoder)
     if (!hashAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!hashValue.Decode(decoder))
         return false;
 
@@ -347,8 +329,6 @@ void V2Form::Encode(std::span<std::byte> out)
 
 bool V2Form::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -363,11 +343,9 @@ bool V2Form::Decode(DerDecode decoder)
     if (!issuerName.Decode(decoder))
         return false;
 
-    
     if (!baseCertificateID.Decode(decoder))
         return false;
 
-    
     if (!objectDigestInfo.Decode(decoder))
         return false;
 
@@ -387,8 +365,6 @@ void AttCertValidityPeriod::Encode(std::span<std::byte> out)
 
 bool AttCertValidityPeriod::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -403,7 +379,6 @@ bool AttCertValidityPeriod::Decode(DerDecode decoder)
     if (!notBeforeTime.Decode(decoder))
         return false;
 
-    
     if (!notAfterTime.Decode(decoder))
         return false;
 
@@ -437,8 +412,6 @@ void AttributeCertificateInfo::Encode(std::span<std::byte> out)
 
 bool AttributeCertificateInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -453,39 +426,30 @@ bool AttributeCertificateInfo::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!holder.Decode(decoder))
         return false;
 
-    
     if (!issuer.Decode(decoder))
         return false;
 
-    
     if (!holder.Decode(decoder))
         return false;
 
-    
     if (!signature.Decode(decoder))
         return false;
 
-    
     if (!serialNumber.Decode(decoder))
         return false;
 
-    
     if (!attrCertValidityPeriod.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(attributes))
         return false;
 
-    
     if (!issuerUniqueID.Decode(decoder))
         return false;
 
-    
     if (!extensions.Decode(decoder))
         return false;
 
@@ -507,8 +471,6 @@ void AttributeCertificate::Encode(std::span<std::byte> out)
 
 bool AttributeCertificate::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -523,11 +485,9 @@ bool AttributeCertificate::Decode(DerDecode decoder)
     if (!acinfo.Decode(decoder))
         return false;
 
-    
     if (!signatureAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!signatureValue.Decode(decoder))
         return false;
 
@@ -551,8 +511,6 @@ void CertID::Encode(std::span<std::byte> out)
 
 bool CertID::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -567,15 +525,12 @@ bool CertID::Decode(DerDecode decoder)
     if (!hashAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!issuerNameHash.Decode(decoder))
         return false;
 
-    
     if (!issuerKeyHash.Decode(decoder))
         return false;
 
-    
     if (!serialNumber.Decode(decoder))
         return false;
 
@@ -595,8 +550,6 @@ void RevokedInfo::Encode(std::span<std::byte> out)
 
 bool RevokedInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -611,7 +564,6 @@ bool RevokedInfo::Decode(DerDecode decoder)
     if (!revocationTime.Decode(decoder))
         return false;
 
-    
     if (!revocationReason.Decode(decoder))
         return false;
 
@@ -637,8 +589,6 @@ void SingleResponse::Encode(std::span<std::byte> out)
 
 bool SingleResponse::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -653,19 +603,15 @@ bool SingleResponse::Decode(DerDecode decoder)
     if (!certID.Decode(decoder))
         return false;
 
-    
     if (!certStatus.Decode(decoder))
         return false;
 
-    
     if (!thisUpdate.Decode(decoder))
         return false;
 
-    
     if (!nextUpdate.Decode(decoder))
         return false;
 
-    
     if (!singleExtensions.Decode(decoder))
         return false;
 
@@ -687,8 +633,6 @@ void PKIStatusInfo::Encode(std::span<std::byte> out)
 
 bool PKIStatusInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -703,11 +647,9 @@ bool PKIStatusInfo::Decode(DerDecode decoder)
     if (!status.Decode(decoder))
         return false;
 
-    
     if (!statusString.Decode(decoder))
         return false;
 
-    
     if (!failInfo.Decode(decoder))
         return false;
 
@@ -727,8 +669,6 @@ void ContentInfo::Encode(std::span<std::byte> out)
 
 bool ContentInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -743,7 +683,6 @@ bool ContentInfo::Decode(DerDecode decoder)
     if (!contentType.Decode(decoder))
         return false;
 
-    
     if (!content.Decode(decoder))
         return false;
 
@@ -765,8 +704,6 @@ void CrlIdentifier::Encode(std::span<std::byte> out)
 
 bool CrlIdentifier::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -781,11 +718,9 @@ bool CrlIdentifier::Decode(DerDecode decoder)
     if (!crlissuer.Decode(decoder))
         return false;
 
-    
     if (!crlIssuedTime.Decode(decoder))
         return false;
 
-    
     if (!crlNumber.Decode(decoder))
         return false;
 
@@ -805,8 +740,6 @@ void CrlValidatedID::Encode(std::span<std::byte> out)
 
 bool CrlValidatedID::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -821,7 +754,6 @@ bool CrlValidatedID::Decode(DerDecode decoder)
     if (!crlHash.Decode(decoder))
         return false;
 
-    
     if (!crlIdentifier.Decode(decoder))
         return false;
 
@@ -841,8 +773,6 @@ void MessageImprint::Encode(std::span<std::byte> out)
 
 bool MessageImprint::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -857,7 +787,6 @@ bool MessageImprint::Decode(DerDecode decoder)
     if (!hashAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!hashedMessage.Decode(decoder))
         return false;
 
@@ -877,8 +806,6 @@ void UserNotice::Encode(std::span<std::byte> out)
 
 bool UserNotice::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -893,7 +820,6 @@ bool UserNotice::Decode(DerDecode decoder)
     if (!noticeRef.Decode(decoder))
         return false;
 
-    
     if (!explicitText.Decode(decoder))
         return false;
 
@@ -913,8 +839,6 @@ void NoticeReference::Encode(std::span<std::byte> out)
 
 bool NoticeReference::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -929,7 +853,6 @@ bool NoticeReference::Decode(DerDecode decoder)
     if (!organization.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(noticeNumbers))
         return false;
 
@@ -949,8 +872,6 @@ void OcspIdentifier::Encode(std::span<std::byte> out)
 
 bool OcspIdentifier::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -965,7 +886,6 @@ bool OcspIdentifier::Decode(DerDecode decoder)
     if (!ocspResponderID.Decode(decoder))
         return false;
 
-    
     if (!producedAt.Decode(decoder))
         return false;
 
@@ -987,8 +907,6 @@ void CrlOcspRef::Encode(std::span<std::byte> out)
 
 bool CrlOcspRef::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1003,11 +921,9 @@ bool CrlOcspRef::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(crlids))
         return false;
 
-    
     if (!ocspids.Decode(decoder))
         return false;
 
-    
     if (!otherRev.Decode(decoder))
         return false;
 
@@ -1027,8 +943,6 @@ void OtherRevRefs::Encode(std::span<std::byte> out)
 
 bool OtherRevRefs::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1043,7 +957,6 @@ bool OtherRevRefs::Decode(DerDecode decoder)
     if (!otherRevRefType.Decode(decoder))
         return false;
 
-    
     if (!otherRevRefs.Decode(decoder))
         return false;
 
@@ -1070,8 +983,6 @@ void RevocationValues::Encode(std::span<std::byte> out)
 
 bool RevocationValues::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1086,11 +997,9 @@ bool RevocationValues::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(crlVals))
         return false;
 
-    
     if (!decoder.DecodeSet(ocspVals))
         return false;
 
-    
     if (!otherRevVals.Decode(decoder))
         return false;
 
@@ -1110,8 +1019,6 @@ void OtherRevVals::Encode(std::span<std::byte> out)
 
 bool OtherRevVals::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1126,7 +1033,6 @@ bool OtherRevVals::Decode(DerDecode decoder)
     if (!otherRevValType.Decode(decoder))
         return false;
 
-    
     if (!otherRevVals.Decode(decoder))
         return false;
 
@@ -1150,8 +1056,6 @@ void BasicOCSPResponse::Encode(std::span<std::byte> out)
 
 bool BasicOCSPResponse::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1166,15 +1070,12 @@ bool BasicOCSPResponse::Decode(DerDecode decoder)
     if (!tbsResponseData.Decode(decoder))
         return false;
 
-    
     if (!signatureAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!signature.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(certs))
         return false;
 
@@ -1200,8 +1101,6 @@ void ResponseData::Encode(std::span<std::byte> out)
 
 bool ResponseData::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1216,19 +1115,15 @@ bool ResponseData::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!responderID.Decode(decoder))
         return false;
 
-    
     if (!producedAt.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(responses))
         return false;
 
-    
     if (!extensions.Decode(decoder))
         return false;
 
@@ -1248,8 +1143,6 @@ void SigningCertificateV2::Encode(std::span<std::byte> out)
 
 bool SigningCertificateV2::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1264,7 +1157,6 @@ bool SigningCertificateV2::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(certs))
         return false;
 
-    
     if (!decoder.DecodeSet(policies))
         return false;
 
@@ -1284,8 +1176,6 @@ void SubjectPublicKeyInfo::Encode(std::span<std::byte> out)
 
 bool SubjectPublicKeyInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1300,7 +1190,6 @@ bool SubjectPublicKeyInfo::Decode(DerDecode decoder)
     if (!algorithm.Decode(decoder))
         return false;
 
-    
     if (!subjectPublicKey.Decode(decoder))
         return false;
 
@@ -1322,8 +1211,6 @@ void Certificate::Encode(std::span<std::byte> out)
 
 bool Certificate::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1338,11 +1225,9 @@ bool Certificate::Decode(DerDecode decoder)
     if (!tbsCertificate.Decode(decoder))
         return false;
 
-    
     if (!signatureAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!signatureValue.Decode(decoder))
         return false;
 
@@ -1378,8 +1263,6 @@ void TBSCertificate::Encode(std::span<std::byte> out)
 
 bool TBSCertificate::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1399,54 +1282,41 @@ bool TBSCertificate::Decode(DerDecode decoder)
             return false;
     }
 
-    
     if (!serialNumber.Decode(decoder))
         return false;
 
-    
     if (!signature.Decode(decoder))
         return false;
 
-    
     if (!issuer.Decode(decoder))
         return false;
 
-    
     if (!validity.Decode(decoder))
         return false;
 
-    
     if (!subject.Decode(decoder))
         return false;
 
-    
     if (!subjectPublicKeyInfo.Decode(decoder))
         return false;
 
-    
     // The following may not be present, and may need to be skipped
     if (decoder.RemainingData()[0] == std::byte{0xA1})
     {
         if (!issuerUniqueID.Decode(decoder))
             return false;
-
-        
     }
 
     if (decoder.RemainingData()[0] == std::byte{0xA2})
     {
         if (!subjectUniqueID.Decode(decoder))
             return false;
-
-        
     }
 
     if (decoder.RemainingData()[0] == std::byte{0xA3})
     {
         if (!extensions.Decode(decoder))
             return false;
-
-        
     }
 
     return true;
@@ -1467,8 +1337,6 @@ void CertificateList::Encode(std::span<std::byte> out)
 
 bool CertificateList::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1483,11 +1351,9 @@ bool CertificateList::Decode(DerDecode decoder)
     if (!tbsCertList.Decode(decoder))
         return false;
 
-    
     if (!signatureAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!signatureValue.Decode(decoder))
         return false;
 
@@ -1517,8 +1383,6 @@ void TBSCertList::Encode(std::span<std::byte> out)
 
 bool TBSCertList::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1535,35 +1399,27 @@ bool TBSCertList::Decode(DerDecode decoder)
     {
         if (!version.Decode(decoder))
             return false;
-
-        
     }
 
     if (!signature.Decode(decoder))
         return false;
 
-    
     if (!issuer.Decode(decoder))
         return false;
 
-    
     if (!thisUpdate.Decode(decoder))
         return false;
-
-    
 
     // This is also optional, and may not be present
     if (nextUpdate.Decode(decoder))
     {
-        
     }
 
     // These are optional, and may not be present
     if (revokedCertificates.Decode(decoder))
-        
 
-    if (decoder.IsAllUsed()) // extensions are optional
-        return true;
+        if (decoder.IsAllUsed()) // extensions are optional
+            return true;
 
     if (!crlExtensions.Decode(decoder))
         return false;
@@ -1584,8 +1440,6 @@ void PolicyInformation::Encode(std::span<std::byte> out)
 
 bool PolicyInformation::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1600,7 +1454,6 @@ bool PolicyInformation::Decode(DerDecode decoder)
     if (!policyIdentifier.Decode(decoder))
         return false;
 
-    
     if (decoder.IsAllUsed()) // policy qualifiers are optional
         return true;
 
@@ -1630,8 +1483,6 @@ void ESSCertID::Encode(std::span<std::byte> out)
 
 bool ESSCertID::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1646,7 +1497,6 @@ bool ESSCertID::Decode(DerDecode decoder)
     if (!certHash.Decode(decoder))
         return false;
 
-    
     if (!issuerSerial.Decode(decoder))
         return false;
 
@@ -1666,8 +1516,6 @@ void SigningCertificate::Encode(std::span<std::byte> out)
 
 bool SigningCertificate::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1682,7 +1530,6 @@ bool SigningCertificate::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(certs))
         return false;
 
-    
     if (!decoder.DecodeSet(policies))
         return false;
 
@@ -1704,8 +1551,6 @@ void ESSCertIDv2::Encode(std::span<std::byte> out)
 
 bool ESSCertIDv2::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1720,11 +1565,9 @@ bool ESSCertIDv2::Decode(DerDecode decoder)
     if (!hashAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!certHash.Decode(decoder))
         return false;
 
-    
     if (!issuerSerial.Decode(decoder))
         return false;
 
@@ -1744,8 +1587,6 @@ void PolicyQualifierInfo::Encode(std::span<std::byte> out)
 
 bool PolicyQualifierInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1760,7 +1601,6 @@ bool PolicyQualifierInfo::Decode(DerDecode decoder)
     if (!policyQualifierId.Decode(decoder))
         return false;
 
-    
     if (!qualifier.Decode(decoder))
         return false;
 
@@ -1780,8 +1620,6 @@ void IssuerAndSerialNumber::Encode(std::span<std::byte> out)
 
 bool IssuerAndSerialNumber::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1795,8 +1633,6 @@ bool IssuerAndSerialNumber::Decode(DerDecode decoder)
 
     if (!issuer.Decode(decoder))
         return false;
-
-    
 
     if (!serialNumber.Decode(decoder))
         return false;
@@ -1822,8 +1658,6 @@ void Extension::Encode(std::span<std::byte> out)
 
 bool Extension::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1838,7 +1672,6 @@ bool Extension::Decode(DerDecode decoder)
     if (!extnID.Decode(decoder))
         return false;
 
-    
     // This might not be present
     if (!critical.Decode(decoder))
     {
@@ -1846,7 +1679,6 @@ bool Extension::Decode(DerDecode decoder)
         critical.SetValue(false);
     }
 
-    
     if (!extnValue.Decode(decoder))
         return false;
 
@@ -1864,8 +1696,6 @@ void CertStatus::Encode(std::span<std::byte> out)
 
 bool CertStatus::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1935,8 +1765,6 @@ void SignerInfo::Encode(std::span<std::byte> out)
 
 bool SignerInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -1951,27 +1779,21 @@ bool SignerInfo::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!sid.Decode(decoder))
         return false;
 
-    
     if (!digestAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(signedAttrs))
         return false;
 
-    
     if (!signatureAlgorithm.Decode(decoder))
         return false;
 
-    
     if (!signature.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(unsignedAttrs))
         return false;
 
@@ -1991,8 +1813,6 @@ void OtherCertificateFormat::Encode(std::span<std::byte> out)
 
 bool OtherCertificateFormat::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2007,7 +1827,6 @@ bool OtherCertificateFormat::Decode(DerDecode decoder)
     if (!otherCertFormat.Decode(decoder))
         return false;
 
-    
     if (!otherCert.Decode(decoder))
         return false;
 
@@ -2027,8 +1846,6 @@ void EDIPartyName::Encode(std::span<std::byte> out)
 
 bool EDIPartyName::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2043,7 +1860,6 @@ bool EDIPartyName::Decode(DerDecode decoder)
     if (!nameAssigner.Decode(decoder))
         return false;
 
-    
     if (!partyName.Decode(decoder))
         return false;
 
@@ -2065,8 +1881,6 @@ void RevocationEntry::Encode(std::span<std::byte> out)
 
 bool RevocationEntry::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2091,11 +1905,8 @@ bool RevocationEntry::Decode(DerDecode decoder)
     if (!userCertificate.Decode(decoder))
         return false;
 
-    
     if (!revocationDate.Decode(decoder))
         return false;
-
-    
 
     if (decoder.IsAllUsed()) // crlEntryExtensions are optional
         return true;
@@ -2119,8 +1930,6 @@ void OtherRevocationInfoFormat::Encode(std::span<std::byte> out)
 
 bool OtherRevocationInfoFormat::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2135,7 +1944,6 @@ bool OtherRevocationInfoFormat::Decode(DerDecode decoder)
     if (!otherRevInfoFormat.Decode(decoder))
         return false;
 
-    
     if (!otherRevInfo.Decode(decoder))
         return false;
 
@@ -2161,8 +1969,6 @@ void SignedData::Encode(std::span<std::byte> out)
 
 bool SignedData::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2177,23 +1983,18 @@ bool SignedData::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(digestAlgorithms))
         return false;
 
-    
     if (!encapContentInfo.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(certificates))
         return false;
 
-    
     if (!decoder.DecodeSet(crls))
         return false;
 
-    
     if (!decoder.DecodeSet(signerInfos))
         return false;
 
@@ -2213,8 +2014,6 @@ void SigPolicyQualifierInfo::Encode(std::span<std::byte> out)
 
 bool SigPolicyQualifierInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2229,7 +2028,6 @@ bool SigPolicyQualifierInfo::Decode(DerDecode decoder)
     if (!sigPolicyQualifierId.Decode(decoder))
         return false;
 
-    
     if (!sigQualifier.Decode(decoder))
         return false;
 
@@ -2251,8 +2049,6 @@ void SignaturePolicyId::Encode(std::span<std::byte> out)
 
 bool SignaturePolicyId::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2267,11 +2063,9 @@ bool SignaturePolicyId::Decode(DerDecode decoder)
     if (!sigPolicyId.Decode(decoder))
         return false;
 
-    
     if (!sigPolicyHash.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(sigPolicyQualifiers))
         return false;
 
@@ -2291,8 +2085,6 @@ void SPUserNotice::Encode(std::span<std::byte> out)
 
 bool SPUserNotice::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2307,7 +2099,6 @@ bool SPUserNotice::Decode(DerDecode decoder)
     if (!noticeRef.Decode(decoder))
         return false;
 
-    
     if (!explicitText.Decode(decoder))
         return false;
 
@@ -2327,8 +2118,6 @@ void CommitmentTypeQualifier::Encode(std::span<std::byte> out)
 
 bool CommitmentTypeQualifier::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2343,7 +2132,6 @@ bool CommitmentTypeQualifier::Decode(DerDecode decoder)
     if (!commitmentTypeIdentifier.Decode(decoder))
         return false;
 
-    
     if (!qualifier.Decode(decoder))
         return false;
 
@@ -2363,8 +2151,6 @@ void CommitmentTypeIndication::Encode(std::span<std::byte> out)
 
 bool CommitmentTypeIndication::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2379,7 +2165,6 @@ bool CommitmentTypeIndication::Decode(DerDecode decoder)
     if (!commitmentTypeId.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(commitmentTypeQualifier))
         return false;
 
@@ -2401,8 +2186,6 @@ void SignerLocation::Encode(std::span<std::byte> out)
 
 bool SignerLocation::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2417,11 +2200,9 @@ bool SignerLocation::Decode(DerDecode decoder)
     if (!countryName.Decode(decoder))
         return false;
 
-    
     if (!localityName.Decode(decoder))
         return false;
 
-    
     if (!decoder.DecodeSet(postalAdddress))
         return false;
 
@@ -2441,8 +2222,6 @@ void SignerAttribute::Encode(std::span<std::byte> out)
 
 bool SignerAttribute::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2457,7 +2236,6 @@ bool SignerAttribute::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(claimedAttributes))
         return false;
 
-    
     if (!certifiedAttributes.Decode(decoder))
         return false;
 
@@ -2485,8 +2263,6 @@ void TimeStampReq::Encode(std::span<std::byte> out)
 
 bool TimeStampReq::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2501,23 +2277,18 @@ bool TimeStampReq::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!messageImprint.Decode(decoder))
         return false;
 
-    
     if (!reqPolicy.Decode(decoder))
         return false;
 
-    
     if (!nonce.Decode(decoder))
         return false;
 
-    
     if (!certReq.Decode(decoder))
         return false;
 
-    
     if (!extensions.Decode(decoder))
         return false;
 
@@ -2537,8 +2308,6 @@ void TimeStampResp::Encode(std::span<std::byte> out)
 
 bool TimeStampResp::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2553,7 +2322,6 @@ bool TimeStampResp::Decode(DerDecode decoder)
     if (!status.Decode(decoder))
         return false;
 
-    
     if (!timeStampToken.Decode(decoder))
         return false;
 
@@ -2589,8 +2357,6 @@ void TSTInfo::Encode(std::span<std::byte> out)
 
 bool TSTInfo::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2605,39 +2371,30 @@ bool TSTInfo::Decode(DerDecode decoder)
     if (!version.Decode(decoder))
         return false;
 
-    
     if (!policy.Decode(decoder))
         return false;
 
-    
     if (!messageImprint.Decode(decoder))
         return false;
 
-    
     if (!serialNumber.Decode(decoder))
         return false;
 
-    
     if (!genTime.Decode(decoder))
         return false;
 
-    
     if (!accuracy.Decode(decoder))
         return false;
 
-    
     if (!ordering.Decode(decoder))
         return false;
 
-    
     if (!nonce.Decode(decoder))
         return false;
 
-    
     if (!tsa.Decode(decoder))
         return false;
 
-    
     if (!extensions.Decode(decoder))
         return false;
 
@@ -2657,8 +2414,6 @@ void OtherCertId::Encode(std::span<std::byte> out)
 
 bool OtherCertId::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2673,7 +2428,6 @@ bool OtherCertId::Decode(DerDecode decoder)
     if (!otherCertHash.Decode(decoder))
         return false;
 
-    
     if (!issuerSerial.Decode(decoder))
         return false;
 
@@ -2693,8 +2447,6 @@ void OcspResponsesID::Encode(std::span<std::byte> out)
 
 bool OcspResponsesID::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2709,7 +2461,6 @@ bool OcspResponsesID::Decode(DerDecode decoder)
     if (!ocspIdentifier.Decode(decoder))
         return false;
 
-    
     if (!ocspRepHash.Decode(decoder))
         return false;
 
@@ -2729,8 +2480,6 @@ void Validity::Encode(std::span<std::byte> out)
 
 bool Validity::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2745,7 +2494,6 @@ bool Validity::Decode(DerDecode decoder)
     if (!notBefore.Decode(decoder))
         return false;
 
-    
     if (!notAfter.Decode(decoder))
         return false;
 
@@ -2765,8 +2513,6 @@ void AttributeTypeAndValue::Encode(std::span<std::byte> out)
 
 bool AttributeTypeAndValue::Decode(DerDecode decoder)
 {
-    
-
     switch (decoder.InitSequenceOrSet())
     {
     case DecodeResult::Failed:
@@ -2781,7 +2527,6 @@ bool AttributeTypeAndValue::Decode(DerDecode decoder)
     if (!type.Decode(decoder))
         return false;
 
-    
     if (!value.Decode(decoder))
         return false;
 
