@@ -275,7 +275,7 @@ bool ObjectIdentifier::ToString(std::wstring &out) const
 
 	for (; pos < value.size(); pos += cbRead)
 	{
-		uint32_t node = DecodeLong(value.subspan(pos), cbRead);
+		uint32_t node = DecodeLong(std::span{value}.subspan(pos), cbRead);
 		tmp += L"." + std::to_wstring(node);
 	}
 
@@ -469,16 +469,16 @@ void Boolean::Encode(std::span<std::byte> out)
 	cbData = 3;
 }
 
-bool Boolean::Decode(DerDecode decoder)
+bool Boolean::Decode(DerDecode& decoder)
 {
-	size_t cbPrefix = 0;
-	if (!decoder.CheckDecode(decoder.RemainingData(), DerType::Boolean, cbPrefix))
+	size_t size = 0;
+	if (!decoder.CheckDecode(decoder.RemainingData(), DerType::Boolean, size))
 	{
 		return decoder.DecodeNull();
 	}
 
 	// Now check specifics for this type
-	if (cbPrefix + size != 3)
+	if (size != 2)
 		throw std::exception(); // Incorrect decode
 
 	b = decoder.RemainingData()[2] != std::byte{0} ? std::byte{0xff} : std::byte{0};
@@ -543,7 +543,7 @@ void Time::Encode(std::span<std::byte> out)
 	}
 }
 
-bool Time::Decode(DerDecode decoder)
+bool Time::Decode(DerDecode& decoder)
 {
 	// Sort out which of the two we have
 	if (decoder.RemainingData().size() < 2)
@@ -678,20 +678,16 @@ void BMPString::Encode(std::span<std::byte> out)
 
 // Shouldn't need this for this class, but everything needs it implemented
 
-size_t AnyType::SetDataSize()
+size_t AnyType::UpdateAndGetDataSize()
 {
 	if (encodedValue.size() <= 2)
 		cbData = 0;
 
-	size_t tmp = 0;
-	size_t cbRead = 0;
-
 	DerDecode decoder{std::span{encodedValue}};
 
-	if (!decoder.DecodeSize(std::span{encodedValue}.subspan(1), tmp, cbRead))
+	if (!decoder.DecodeSize(cbData))
 		throw std::exception(); // Error in DecodeSize
 
-	cbData = static_cast<size_t>(tmp);
 	return cbData;
 }
 
@@ -717,10 +713,9 @@ bool AnyType::ToString(std::string &out) const
 		size_t cbRead = 0;
 		DerDecode decoder{std::span{encodedValue}};
 
-		if (decoder.DecodeSize(std::span{encodedValue}.subspan(1), valueSize, cbRead))
+		if (decoder.DecodeSize(valueSize))
 		{
 			const char *sz = reinterpret_cast<const char *>(encodedValue.data() + 1 + cbRead);
-			out.reserve(valueSize);
 			out.append(sz, valueSize);
 			return true;
 		}
@@ -757,7 +752,7 @@ bool AnyType::ToString(std::wstring &out) const
 		size_t cbRead = 0;
 		DerDecode decoder{std::span{encodedValue}};
 
-		if (decoder.DecodeSize(valueSize, cbRead))
+		if (decoder.DecodeSize(valueSize))
 		{
 			// This could be a non-null terminated character string
 			const char *sz = reinterpret_cast<const char *>(encodedValue.data() + 1 + cbRead);

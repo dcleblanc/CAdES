@@ -33,9 +33,12 @@ void Accuracy::Encode(std::span<std::byte> out)
     micros.Encode(eh.DataPtr(out));
 }
 
-bool Accuracy::Decode(DerDecode decoder)
+bool Accuracy::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -46,13 +49,13 @@ bool Accuracy::Decode(DerDecode decoder)
         break;
     }
 
-    if (!seconds.Decode(decoder))
+    if (!seconds.Decode(innerDecoder))
         return false;
 
-    if (!millis.Decode(decoder))
+    if (!millis.Decode(innerDecoder))
         return false;
 
-    if (!micros.Decode(decoder))
+    if (!micros.Decode(innerDecoder))
         return false;
 
     return true;
@@ -69,9 +72,12 @@ void AlgorithmIdentifier::Encode(std::span<std::byte> out)
     parameters.Encode(eh.DataPtr(out));
 }
 
-bool AlgorithmIdentifier::Decode(DerDecode decoder)
+bool AlgorithmIdentifier::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -82,13 +88,13 @@ bool AlgorithmIdentifier::Decode(DerDecode decoder)
         break;
     }
 
-    if (!algorithm.Decode(decoder))
+    if (!algorithm.Decode(innerDecoder))
         return false;
 
-    if (decoder.IsAllUsed())
+    if (innerDecoder.Empty())
         return true;
 
-    if (!parameters.Decode(decoder))
+    if (!parameters.Decode(innerDecoder))
         return false;
 
     return true;
@@ -105,9 +111,12 @@ void Attribute::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, attrValues, eh.DataPtr(out));
 }
 
-bool Attribute::Decode(DerDecode decoder)
+bool Attribute::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -118,7 +127,7 @@ bool Attribute::Decode(DerDecode decoder)
         break;
     }
 
-    if (!attrType.Decode(decoder))
+    if (!attrType.Decode(innerDecoder))
         return false;
 
     if (decoder.DecodeSet(attrValues))
@@ -140,9 +149,12 @@ void EncapsulatedContentInfo::Encode(std::span<std::byte> out)
     eContent.Encode(eh.DataPtr(out));
 }
 
-bool EncapsulatedContentInfo::Decode(DerDecode decoder)
+bool EncapsulatedContentInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -153,10 +165,10 @@ bool EncapsulatedContentInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!eContentType.Decode(decoder))
+    if (!eContentType.Decode(innerDecoder))
         return false;
 
-    if (!eContent.Decode(decoder))
+    if (!eContent.Decode(innerDecoder))
         return false;
 
     return true;
@@ -175,9 +187,12 @@ void IssuerSerial::Encode(std::span<std::byte> out)
     issuerUID.Encode(eh.DataPtr(out));
 }
 
-bool IssuerSerial::Decode(DerDecode decoder)
+bool IssuerSerial::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -188,13 +203,13 @@ bool IssuerSerial::Decode(DerDecode decoder)
         break;
     }
 
-    if (!issuer.Decode(decoder))
+    if (!issuer.Decode(innerDecoder))
         return false;
 
-    if (!serial.Decode(decoder))
+    if (!serial.Decode(innerDecoder))
         return false;
 
-    if (!issuerUID.Decode(decoder))
+    if (!issuerUID.Decode(innerDecoder))
         return false;
 
     return true;
@@ -215,9 +230,12 @@ void ObjectDigestInfo::Encode(std::span<std::byte> out)
     objectDigest.Encode(eh.DataPtr(out));
 }
 
-bool ObjectDigestInfo::Decode(DerDecode decoder)
+bool ObjectDigestInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -228,16 +246,16 @@ bool ObjectDigestInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!digestedObjectType.Decode(decoder))
+    if (!digestedObjectType.Decode(innerDecoder))
         return false;
 
-    if (!otherObjectTypeID.Decode(decoder))
+    if (!otherObjectTypeID.Decode(innerDecoder))
         return false;
 
-    if (!digestAlgorithm.Decode(decoder))
+    if (!digestAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!objectDigest.Decode(decoder))
+    if (!objectDigest.Decode(innerDecoder))
         return false;
 
     return true;
@@ -256,9 +274,12 @@ void Holder::Encode(std::span<std::byte> out)
     objectDigestInfo.Encode(eh.DataPtr(out));
 }
 
-bool Holder::Decode(DerDecode decoder)
+bool Holder::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -269,13 +290,13 @@ bool Holder::Decode(DerDecode decoder)
         break;
     }
 
-    if (!baseCertificateID.Decode(decoder))
+    if (!baseCertificateID.Decode(innerDecoder))
         return false;
 
-    if (!entityName.Decode(decoder))
+    if (!entityName.Decode(innerDecoder))
         return false;
 
-    if (!objectDigestInfo.Decode(decoder))
+    if (!objectDigestInfo.Decode(innerDecoder))
         return false;
 
     return true;
@@ -292,9 +313,12 @@ void OtherHashAlgAndValue::Encode(std::span<std::byte> out)
     hashValue.Encode(eh.DataPtr(out));
 }
 
-bool OtherHashAlgAndValue::Decode(DerDecode decoder)
+bool OtherHashAlgAndValue::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -305,10 +329,10 @@ bool OtherHashAlgAndValue::Decode(DerDecode decoder)
         break;
     }
 
-    if (!hashAlgorithm.Decode(decoder))
+    if (!hashAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!hashValue.Decode(decoder))
+    if (!hashValue.Decode(innerDecoder))
         return false;
 
     return true;
@@ -327,9 +351,12 @@ void V2Form::Encode(std::span<std::byte> out)
     objectDigestInfo.Encode(eh.DataPtr(out));
 }
 
-bool V2Form::Decode(DerDecode decoder)
+bool V2Form::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -340,13 +367,13 @@ bool V2Form::Decode(DerDecode decoder)
         break;
     }
 
-    if (!issuerName.Decode(decoder))
+    if (!issuerName.Decode(innerDecoder))
         return false;
 
-    if (!baseCertificateID.Decode(decoder))
+    if (!baseCertificateID.Decode(innerDecoder))
         return false;
 
-    if (!objectDigestInfo.Decode(decoder))
+    if (!objectDigestInfo.Decode(innerDecoder))
         return false;
 
     return true;
@@ -363,9 +390,12 @@ void AttCertValidityPeriod::Encode(std::span<std::byte> out)
     notAfterTime.Encode(eh.DataPtr(out));
 }
 
-bool AttCertValidityPeriod::Decode(DerDecode decoder)
+bool AttCertValidityPeriod::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -376,10 +406,10 @@ bool AttCertValidityPeriod::Decode(DerDecode decoder)
         break;
     }
 
-    if (!notBeforeTime.Decode(decoder))
+    if (!notBeforeTime.Decode(innerDecoder))
         return false;
 
-    if (!notAfterTime.Decode(decoder))
+    if (!notAfterTime.Decode(innerDecoder))
         return false;
 
     return true;
@@ -410,9 +440,12 @@ void AttributeCertificateInfo::Encode(std::span<std::byte> out)
     extensions.Encode(eh.DataPtr(out));
 }
 
-bool AttributeCertificateInfo::Decode(DerDecode decoder)
+bool AttributeCertificateInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -423,34 +456,34 @@ bool AttributeCertificateInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
-    if (!holder.Decode(decoder))
+    if (!holder.Decode(innerDecoder))
         return false;
 
-    if (!issuer.Decode(decoder))
+    if (!issuer.Decode(innerDecoder))
         return false;
 
-    if (!holder.Decode(decoder))
+    if (!holder.Decode(innerDecoder))
         return false;
 
-    if (!signature.Decode(decoder))
+    if (!signature.Decode(innerDecoder))
         return false;
 
-    if (!serialNumber.Decode(decoder))
+    if (!serialNumber.Decode(innerDecoder))
         return false;
 
-    if (!attrCertValidityPeriod.Decode(decoder))
+    if (!attrCertValidityPeriod.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(attributes))
         return false;
 
-    if (!issuerUniqueID.Decode(decoder))
+    if (!issuerUniqueID.Decode(innerDecoder))
         return false;
 
-    if (!extensions.Decode(decoder))
+    if (!extensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -469,9 +502,12 @@ void AttributeCertificate::Encode(std::span<std::byte> out)
     signatureValue.Encode(eh.DataPtr(out));
 }
 
-bool AttributeCertificate::Decode(DerDecode decoder)
+bool AttributeCertificate::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -482,13 +518,13 @@ bool AttributeCertificate::Decode(DerDecode decoder)
         break;
     }
 
-    if (!acinfo.Decode(decoder))
+    if (!acinfo.Decode(innerDecoder))
         return false;
 
-    if (!signatureAlgorithm.Decode(decoder))
+    if (!signatureAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!signatureValue.Decode(decoder))
+    if (!signatureValue.Decode(innerDecoder))
         return false;
 
     return true;
@@ -509,9 +545,12 @@ void CertID::Encode(std::span<std::byte> out)
     serialNumber.Encode(eh.DataPtr(out));
 }
 
-bool CertID::Decode(DerDecode decoder)
+bool CertID::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -522,16 +561,16 @@ bool CertID::Decode(DerDecode decoder)
         break;
     }
 
-    if (!hashAlgorithm.Decode(decoder))
+    if (!hashAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!issuerNameHash.Decode(decoder))
+    if (!issuerNameHash.Decode(innerDecoder))
         return false;
 
-    if (!issuerKeyHash.Decode(decoder))
+    if (!issuerKeyHash.Decode(innerDecoder))
         return false;
 
-    if (!serialNumber.Decode(decoder))
+    if (!serialNumber.Decode(innerDecoder))
         return false;
 
     return true;
@@ -548,9 +587,12 @@ void RevokedInfo::Encode(std::span<std::byte> out)
     revocationReason.Encode(eh.DataPtr(out));
 }
 
-bool RevokedInfo::Decode(DerDecode decoder)
+bool RevokedInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -561,10 +603,10 @@ bool RevokedInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!revocationTime.Decode(decoder))
+    if (!revocationTime.Decode(innerDecoder))
         return false;
 
-    if (!revocationReason.Decode(decoder))
+    if (!revocationReason.Decode(innerDecoder))
         return false;
 
     return true;
@@ -587,9 +629,12 @@ void SingleResponse::Encode(std::span<std::byte> out)
     singleExtensions.Encode(eh.DataPtr(out));
 }
 
-bool SingleResponse::Decode(DerDecode decoder)
+bool SingleResponse::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -600,19 +645,19 @@ bool SingleResponse::Decode(DerDecode decoder)
         break;
     }
 
-    if (!certID.Decode(decoder))
+    if (!certID.Decode(innerDecoder))
         return false;
 
-    if (!certStatus.Decode(decoder))
+    if (!certStatus.Decode(innerDecoder))
         return false;
 
-    if (!thisUpdate.Decode(decoder))
+    if (!thisUpdate.Decode(innerDecoder))
         return false;
 
-    if (!nextUpdate.Decode(decoder))
+    if (!nextUpdate.Decode(innerDecoder))
         return false;
 
-    if (!singleExtensions.Decode(decoder))
+    if (!singleExtensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -631,9 +676,12 @@ void PKIStatusInfo::Encode(std::span<std::byte> out)
     failInfo.Encode(eh.DataPtr(out));
 }
 
-bool PKIStatusInfo::Decode(DerDecode decoder)
+bool PKIStatusInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -644,13 +692,13 @@ bool PKIStatusInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!status.Decode(decoder))
+    if (!status.Decode(innerDecoder))
         return false;
 
-    if (!statusString.Decode(decoder))
+    if (!statusString.Decode(innerDecoder))
         return false;
 
-    if (!failInfo.Decode(decoder))
+    if (!failInfo.Decode(innerDecoder))
         return false;
 
     return true;
@@ -667,9 +715,12 @@ void ContentInfo::Encode(std::span<std::byte> out)
     content.Encode(eh.DataPtr(out));
 }
 
-bool ContentInfo::Decode(DerDecode decoder)
+bool ContentInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -680,10 +731,10 @@ bool ContentInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!contentType.Decode(decoder))
+    if (!contentType.Decode(innerDecoder))
         return false;
 
-    if (!content.Decode(decoder))
+    if (!content.Decode(innerDecoder))
         return false;
 
     return true;
@@ -702,9 +753,12 @@ void CrlIdentifier::Encode(std::span<std::byte> out)
     crlNumber.Encode(eh.DataPtr(out));
 }
 
-bool CrlIdentifier::Decode(DerDecode decoder)
+bool CrlIdentifier::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -715,13 +769,13 @@ bool CrlIdentifier::Decode(DerDecode decoder)
         break;
     }
 
-    if (!crlissuer.Decode(decoder))
+    if (!crlissuer.Decode(innerDecoder))
         return false;
 
-    if (!crlIssuedTime.Decode(decoder))
+    if (!crlIssuedTime.Decode(innerDecoder))
         return false;
 
-    if (!crlNumber.Decode(decoder))
+    if (!crlNumber.Decode(innerDecoder))
         return false;
 
     return true;
@@ -738,9 +792,12 @@ void CrlValidatedID::Encode(std::span<std::byte> out)
     crlIdentifier.Encode(eh.DataPtr(out));
 }
 
-bool CrlValidatedID::Decode(DerDecode decoder)
+bool CrlValidatedID::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -751,10 +808,10 @@ bool CrlValidatedID::Decode(DerDecode decoder)
         break;
     }
 
-    if (!crlHash.Decode(decoder))
+    if (!crlHash.Decode(innerDecoder))
         return false;
 
-    if (!crlIdentifier.Decode(decoder))
+    if (!crlIdentifier.Decode(innerDecoder))
         return false;
 
     return true;
@@ -771,9 +828,12 @@ void MessageImprint::Encode(std::span<std::byte> out)
     hashedMessage.Encode(eh.DataPtr(out));
 }
 
-bool MessageImprint::Decode(DerDecode decoder)
+bool MessageImprint::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -784,10 +844,10 @@ bool MessageImprint::Decode(DerDecode decoder)
         break;
     }
 
-    if (!hashAlgorithm.Decode(decoder))
+    if (!hashAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!hashedMessage.Decode(decoder))
+    if (!hashedMessage.Decode(innerDecoder))
         return false;
 
     return true;
@@ -804,9 +864,12 @@ void UserNotice::Encode(std::span<std::byte> out)
     explicitText.Encode(eh.DataPtr(out));
 }
 
-bool UserNotice::Decode(DerDecode decoder)
+bool UserNotice::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -817,10 +880,10 @@ bool UserNotice::Decode(DerDecode decoder)
         break;
     }
 
-    if (!noticeRef.Decode(decoder))
+    if (!noticeRef.Decode(innerDecoder))
         return false;
 
-    if (!explicitText.Decode(decoder))
+    if (!explicitText.Decode(innerDecoder))
         return false;
 
     return true;
@@ -837,9 +900,12 @@ void NoticeReference::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, noticeNumbers, eh.DataPtr(out));
 }
 
-bool NoticeReference::Decode(DerDecode decoder)
+bool NoticeReference::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -850,7 +916,7 @@ bool NoticeReference::Decode(DerDecode decoder)
         break;
     }
 
-    if (!organization.Decode(decoder))
+    if (!organization.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(noticeNumbers))
@@ -870,9 +936,12 @@ void OcspIdentifier::Encode(std::span<std::byte> out)
     producedAt.Encode(eh.DataPtr(out));
 }
 
-bool OcspIdentifier::Decode(DerDecode decoder)
+bool OcspIdentifier::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -883,10 +952,10 @@ bool OcspIdentifier::Decode(DerDecode decoder)
         break;
     }
 
-    if (!ocspResponderID.Decode(decoder))
+    if (!ocspResponderID.Decode(innerDecoder))
         return false;
 
-    if (!producedAt.Decode(decoder))
+    if (!producedAt.Decode(innerDecoder))
         return false;
 
     return true;
@@ -905,9 +974,12 @@ void CrlOcspRef::Encode(std::span<std::byte> out)
     otherRev.Encode(eh.DataPtr(out));
 }
 
-bool CrlOcspRef::Decode(DerDecode decoder)
+bool CrlOcspRef::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -921,10 +993,10 @@ bool CrlOcspRef::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(crlids))
         return false;
 
-    if (!ocspids.Decode(decoder))
+    if (!ocspids.Decode(innerDecoder))
         return false;
 
-    if (!otherRev.Decode(decoder))
+    if (!otherRev.Decode(innerDecoder))
         return false;
 
     return true;
@@ -941,9 +1013,12 @@ void OtherRevRefs::Encode(std::span<std::byte> out)
     otherRevRefs.Encode(eh.DataPtr(out));
 }
 
-bool OtherRevRefs::Decode(DerDecode decoder)
+bool OtherRevRefs::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -954,10 +1029,10 @@ bool OtherRevRefs::Decode(DerDecode decoder)
         break;
     }
 
-    if (!otherRevRefType.Decode(decoder))
+    if (!otherRevRefType.Decode(innerDecoder))
         return false;
 
-    if (!otherRevRefs.Decode(decoder))
+    if (!otherRevRefs.Decode(innerDecoder))
         return false;
 
     return true;
@@ -981,9 +1056,12 @@ void RevocationValues::Encode(std::span<std::byte> out)
     otherRevVals.Encode(eh.DataPtr(out));
 }
 
-bool RevocationValues::Decode(DerDecode decoder)
+bool RevocationValues::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1000,7 +1078,7 @@ bool RevocationValues::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(ocspVals))
         return false;
 
-    if (!otherRevVals.Decode(decoder))
+    if (!otherRevVals.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1017,9 +1095,12 @@ void OtherRevVals::Encode(std::span<std::byte> out)
     otherRevVals.Encode(eh.DataPtr(out));
 }
 
-bool OtherRevVals::Decode(DerDecode decoder)
+bool OtherRevVals::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1030,10 +1111,10 @@ bool OtherRevVals::Decode(DerDecode decoder)
         break;
     }
 
-    if (!otherRevValType.Decode(decoder))
+    if (!otherRevValType.Decode(innerDecoder))
         return false;
 
-    if (!otherRevVals.Decode(decoder))
+    if (!otherRevVals.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1054,9 +1135,12 @@ void BasicOCSPResponse::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certs, eh.DataPtr(out));
 }
 
-bool BasicOCSPResponse::Decode(DerDecode decoder)
+bool BasicOCSPResponse::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1067,13 +1151,13 @@ bool BasicOCSPResponse::Decode(DerDecode decoder)
         break;
     }
 
-    if (!tbsResponseData.Decode(decoder))
+    if (!tbsResponseData.Decode(innerDecoder))
         return false;
 
-    if (!signatureAlgorithm.Decode(decoder))
+    if (!signatureAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!signature.Decode(decoder))
+    if (!signature.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(certs))
@@ -1099,9 +1183,12 @@ void ResponseData::Encode(std::span<std::byte> out)
     extensions.Encode(eh.DataPtr(out));
 }
 
-bool ResponseData::Decode(DerDecode decoder)
+bool ResponseData::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1112,19 +1199,19 @@ bool ResponseData::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
-    if (!responderID.Decode(decoder))
+    if (!responderID.Decode(innerDecoder))
         return false;
 
-    if (!producedAt.Decode(decoder))
+    if (!producedAt.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(responses))
         return false;
 
-    if (!extensions.Decode(decoder))
+    if (!extensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1141,9 +1228,12 @@ void SigningCertificateV2::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
 }
 
-bool SigningCertificateV2::Decode(DerDecode decoder)
+bool SigningCertificateV2::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1174,9 +1264,12 @@ void SubjectPublicKeyInfo::Encode(std::span<std::byte> out)
     subjectPublicKey.Encode(eh.DataPtr(out));
 }
 
-bool SubjectPublicKeyInfo::Decode(DerDecode decoder)
+bool SubjectPublicKeyInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1187,10 +1280,10 @@ bool SubjectPublicKeyInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!algorithm.Decode(decoder))
+    if (!algorithm.Decode(innerDecoder))
         return false;
 
-    if (!subjectPublicKey.Decode(decoder))
+    if (!subjectPublicKey.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1209,9 +1302,12 @@ void Certificate::Encode(std::span<std::byte> out)
     signatureValue.Encode(eh.DataPtr(out));
 }
 
-bool Certificate::Decode(DerDecode decoder)
+bool Certificate::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1222,13 +1318,13 @@ bool Certificate::Decode(DerDecode decoder)
         break;
     }
 
-    if (!tbsCertificate.Decode(decoder))
+    if (!tbsCertificate.Decode(innerDecoder))
         return false;
 
-    if (!signatureAlgorithm.Decode(decoder))
+    if (!signatureAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!signatureValue.Decode(decoder))
+    if (!signatureValue.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1261,9 +1357,12 @@ void TBSCertificate::Encode(std::span<std::byte> out)
     extensions.Encode(eh.DataPtr(out));
 }
 
-bool TBSCertificate::Decode(DerDecode decoder)
+bool TBSCertificate::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1276,46 +1375,46 @@ bool TBSCertificate::Decode(DerDecode decoder)
 
     // A V3 cert should always have this, anything with extensions must be v3
     // If it is missing, it implies v1 (value of 0)
-    if (decoder.RemainingData()[0] == std::byte{0xA0})
+    if (innerDecoder.RemainingData()[0] == std::byte{0xA0})
     {
-        if (!version.Decode(decoder))
+        if (!version.Decode(innerDecoder))
             return false;
     }
 
-    if (!serialNumber.Decode(decoder))
+    if (!serialNumber.Decode(innerDecoder))
         return false;
 
-    if (!signature.Decode(decoder))
+    if (!signature.Decode(innerDecoder))
         return false;
 
-    if (!issuer.Decode(decoder))
+    if (!issuer.Decode(innerDecoder))
         return false;
 
-    if (!validity.Decode(decoder))
+    if (!validity.Decode(innerDecoder))
         return false;
 
-    if (!subject.Decode(decoder))
+    if (!subject.Decode(innerDecoder))
         return false;
 
-    if (!subjectPublicKeyInfo.Decode(decoder))
+    if (!subjectPublicKeyInfo.Decode(innerDecoder))
         return false;
 
     // The following may not be present, and may need to be skipped
-    if (decoder.RemainingData()[0] == std::byte{0xA1})
+    if (innerDecoder.RemainingData()[0] == std::byte{0xA1})
     {
-        if (!issuerUniqueID.Decode(decoder))
+        if (!issuerUniqueID.Decode(innerDecoder))
             return false;
     }
 
-    if (decoder.RemainingData()[0] == std::byte{0xA2})
+    if (innerDecoder.RemainingData()[0] == std::byte{0xA2})
     {
-        if (!subjectUniqueID.Decode(decoder))
+        if (!subjectUniqueID.Decode(innerDecoder))
             return false;
     }
 
-    if (decoder.RemainingData()[0] == std::byte{0xA3})
+    if (innerDecoder.RemainingData()[0] == std::byte{0xA3})
     {
-        if (!extensions.Decode(decoder))
+        if (!extensions.Decode(innerDecoder))
             return false;
     }
 
@@ -1335,9 +1434,12 @@ void CertificateList::Encode(std::span<std::byte> out)
     signatureValue.Encode(eh.DataPtr(out));
 }
 
-bool CertificateList::Decode(DerDecode decoder)
+bool CertificateList::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1348,13 +1450,13 @@ bool CertificateList::Decode(DerDecode decoder)
         break;
     }
 
-    if (!tbsCertList.Decode(decoder))
+    if (!tbsCertList.Decode(innerDecoder))
         return false;
 
-    if (!signatureAlgorithm.Decode(decoder))
+    if (!signatureAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!signatureValue.Decode(decoder))
+    if (!signatureValue.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1381,9 +1483,12 @@ void TBSCertList::Encode(std::span<std::byte> out)
     crlExtensions.Encode(eh.DataPtr(out));
 }
 
-bool TBSCertList::Decode(DerDecode decoder)
+bool TBSCertList::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1395,33 +1500,33 @@ bool TBSCertList::Decode(DerDecode decoder)
     }
 
     // Version is optional
-    if (decoder.RemainingData()[0] == static_cast<std::byte>(DerType::Integer))
+    if (innerDecoder.RemainingData()[0] == static_cast<std::byte>(DerType::Integer))
     {
-        if (!version.Decode(decoder))
+        if (!version.Decode(innerDecoder))
             return false;
     }
 
-    if (!signature.Decode(decoder))
+    if (!signature.Decode(innerDecoder))
         return false;
 
-    if (!issuer.Decode(decoder))
+    if (!issuer.Decode(innerDecoder))
         return false;
 
-    if (!thisUpdate.Decode(decoder))
+    if (!thisUpdate.Decode(innerDecoder))
         return false;
 
     // This is also optional, and may not be present
-    if (nextUpdate.Decode(decoder))
+    if (nextUpdate.Decode(innerDecoder))
     {
     }
 
     // These are optional, and may not be present
-    if (revokedCertificates.Decode(decoder))
+    if (revokedCertificates.Decode(innerDecoder))
 
-        if (decoder.IsAllUsed()) // extensions are optional
+        if (decoder.Empty()) // extensions are optional
             return true;
 
-    if (!crlExtensions.Decode(decoder))
+    if (!crlExtensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1438,9 +1543,12 @@ void PolicyInformation::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policyQualifiers, eh.DataPtr(out));
 }
 
-bool PolicyInformation::Decode(DerDecode decoder)
+bool PolicyInformation::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1451,15 +1559,14 @@ bool PolicyInformation::Decode(DerDecode decoder)
         break;
     }
 
-    if (!policyIdentifier.Decode(decoder))
+    if (!policyIdentifier.Decode(innerDecoder))
         return false;
 
-    if (decoder.IsAllUsed()) // policy qualifiers are optional
+    if (decoder.Empty()) // policy qualifiers are optional
         return true;
 
     size_t cbSize = 0;
-    size_t cbPrefix = 0;
-    bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, policyQualifiers);
+    bool ret = decoder.DecodeSequenceOf(cbSize, policyQualifiers);
 
     if (ret)
     {
@@ -1481,9 +1588,12 @@ void ESSCertID::Encode(std::span<std::byte> out)
     issuerSerial.Encode(eh.DataPtr(out));
 }
 
-bool ESSCertID::Decode(DerDecode decoder)
+bool ESSCertID::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1494,10 +1604,10 @@ bool ESSCertID::Decode(DerDecode decoder)
         break;
     }
 
-    if (!certHash.Decode(decoder))
+    if (!certHash.Decode(innerDecoder))
         return false;
 
-    if (!issuerSerial.Decode(decoder))
+    if (!issuerSerial.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1514,9 +1624,12 @@ void SigningCertificate::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, policies, eh.DataPtr(out));
 }
 
-bool SigningCertificate::Decode(DerDecode decoder)
+bool SigningCertificate::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1549,9 +1662,12 @@ void ESSCertIDv2::Encode(std::span<std::byte> out)
     issuerSerial.Encode(eh.DataPtr(out));
 }
 
-bool ESSCertIDv2::Decode(DerDecode decoder)
+bool ESSCertIDv2::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1562,13 +1678,13 @@ bool ESSCertIDv2::Decode(DerDecode decoder)
         break;
     }
 
-    if (!hashAlgorithm.Decode(decoder))
+    if (!hashAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!certHash.Decode(decoder))
+    if (!certHash.Decode(innerDecoder))
         return false;
 
-    if (!issuerSerial.Decode(decoder))
+    if (!issuerSerial.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1585,9 +1701,12 @@ void PolicyQualifierInfo::Encode(std::span<std::byte> out)
     qualifier.Encode(eh.DataPtr(out));
 }
 
-bool PolicyQualifierInfo::Decode(DerDecode decoder)
+bool PolicyQualifierInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1598,10 +1717,10 @@ bool PolicyQualifierInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!policyQualifierId.Decode(decoder))
+    if (!policyQualifierId.Decode(innerDecoder))
         return false;
 
-    if (!qualifier.Decode(decoder))
+    if (!qualifier.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1618,9 +1737,12 @@ void IssuerAndSerialNumber::Encode(std::span<std::byte> out)
     serialNumber.Encode(eh.DataPtr(out));
 }
 
-bool IssuerAndSerialNumber::Decode(DerDecode decoder)
+bool IssuerAndSerialNumber::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1631,10 +1753,10 @@ bool IssuerAndSerialNumber::Decode(DerDecode decoder)
         break;
     }
 
-    if (!issuer.Decode(decoder))
+    if (!issuer.Decode(innerDecoder))
         return false;
 
-    if (!serialNumber.Decode(decoder))
+    if (!serialNumber.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1656,9 +1778,12 @@ void Extension::Encode(std::span<std::byte> out)
     extnValue.Encode(eh.DataPtr(out));
 }
 
-bool Extension::Decode(DerDecode decoder)
+bool Extension::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1669,17 +1794,17 @@ bool Extension::Decode(DerDecode decoder)
         break;
     }
 
-    if (!extnID.Decode(decoder))
+    if (!extnID.Decode(innerDecoder))
         return false;
 
     // This might not be present
-    if (!critical.Decode(decoder))
+    if (!critical.Decode(innerDecoder))
     {
         // Ought to be false by default, but this is more readable
         critical.SetValue(false);
     }
 
-    if (!extnValue.Decode(decoder))
+    if (!extnValue.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1694,9 +1819,12 @@ void CertStatus::Encode(std::span<std::byte> out)
     revoked.Encode(eh.DataPtr(out));
 }
 
-bool CertStatus::Decode(DerDecode decoder)
+bool CertStatus::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1707,13 +1835,13 @@ bool CertStatus::Decode(DerDecode decoder)
         break;
     }
 
-    if (!revoked.Decode(decoder))
+    if (!revoked.Decode(innerDecoder))
         return false;
 
     return true;
 }
 
-bool DisplayText::Decode(DerDecode decoder)
+bool DisplayText::Decode(DerDecode& decoder)
 {
     if (decoder.RemainingData().size() < 2)
         return false;
@@ -1763,9 +1891,12 @@ void SignerInfo::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, unsignedAttrs, eh.DataPtr(out));
 }
 
-bool SignerInfo::Decode(DerDecode decoder)
+bool SignerInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1776,22 +1907,22 @@ bool SignerInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
-    if (!sid.Decode(decoder))
+    if (!sid.Decode(innerDecoder))
         return false;
 
-    if (!digestAlgorithm.Decode(decoder))
+    if (!digestAlgorithm.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(signedAttrs))
         return false;
 
-    if (!signatureAlgorithm.Decode(decoder))
+    if (!signatureAlgorithm.Decode(innerDecoder))
         return false;
 
-    if (!signature.Decode(decoder))
+    if (!signature.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(unsignedAttrs))
@@ -1811,9 +1942,12 @@ void OtherCertificateFormat::Encode(std::span<std::byte> out)
     otherCert.Encode(eh.DataPtr(out));
 }
 
-bool OtherCertificateFormat::Decode(DerDecode decoder)
+bool OtherCertificateFormat::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1824,10 +1958,10 @@ bool OtherCertificateFormat::Decode(DerDecode decoder)
         break;
     }
 
-    if (!otherCertFormat.Decode(decoder))
+    if (!otherCertFormat.Decode(innerDecoder))
         return false;
 
-    if (!otherCert.Decode(decoder))
+    if (!otherCert.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1844,9 +1978,12 @@ void EDIPartyName::Encode(std::span<std::byte> out)
     partyName.Encode(eh.DataPtr(out));
 }
 
-bool EDIPartyName::Decode(DerDecode decoder)
+bool EDIPartyName::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1857,10 +1994,10 @@ bool EDIPartyName::Decode(DerDecode decoder)
         break;
     }
 
-    if (!nameAssigner.Decode(decoder))
+    if (!nameAssigner.Decode(innerDecoder))
         return false;
 
-    if (!partyName.Decode(decoder))
+    if (!partyName.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1879,9 +2016,12 @@ void RevocationEntry::Encode(std::span<std::byte> out)
     crlEntryExtensions.Encode(eh.DataPtr(out));
 }
 
-bool RevocationEntry::Decode(DerDecode decoder)
+bool RevocationEntry::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1895,23 +2035,23 @@ bool RevocationEntry::Decode(DerDecode decoder)
     // We have an optional sequence of RevocationEntry object
     // and won't know if there really is a RevocationEntry until
     // we get here
-    if (decoder.RemainingData()[0] != static_cast<std::byte>(DerType::Integer))
+    if (innerDecoder.RemainingData()[0] != static_cast<std::byte>(DerType::Integer))
     {
         cbData = 0;
         decoder.Reset(); // This keeps us from throwing
         return false;
     }
 
-    if (!userCertificate.Decode(decoder))
+    if (!userCertificate.Decode(innerDecoder))
         return false;
 
-    if (!revocationDate.Decode(decoder))
+    if (!revocationDate.Decode(innerDecoder))
         return false;
 
-    if (decoder.IsAllUsed()) // crlEntryExtensions are optional
+    if (decoder.Empty()) // crlEntryExtensions are optional
         return true;
 
-    if (!crlEntryExtensions.Decode(decoder))
+    if (!crlEntryExtensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1928,9 +2068,12 @@ void OtherRevocationInfoFormat::Encode(std::span<std::byte> out)
     otherRevInfo.Encode(eh.DataPtr(out));
 }
 
-bool OtherRevocationInfoFormat::Decode(DerDecode decoder)
+bool OtherRevocationInfoFormat::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1941,10 +2084,10 @@ bool OtherRevocationInfoFormat::Decode(DerDecode decoder)
         break;
     }
 
-    if (!otherRevInfoFormat.Decode(decoder))
+    if (!otherRevInfoFormat.Decode(innerDecoder))
         return false;
 
-    if (!otherRevInfo.Decode(decoder))
+    if (!otherRevInfo.Decode(innerDecoder))
         return false;
 
     return true;
@@ -1967,9 +2110,12 @@ void SignedData::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, signerInfos, eh.DataPtr(out));
 }
 
-bool SignedData::Decode(DerDecode decoder)
+bool SignedData::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -1980,13 +2126,13 @@ bool SignedData::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(digestAlgorithms))
         return false;
 
-    if (!encapContentInfo.Decode(decoder))
+    if (!encapContentInfo.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(certificates))
@@ -2012,9 +2158,12 @@ void SigPolicyQualifierInfo::Encode(std::span<std::byte> out)
     sigQualifier.Encode(eh.DataPtr(out));
 }
 
-bool SigPolicyQualifierInfo::Decode(DerDecode decoder)
+bool SigPolicyQualifierInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2025,10 +2174,10 @@ bool SigPolicyQualifierInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!sigPolicyQualifierId.Decode(decoder))
+    if (!sigPolicyQualifierId.Decode(innerDecoder))
         return false;
 
-    if (!sigQualifier.Decode(decoder))
+    if (!sigQualifier.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2047,9 +2196,12 @@ void SignaturePolicyId::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, sigPolicyQualifiers, eh.DataPtr(out));
 }
 
-bool SignaturePolicyId::Decode(DerDecode decoder)
+bool SignaturePolicyId::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2060,10 +2212,10 @@ bool SignaturePolicyId::Decode(DerDecode decoder)
         break;
     }
 
-    if (!sigPolicyId.Decode(decoder))
+    if (!sigPolicyId.Decode(innerDecoder))
         return false;
 
-    if (!sigPolicyHash.Decode(decoder))
+    if (!sigPolicyHash.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(sigPolicyQualifiers))
@@ -2083,9 +2235,12 @@ void SPUserNotice::Encode(std::span<std::byte> out)
     explicitText.Encode(eh.DataPtr(out));
 }
 
-bool SPUserNotice::Decode(DerDecode decoder)
+bool SPUserNotice::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2096,10 +2251,10 @@ bool SPUserNotice::Decode(DerDecode decoder)
         break;
     }
 
-    if (!noticeRef.Decode(decoder))
+    if (!noticeRef.Decode(innerDecoder))
         return false;
 
-    if (!explicitText.Decode(decoder))
+    if (!explicitText.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2116,9 +2271,12 @@ void CommitmentTypeQualifier::Encode(std::span<std::byte> out)
     qualifier.Encode(eh.DataPtr(out));
 }
 
-bool CommitmentTypeQualifier::Decode(DerDecode decoder)
+bool CommitmentTypeQualifier::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2129,10 +2287,10 @@ bool CommitmentTypeQualifier::Decode(DerDecode decoder)
         break;
     }
 
-    if (!commitmentTypeIdentifier.Decode(decoder))
+    if (!commitmentTypeIdentifier.Decode(innerDecoder))
         return false;
 
-    if (!qualifier.Decode(decoder))
+    if (!qualifier.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2149,9 +2307,12 @@ void CommitmentTypeIndication::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, commitmentTypeQualifier, eh.DataPtr(out));
 }
 
-bool CommitmentTypeIndication::Decode(DerDecode decoder)
+bool CommitmentTypeIndication::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2162,7 +2323,7 @@ bool CommitmentTypeIndication::Decode(DerDecode decoder)
         break;
     }
 
-    if (!commitmentTypeId.Decode(decoder))
+    if (!commitmentTypeId.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(commitmentTypeQualifier))
@@ -2184,9 +2345,12 @@ void SignerLocation::Encode(std::span<std::byte> out)
     EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, postalAdddress, eh.DataPtr(out));
 }
 
-bool SignerLocation::Decode(DerDecode decoder)
+bool SignerLocation::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2197,10 +2361,10 @@ bool SignerLocation::Decode(DerDecode decoder)
         break;
     }
 
-    if (!countryName.Decode(decoder))
+    if (!countryName.Decode(innerDecoder))
         return false;
 
-    if (!localityName.Decode(decoder))
+    if (!localityName.Decode(innerDecoder))
         return false;
 
     if (!decoder.DecodeSet(postalAdddress))
@@ -2220,9 +2384,12 @@ void SignerAttribute::Encode(std::span<std::byte> out)
     certifiedAttributes.Encode(eh.DataPtr(out));
 }
 
-bool SignerAttribute::Decode(DerDecode decoder)
+bool SignerAttribute::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2236,7 +2403,7 @@ bool SignerAttribute::Decode(DerDecode decoder)
     if (!decoder.DecodeSet(claimedAttributes))
         return false;
 
-    if (!certifiedAttributes.Decode(decoder))
+    if (!certifiedAttributes.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2261,9 +2428,12 @@ void TimeStampReq::Encode(std::span<std::byte> out)
     extensions.Encode(eh.DataPtr(out));
 }
 
-bool TimeStampReq::Decode(DerDecode decoder)
+bool TimeStampReq::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2274,22 +2444,22 @@ bool TimeStampReq::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
-    if (!messageImprint.Decode(decoder))
+    if (!messageImprint.Decode(innerDecoder))
         return false;
 
-    if (!reqPolicy.Decode(decoder))
+    if (!reqPolicy.Decode(innerDecoder))
         return false;
 
-    if (!nonce.Decode(decoder))
+    if (!nonce.Decode(innerDecoder))
         return false;
 
-    if (!certReq.Decode(decoder))
+    if (!certReq.Decode(innerDecoder))
         return false;
 
-    if (!extensions.Decode(decoder))
+    if (!extensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2306,9 +2476,12 @@ void TimeStampResp::Encode(std::span<std::byte> out)
     timeStampToken.Encode(eh.DataPtr(out));
 }
 
-bool TimeStampResp::Decode(DerDecode decoder)
+bool TimeStampResp::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2319,10 +2492,10 @@ bool TimeStampResp::Decode(DerDecode decoder)
         break;
     }
 
-    if (!status.Decode(decoder))
+    if (!status.Decode(innerDecoder))
         return false;
 
-    if (!timeStampToken.Decode(decoder))
+    if (!timeStampToken.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2355,9 +2528,12 @@ void TSTInfo::Encode(std::span<std::byte> out)
     extensions.Encode(eh.DataPtr(out));
 }
 
-bool TSTInfo::Decode(DerDecode decoder)
+bool TSTInfo::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2368,34 +2544,34 @@ bool TSTInfo::Decode(DerDecode decoder)
         break;
     }
 
-    if (!version.Decode(decoder))
+    if (!version.Decode(innerDecoder))
         return false;
 
-    if (!policy.Decode(decoder))
+    if (!policy.Decode(innerDecoder))
         return false;
 
-    if (!messageImprint.Decode(decoder))
+    if (!messageImprint.Decode(innerDecoder))
         return false;
 
-    if (!serialNumber.Decode(decoder))
+    if (!serialNumber.Decode(innerDecoder))
         return false;
 
-    if (!genTime.Decode(decoder))
+    if (!genTime.Decode(innerDecoder))
         return false;
 
-    if (!accuracy.Decode(decoder))
+    if (!accuracy.Decode(innerDecoder))
         return false;
 
-    if (!ordering.Decode(decoder))
+    if (!ordering.Decode(innerDecoder))
         return false;
 
-    if (!nonce.Decode(decoder))
+    if (!nonce.Decode(innerDecoder))
         return false;
 
-    if (!tsa.Decode(decoder))
+    if (!tsa.Decode(innerDecoder))
         return false;
 
-    if (!extensions.Decode(decoder))
+    if (!extensions.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2412,9 +2588,12 @@ void OtherCertId::Encode(std::span<std::byte> out)
     issuerSerial.Encode(eh.DataPtr(out));
 }
 
-bool OtherCertId::Decode(DerDecode decoder)
+bool OtherCertId::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2425,10 +2604,10 @@ bool OtherCertId::Decode(DerDecode decoder)
         break;
     }
 
-    if (!otherCertHash.Decode(decoder))
+    if (!otherCertHash.Decode(innerDecoder))
         return false;
 
-    if (!issuerSerial.Decode(decoder))
+    if (!issuerSerial.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2445,9 +2624,12 @@ void OcspResponsesID::Encode(std::span<std::byte> out)
     ocspRepHash.Encode(eh.DataPtr(out));
 }
 
-bool OcspResponsesID::Decode(DerDecode decoder)
+bool OcspResponsesID::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2458,10 +2640,10 @@ bool OcspResponsesID::Decode(DerDecode decoder)
         break;
     }
 
-    if (!ocspIdentifier.Decode(decoder))
+    if (!ocspIdentifier.Decode(innerDecoder))
         return false;
 
-    if (!ocspRepHash.Decode(decoder))
+    if (!ocspRepHash.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2478,9 +2660,12 @@ void Validity::Encode(std::span<std::byte> out)
     notAfter.Encode(eh.DataPtr(out));
 }
 
-bool Validity::Decode(DerDecode decoder)
+bool Validity::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2491,10 +2676,10 @@ bool Validity::Decode(DerDecode decoder)
         break;
     }
 
-    if (!notBefore.Decode(decoder))
+    if (!notBefore.Decode(innerDecoder))
         return false;
 
-    if (!notAfter.Decode(decoder))
+    if (!notAfter.Decode(innerDecoder))
         return false;
 
     return true;
@@ -2511,9 +2696,12 @@ void AttributeTypeAndValue::Encode(std::span<std::byte> out)
     value.Encode(eh.DataPtr(out));
 }
 
-bool AttributeTypeAndValue::Decode(DerDecode decoder)
+bool AttributeTypeAndValue::Decode(DerDecode& decoder)
 {
-    switch (decoder.InitSequenceOrSet())
+    DecodeResult result;
+    DerDecode innerDecoder;
+    std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+    switch (result)
     {
     case DecodeResult::Failed:
         return false;
@@ -2524,10 +2712,10 @@ bool AttributeTypeAndValue::Decode(DerDecode decoder)
         break;
     }
 
-    if (!type.Decode(decoder))
+    if (!type.Decode(innerDecoder))
         return false;
 
-    if (!value.Decode(decoder))
+    if (!value.Decode(innerDecoder))
         return false;
 
     return true;

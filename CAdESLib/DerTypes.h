@@ -14,7 +14,7 @@
 
 class DerTypeContainer
 {
-/*
+	/*
 	This is actually a bitfield, roughly defined as
 	struct DerType
 	{
@@ -108,13 +108,12 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) = 0;
-	virtual bool Decode(DerDecode decoder) = 0;
-
+	virtual bool Decode(DerDecode& decoder) = 0;
 
 	size_t Size() const { return cbData; }
 
 protected:
-	virtual size_t SetDataSize() = 0;
+	virtual size_t UpdateAndGetDataSize() = 0;
 
 	// Don't calculate the data size more than once
 	size_t cbData;
@@ -161,7 +160,7 @@ public:
 
 	// This contains an encapsulated type, and it has a type
 	// that is defined by the context
-	bool Decode(DerDecode decoder)
+	bool Decode(DerDecode& decoder)
 	{
 		return decoder.Decode<T, type>(innerType, hasData);
 	}
@@ -215,7 +214,7 @@ public:
 
 	bool IsPresent(std::byte t) const { return t == type; }
 
-	bool Decode(DerDecode decoder)
+	bool Decode(DerDecode& decoder)
 	{
 		// If this is an optional type, we could have used
 		// all the bytes on the previous item
@@ -303,34 +302,29 @@ public:
 		std::copy(encodedValue.begin(), encodedValue.end(), out.begin());
 	}
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		auto remaining = decoder.RemainingData();
 		// This can hold anything, by design. Just copy the bytes, might be a Null
-		if (remaining.size() < 2)
+		if (decoder.Empty())
 			return false;
 
-		if (remaining[0] == static_cast<std::byte>(DerType::Null))
+		if (decoder.DecodeNull())
 		{
-			if (remaining[1] == std::byte{0})
-			{
-				cbData = 2;
-				return true;
-			}
-			return false;
+			cbData = 2;
+			return true;
 		}
 		else
 		{
+			std::span<const std::byte> nextBytes;
 			size_t size = 0;
-			size_t cbPrefix = 0;
 
-			if (!DerDecode::DecodeSize(remaining.subspan(1), size, cbPrefix) || 1 + cbPrefix + size > remaining.size())
+			if (!decoder.DecodeSize(size))
 				throw std::out_of_range("Illegal size value");
 
 			encodedValue.clear();
-			encodedValue.resize(remaining.size());
-			cbData = 1 + cbPrefix + static_cast<size_t>(size);
-			std::copy(remaining.begin(), remaining.end(), encodedValue.begin());
+			encodedValue.resize(size);
+			decoder.GetNextBytes(size, nextBytes);
+			std::copy(nextBytes.begin(), nextBytes.end(), encodedValue.begin());
 
 			return true;
 		}
@@ -340,7 +334,7 @@ public:
 	size_t GetBufferSize() const { return encodedValue.size(); }
 
 	// Shouldn't need this for this class, but everything needs it implemented
-	virtual size_t SetDataSize() override;
+	virtual size_t UpdateAndGetDataSize() override;
 
 	static std::ostream &Output(std::ostream &os, const AnyType &o);
 	template <typename CharType>
@@ -382,7 +376,7 @@ public:
 
 private:
 	std::vector<std::byte> encodedValue;
-	static constexpr std::vector<std::byte> nullBytes = { std::byte{(uint8_t)DerType::Null}, std::byte{0}};
+	static constexpr std::vector<std::byte> nullBytes = {std::byte{(uint8_t)DerType::Null}, std::byte{0}};
 };
 
 /*
@@ -417,7 +411,7 @@ public:
 		value.Encode(out);
 	}
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
 		if (value.Decode(decoder))
 		{
@@ -437,7 +431,10 @@ public:
 		auto in = value.GetBuffer();
 		DerDecode decoder{in};
 
-		switch (decoder.InitSequenceOrSet())
+		DecodeResult result;
+		DerDecode innerDecoder;
+		std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+		switch (result)
 		{
 		case DecodeResult::Failed:
 			return false;
@@ -448,24 +445,29 @@ public:
 			break;
 		}
 
-		return inner.Decode(decoder);
+		return inner.Decode(innerDecoder);
 	}
 
 	std::span<const std::byte> GetInnerBuffer() const
 	{
 		auto in = value.GetBuffer();
-		size_t cbPrefix = 0;
+		DerDecode decoder(in);
 
 		size_t innerSize = 0;
 
-		if (!DecodeSize(innerSize) || innerSize > remaining.size())
+		if (!decoder.DecodeSize(innerSize))
 			throw std::out_of_range("Illegal size value");
+		std::span<const std::byte> nextBytes;
 
-		return remaining;
+		if (!decoder.GetNextBytes(innerSize, nextBytes))
+		{
+			throw std::out_of_range("Couldn't get bytes");
+		}
+		return nextBytes;
 	}
 
 protected:
-	virtual size_t SetDataSize() override { return (cbData = value.SetDataSize()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.UpdateAndGetDataSize()); }
 
 	AnyType value;
 	DerTypeContainer derType;
@@ -486,7 +488,7 @@ public:
 	bool GetValue() const { return b == std::byte{0} ? false : true; }
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override;
+	virtual bool Decode(DerDecode& decoder) override;
 
 	friend std::ostream &operator<<(std::ostream &os, const Boolean &b)
 	{
@@ -501,7 +503,7 @@ public:
 	}
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = 1); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = 1); }
 
 	std::byte b;
 };
@@ -556,9 +558,9 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::Integer,value);
+		return decoder.Decode(DerType::Integer, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const Integer &o)
@@ -613,7 +615,7 @@ public:
 	const std::span<const std::byte> &GetBytes() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::vector<std::byte> value;
 };
@@ -627,9 +629,9 @@ public:
 
 	uint8_t UnusedBits() const { return value.size() > 0 ? std::to_integer<uint8_t>(value[0]) : (uint8_t)0; }
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::BitString,value);
+		return decoder.Decode(DerType::BitString, value);
 	}
 
 	size_t ValueSize() const
@@ -653,7 +655,7 @@ public:
 		return true;
 	}
 
-	bool GetValue(std::span<const std::byte>& pValue)
+	bool GetValue(std::span<const std::byte> &pValue)
 	{
 		if (value.size() < 2)
 			return false;
@@ -703,7 +705,7 @@ public:
 	const std::span<const std::byte> GetBits() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::vector<std::byte> value;
 };
@@ -734,9 +736,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::OctetString,value);
+		return decoder.Decode(DerType::OctetString, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const OctetString &o)
@@ -764,7 +766,7 @@ public:
 	const std::vector<std::byte> &GetValue() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::vector<std::byte> value;
 };
@@ -776,11 +778,11 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
 		size_t cbPrefix = 0;
 		auto data = decoder.RemainingData();
-		if (!decoder.CheckDecode(data ,DerType::Enumerated, cbPrefix))
+		if (!decoder.CheckDecode(data, DerType::Enumerated, cbPrefix))
 		{
 			cbData = 0;
 			return false;
@@ -810,7 +812,7 @@ public:
 	std::byte GetValue() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = 1); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = 1); }
 
 	std::byte value;
 };
@@ -834,9 +836,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		bool fRet = decoder.Decode(DerType::ObjectIdentifier,value);
+		bool fRet = decoder.Decode(DerType::ObjectIdentifier, value);
 
 		if (fRet)
 			SetOidIndex();
@@ -865,7 +867,7 @@ public:
 		return ::GetOidString(oidIndex);
 	}
 
-	std::span<const std::byte> GetBytes() { return value; }
+	std::span<const std::byte> GetBytes() { return std::span{value}; }
 
 	bool IsEmpty() const { return value.size() == 0; }
 
@@ -881,19 +883,20 @@ public:
 private:
 	void SetOidIndex()
 	{
-		if (GetOidInfoIndex(value, oidIndex))
+		auto oidSpan = std::span{static_cast<const std::byte *>(value.data()), value.size()};
+		if (GetOidInfoIndex(oidSpan, oidIndex))
 			return;
 
 		oidIndex = ~static_cast<size_t>(0);
 	}
 
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	void EncodeLong(uint64_t in, std::span<std::byte> out);
 	uint32_t DecodeLong(std::span<const std::byte> in, size_t &cbRead) const;
 	uint32_t GetNextLong(const char *start, const char *&next);
 
-	std::span<const std::byte> value;
+	std::vector<std::byte> value;
 	size_t oidIndex;
 };
 
@@ -930,9 +933,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::UTCTime,value);
+		return decoder.Decode(DerType::UTCTime, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const UTCTime &str)
@@ -948,7 +951,7 @@ public:
 	}
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -984,9 +987,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::GeneralizedTime,value);
+		return decoder.Decode(DerType::GeneralizedTime, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const GeneralizedTime &str)
@@ -1002,7 +1005,7 @@ public:
 	}
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1055,7 +1058,7 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override;
+	virtual bool Decode(DerDecode& decoder) override;
 
 	template <typename CharType>
 	friend std::basic_ostream<CharType> &operator<<(std::basic_ostream<CharType> &os, const Time &str)
@@ -1071,7 +1074,7 @@ public:
 	TimeType GetType() const { return type; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 	TimeType type;
@@ -1108,9 +1111,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::IA5String,value);
+		return decoder.Decode(DerType::IA5String, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const IA5String &str)
@@ -1128,7 +1131,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1147,9 +1150,9 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::GeneralString,value);
+		return decoder.Decode(DerType::GeneralString, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const GeneralString &str)
@@ -1167,7 +1170,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1182,9 +1185,9 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::PrintableString,value);
+		return decoder.Decode(DerType::PrintableString, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const PrintableString &str)
@@ -1202,7 +1205,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1221,9 +1224,9 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::T61String,value);
+		return decoder.Decode(DerType::T61String, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const T61String &str)
@@ -1241,7 +1244,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1261,9 +1264,9 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::UTF8String,value);
+		return decoder.Decode(DerType::UTF8String, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const UTF8String &str)
@@ -1281,7 +1284,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1300,9 +1303,9 @@ public:
 	}
 
 	virtual void Encode(std::span<std::byte> out) override;
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::VisibleString,value);
+		return decoder.Decode(DerType::VisibleString, value);
 	}
 
 	friend std::ostream &operator<<(std::ostream &os, const VisibleString &str)
@@ -1320,7 +1323,7 @@ public:
 	const std::string &ToString() const { return value; }
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size()); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size()); }
 
 	std::string value;
 };
@@ -1343,13 +1346,13 @@ public:
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::UniversalString,value);
+		return decoder.Decode(DerType::UniversalString, value);
 	}
 
 private:
-	virtual size_t SetDataSize() override { return (cbData = value.size() * sizeof(value[0])); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size() * sizeof(value[0])); }
 
 	std::u32string value;
 };
@@ -1374,13 +1377,13 @@ public:
 		return true;
 	}
 
-	virtual size_t SetDataSize() override { return (cbData = value.size() * sizeof(wchar_t)); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = value.size() * sizeof(wchar_t)); }
 
 	virtual void Encode(std::span<std::byte> out) override;
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
-		return decoder.Decode(DerType::BMPString,value);
+		return decoder.Decode(DerType::BMPString, value);
 	}
 
 	std::wstring value;
@@ -1411,7 +1414,7 @@ public:
 		cbData = 2;
 	}
 
-	virtual bool Decode(DerDecode decoder) override
+	virtual bool Decode(DerDecode& decoder) override
 	{
 		auto remaining = decoder.RemainingData();
 		// This one is special
@@ -1425,7 +1428,7 @@ public:
 		return true;
 	}
 
-	virtual size_t SetDataSize() override { return (cbData = 0); }
+	virtual size_t UpdateAndGetDataSize() override { return (cbData = 0); }
 };
 
 /* End basic DER encoding types */

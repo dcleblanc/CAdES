@@ -23,13 +23,13 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
-#include <assert.h>
 #include <time.h>
 #include <cstddef>
 #include <algorithm>
 #include <functional>
 #include <span>
 #include <array>
+#include <tuple>
 
 // Utilities implemented in Common.cpp
 // This may involve deprecated functionality

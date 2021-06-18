@@ -51,10 +51,10 @@ class EncapsulatedContentInfo final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = eContentType.EncodedSize() + eContent.EncodedSize();
         return cbData;
@@ -82,7 +82,7 @@ public:
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     void AddAttributeValue(const AttributeValue &value)
     {
@@ -94,12 +94,12 @@ public:
     const std::vector<AttributeValue> &GetAttrValues() const { return attrValues; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         size_t cbNeeded = 0; // For the set byte
 
         // First, calculate how much is needed for the set of attrValues
-        for (auto&& attrValue: attrValues)
+        for (auto &&attrValue : attrValues)
         {
             cbNeeded += attrValue.EncodedSize();
         }
@@ -121,7 +121,7 @@ class AttributeTypeAndValue : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     std::string GetTypeLabel() const { return type.GetOidLabel(); }
 
@@ -149,7 +149,7 @@ public:
     void SetValue(const AnyType &at) { value = at; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = type.EncodedSize() + value.EncodedSize());
     }
@@ -167,7 +167,7 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, attrs, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         return decoder.DecodeSet(attrs);
     }
@@ -180,7 +180,7 @@ public:
     {
         std::string tmp;
 
-        for (const auto& attr : attrs)
+        for (const auto &attr : attrs)
         {
             std::string szLabel = attr.GetTypeLabel();
             std::string s;
@@ -204,7 +204,7 @@ public:
     const std::vector<AttributeTypeAndValue> &GetAttributeVector() const { return attrs; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(attrs);
         return cbData;
@@ -229,9 +229,12 @@ public:
         }
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -246,11 +249,10 @@ public:
         for (size_t item = 0; decoder.RemainingData().size() > 0; ++item)
         {
             RelativeDistinguishedName rdn;
-            if (!rdn.Decode(decoder))
+            if (!rdn.Decode(innerDecoder))
                 return false;
 
             name.push_back(rdn);
-            
         }
 
         return true;
@@ -281,7 +283,7 @@ public:
     const std::vector<RelativeDistinguishedName> &GetRDNVector() const { return name; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         size_t cbNeeded = 0;
 
@@ -320,7 +322,7 @@ public:
         rdnSequence.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         // A Name is a CHOICE, but there's only one possible type, which is an rdnSequence
         return rdnSequence.Decode(decoder);
@@ -339,7 +341,7 @@ public:
     const RDNSequence &GetRDNSequence() const { return rdnSequence; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = 0;
         return cbData;
@@ -354,10 +356,10 @@ class IssuerAndSerialNumber final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = issuer.EncodedSize() + serialNumber.EncodedSize();
         return cbData;
@@ -414,7 +416,7 @@ class Extension final : public DerBase
 		and if not, is evaluated as false
 	*/
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         size_t cbCritical = critical.GetValue() ? critical.EncodedSize() : 0;
         cbData = extnID.EncodedSize() + cbCritical + extnValue.EncodedSize();
@@ -422,7 +424,7 @@ public:
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     std::string ExtensionIdLabel() const { return extnID.GetOidLabel(); }
     std::string ExtensionIdOidString() const { return extnID.GetOidString(); }
@@ -487,7 +489,7 @@ public:
     // {
     //     auto data = std::span{os.GetValue()};
     //     DerDecode decoder{data};
-    //     return os.Decode(decoder);
+    //     return os.Decode(innerDecoder);
     // }
 
 protected:
@@ -504,7 +506,7 @@ public:
         extension.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) final
+    virtual bool Decode(DerDecode& decoder) final
     {
         return extension.Decode(decoder);
     }
@@ -512,9 +514,9 @@ public:
     const AnyType &GetRawExtensionData() const { return extension; }
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
-        return (cbData = extension.SetDataSize());
+        return (cbData = extension.UpdateAndGetDataSize());
     }
 
     AnyType extension;
@@ -551,7 +553,7 @@ public:
         bitString.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) final
+    virtual bool Decode(DerDecode& decoder) final
     {
         if (!bitString.Decode(decoder) || !BitStringToKeyUsage())
             return false;
@@ -564,7 +566,7 @@ public:
     bool HasUsage() const { return (*reinterpret_cast<const int32_t *>(&keyUsageValue) == 0); }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return cbData = bitString.EncodedSize();
     }
@@ -698,12 +700,11 @@ public:
 
     // Also TODO - need to capture all the EKU OIDs
     // in the samples, be able to translate the most common to a friendly name
-    virtual bool Decode(DerDecode decoder) final
+    virtual bool Decode(DerDecode& decoder) final
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf<ObjectIdentifier>(cbPrefix, cbSize, ekus);
+
+        bool ret = decoder.DecodeSequenceOf<ObjectIdentifier>(cbSize, ekus);
 
         if (ret)
         {
@@ -720,13 +721,12 @@ public:
 
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, ekus, eh.DataPtr(out));
-        
     }
 
     const std::vector<ObjectIdentifier> &GetEkus() const { return ekus; }
 
 private:
-    size_t SetDataSize() { return (cbData = GetEncodedSize(ekus)); }
+    size_t UpdateAndGetDataSize() { return (cbData = GetEncodedSize(ekus)); }
 
     std::vector<ObjectIdentifier> ekus;
 };
@@ -752,7 +752,7 @@ public:
         keyIdentifier.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) final
+    virtual bool Decode(DerDecode& decoder) final
     {
         return keyIdentifier.Decode(decoder);
     }
@@ -763,7 +763,7 @@ public:
 private:
     OctetString keyIdentifier;
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = keyIdentifier.EncodedSize());
     }
@@ -837,13 +837,13 @@ class EDIPartyName final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     const DirectoryString &GetNameAssigner() const { return nameAssigner; }
     const DirectoryString &GetPartyName() const { return partyName; }
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = nameAssigner.EncodedSize() + partyName.EncodedSize());
     }
@@ -1012,16 +1012,15 @@ class GeneralNames final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override
     {
-        SetDataSize();
+        UpdateAndGetDataSize();
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, names, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf<GeneralName>(cbPrefix, cbSize, names);
+
+        bool ret = decoder.DecodeSequenceOf<GeneralName>(cbSize, names);
 
         if (ret)
         {
@@ -1035,7 +1034,7 @@ public:
     const std::vector<GeneralName> &GetNames() const { return names; }
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetDataSize(names);
         return cbData;
@@ -1056,17 +1055,17 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         fullName.Encode(eh.DataPtr(out));
-        
 
         nameRelativeToCRLIssuer.Encode(eh.DataPtr(out));
-        
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1077,13 +1076,13 @@ public:
             break;
         }
 
-        if (!fullName.Decode(decoder))
+        if (!fullName.Decode(innerDecoder))
             return false;
 
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (!nameRelativeToCRLIssuer.Decode(decoder))
+        if (!nameRelativeToCRLIssuer.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1096,7 +1095,7 @@ public:
     bool HasNameRelativeToCRLIssuer() const { return nameRelativeToCRLIssuer.HasData(); }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = fullName.EncodedSize() + nameRelativeToCRLIssuer.EncodedSize());
     }
@@ -1119,20 +1118,19 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         distributionPoint.Encode(eh.DataPtr(out));
-        
 
         reasons.Encode(eh.DataPtr(out));
-        
 
         cRLIssuer.Encode(eh.DataPtr(out));
-        
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1143,21 +1141,19 @@ public:
             break;
         }
 
-        if (!distributionPoint.Decode(decoder))
+        if (!distributionPoint.Decode(innerDecoder))
             return false;
 
-        
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (!reasons.Decode(decoder))
+        if (!reasons.Decode(innerDecoder))
             return false;
 
-        
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (!cRLIssuer.Decode(decoder))
+        if (!cRLIssuer.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1172,7 +1168,7 @@ public:
     bool HasCRLIssuer() const { return cRLIssuer.HasData(); }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return cbData = distributionPoint.EncodedSize() + reasons.EncodedSize() + cRLIssuer.EncodedSize();
     }
@@ -1220,12 +1216,11 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, cRLDistributionPoints, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, cRLDistributionPoints);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, cRLDistributionPoints);
 
         if (ret)
         {
@@ -1239,7 +1234,7 @@ public:
     const std::vector<DistributionPoint> &GetDistributionPoints() const { return cRLDistributionPoints; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = GetEncodedSize(cRLDistributionPoints));
     }
@@ -1268,11 +1263,13 @@ class IssuingDistributionPoint : public ExtensionBase
 public:
     IssuingDistributionPoint() : ExtensionBase(id_ce_issuingDistributionPoint) {}
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1291,34 +1288,32 @@ public:
             onlyContainsAttributeCerts are all FALSE, then either the
             distributionPoint field or the onlySomeReasons field MUST be present.
         */
-        distributionPoint.Decode(decoder);
+        distributionPoint.Decode(innerDecoder);
 
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        onlyContainsUserCerts.Decode(decoder);
+        onlyContainsUserCerts.Decode(innerDecoder);
 
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (onlyContainsCACerts.Decode(decoder))
-            
+        if (onlyContainsCACerts.Decode(innerDecoder))
 
-        if (decoder.IsAllUsed())
+            if (decoder.Empty())
+                return true;
+
+        onlySomeReasons.Decode(innerDecoder);
+
+        if (decoder.Empty())
             return true;
 
-        onlySomeReasons.Decode(decoder);
+        indirectCRL.Decode(innerDecoder);
 
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        indirectCRL.Decode(decoder);
-
-        if (decoder.IsAllUsed())
-            return true;
-
-        onlyContainsAttributeCerts.Decode(decoder);
-            
+        onlyContainsAttributeCerts.Decode(innerDecoder);
 
         return true;
     }
@@ -1330,22 +1325,16 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         distributionPoint.Encode(eh.DataPtr(out));
-        
 
         onlyContainsUserCerts.Encode(eh.DataPtr(out));
-        
 
         onlyContainsCACerts.Encode(eh.DataPtr(out));
-        
 
         onlySomeReasons.Encode(eh.DataPtr(out));
-        
 
         indirectCRL.Encode(eh.DataPtr(out));
-        
 
         onlyContainsAttributeCerts.Encode(eh.DataPtr(out));
-        
     }
 
     const DistributionPointName &GetDistributionPoint() const { return distributionPoint.GetInnerType(); }
@@ -1385,7 +1374,7 @@ public:
     }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return cbData = distributionPoint.EncodedSize() + onlyContainsUserCerts.EncodedSize() + onlyContainsCACerts.EncodedSize() + onlySomeReasons.EncodedSize() + indirectCRL.EncodedSize() + onlyContainsAttributeCerts.EncodedSize();
     }
@@ -1425,20 +1414,19 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         keyIdentifier.Encode(eh.DataPtr(out));
-        
 
         authorityCertIssuer.Encode(eh.DataPtr(out));
-        
 
         authorityCertSerialNumber.Encode(eh.DataPtr(out));
-        
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1449,21 +1437,19 @@ public:
             break;
         }
 
-        if (!keyIdentifier.Decode(decoder))
+        if (!keyIdentifier.Decode(innerDecoder))
             return false;
 
-        
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (!authorityCertIssuer.Decode(decoder))
+        if (!authorityCertIssuer.Decode(innerDecoder))
             return false;
 
-        
-        if (decoder.IsAllUsed())
+        if (decoder.Empty())
             return true;
 
-        if (!authorityCertSerialNumber.Decode(decoder))
+        if (!authorityCertSerialNumber.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1478,7 +1464,7 @@ public:
     bool HasCertificateSerialNumber() const { return authorityCertSerialNumber.HasData(); }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return cbData = keyIdentifier.EncodedSize() + authorityCertIssuer.EncodedSize() + authorityCertSerialNumber.EncodedSize();
     }
@@ -1515,17 +1501,17 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         accessMethod.Encode(eh.DataPtr(out));
-        
 
         accessLocation.Encode(eh.DataPtr(out));
-        
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1536,11 +1522,10 @@ public:
             break;
         }
 
-        if (!accessMethod.Decode(decoder))
+        if (!accessMethod.Decode(innerDecoder))
             return false;
 
-        
-        if (!accessLocation.Decode(decoder))
+        if (!accessLocation.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1550,7 +1535,7 @@ public:
     const GeneralName &GetAccessLocation() const { return accessLocation; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = accessMethod.EncodedSize() + accessLocation.EncodedSize());
     }
@@ -1569,12 +1554,11 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, accessDescriptions, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, accessDescriptions);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, accessDescriptions);
 
         if (ret)
         {
@@ -1588,7 +1572,7 @@ public:
     const std::vector<AccessDescription> &GetAccessDescriptions() const { return accessDescriptions; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = GetEncodedSize(accessDescriptions));
     }
@@ -1606,7 +1590,7 @@ public:
         names.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         return names.Decode(decoder);
     }
@@ -1614,7 +1598,7 @@ public:
     const GeneralNames &GetNames() const { return names; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = names.EncodedSize());
     }
@@ -1652,12 +1636,11 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, keyPurposes, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, keyPurposes);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, keyPurposes);
 
         if (ret)
         {
@@ -1671,7 +1654,7 @@ public:
     const std::vector<ObjectIdentifier> &GetKeyPurposes() const { return keyPurposes; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = GetEncodedSize(keyPurposes));
     }
@@ -1689,12 +1672,11 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, certPolicies, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, certPolicies);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, certPolicies);
 
         if (ret)
         {
@@ -1708,7 +1690,7 @@ public:
     const std::vector<KeyPurposes> &GetCertPolicies() { return certPolicies; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = GetEncodedSize(certPolicies));
     }
@@ -1740,20 +1722,19 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         objId.Encode(eh.DataPtr(out));
-        
 
         majorVersion.Encode(eh.DataPtr(out));
-        
 
         minorVersion.Encode(eh.DataPtr(out));
-        
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1764,15 +1745,13 @@ public:
             break;
         }
 
-        if (!objId.Decode(decoder))
+        if (!objId.Decode(innerDecoder))
             return false;
 
-        
-        if (!majorVersion.Decode(decoder))
+        if (!majorVersion.Decode(innerDecoder))
             return false;
 
-        
-        if (!minorVersion.Decode(decoder))
+        if (!minorVersion.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1783,7 +1762,7 @@ public:
     const Integer &GetMinorVersion() const { return minorVersion; }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = objId.EncodedSize() + majorVersion.EncodedSize() + minorVersion.EncodedSize());
     }
@@ -1843,17 +1822,17 @@ public:
         eh.Init(EncodedSize(), static_cast<std::byte>(DerType::ConstructedSequence));
 
         cA.Encode(eh.DataPtr(out));
-        
 
         pathLenConstraint.Encode(eh.DataPtr(out));
-        
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
-        
 
-        switch (decoder.InitSequenceOrSet())
+        DecodeResult result;
+        DerDecode innerDecoder;
+        std::tie(result, innerDecoder) = decoder.InitSequenceOrSet();
+        switch (result)
         {
         case DecodeResult::Failed:
             return false;
@@ -1868,11 +1847,10 @@ public:
 
         if (cA.IsPresent(decoder.RemainingData()[0]))
         {
-            if (!cA.Decode(decoder))
+            if (!cA.Decode(innerDecoder))
                 return false;
 
-            
-            if (decoder.IsAllUsed())
+            if (decoder.Empty())
                 return true;
         }
         else
@@ -1881,7 +1859,7 @@ public:
             (cA.GetInnerType()).SetValue(false);
         }
 
-        if (!pathLenConstraint.Decode(decoder))
+        if (!pathLenConstraint.Decode(innerDecoder))
             return false;
 
         return true;
@@ -1893,7 +1871,7 @@ public:
     const Integer &GetPathLengthConstraint() const { return pathLenConstraint.GetInnerType(); }
 
 private:
-    virtual size_t SetDataSize()
+    virtual size_t UpdateAndGetDataSize()
     {
         return (cbData = cA.EncodedSize() + pathLenConstraint.EncodedSize());
     }
@@ -1957,7 +1935,7 @@ public:
         version.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return version.Decode(decoder);
     }
@@ -1965,7 +1943,7 @@ public:
     const Integer &GetVersion() const { return version; }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = version.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = version.EncodedSize()); }
     Integer version;
 };
 
@@ -1984,7 +1962,7 @@ public:
         certType.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return certType.Decode(decoder);
     }
@@ -1992,7 +1970,7 @@ public:
     const BMPString &GetCertType() const { return certType; }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = certType.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = certType.EncodedSize()); }
     BMPString certType;
 };
 
@@ -2015,7 +1993,7 @@ public:
         prevCertHash.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return prevCertHash.Decode(decoder);
     }
@@ -2023,7 +2001,7 @@ public:
     const OctetString &GetPrevCertHash() const { return prevCertHash; }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = prevCertHash.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = prevCertHash.EncodedSize()); }
     OctetString prevCertHash;
 };
 
@@ -2039,13 +2017,13 @@ public:
         nothing.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return nothing.Decode(decoder);
     }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = nothing.EncodedSize()); }
     Null nothing;
 };
 
@@ -2061,13 +2039,13 @@ public:
         nothing.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return nothing.Decode(decoder);
     }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = nothing.EncodedSize()); }
     Null nothing;
 };
 
@@ -2084,13 +2062,13 @@ public:
         nothing.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return nothing.Decode(decoder);
     }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = nothing.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = nothing.EncodedSize()); }
     Null nothing;
 };
 
@@ -2127,12 +2105,12 @@ public:
         altNames.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return altNames.Decode(decoder);
     }
 
-    virtual size_t SetDataSize() { return (cbData = altNames.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = altNames.EncodedSize()); }
 
     const GeneralNames &GetAltNames() const { return altNames; }
 
@@ -2230,7 +2208,7 @@ public:
         crlDist.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         return crlDist.Decode(decoder);
     }
@@ -2238,7 +2216,7 @@ public:
     const CrlDistributionPoints &GetDistributionPoints() const { return crlDist; }
 
 private:
-    virtual size_t SetDataSize() { return (cbData = crlDist.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() { return (cbData = crlDist.EncodedSize()); }
 
     CrlDistributionPoints crlDist;
 };
@@ -2266,14 +2244,14 @@ public:
 
     AlgorithmIdentifier() = default;
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = algorithm.EncodedSize() + parameters.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     // Accessors
     std::string AlgorithmOid() const { return algorithm.GetOidString(); }
@@ -2300,10 +2278,10 @@ public:
     SignerInfo() = default;
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (
             cbData =
@@ -2329,10 +2307,10 @@ class OtherCertificateFormat final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = otherCertFormat.EncodedSize() + otherCert.EncodedSize());
     }
@@ -2344,14 +2322,14 @@ protected:
 class SubjectPublicKeyInfo final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = algorithm.EncodedSize() + subjectPublicKey.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     const AlgorithmIdentifier &GetAlgorithm() const { return algorithm; }
     const BitString &GetSubjectPublicKey() const { return subjectPublicKey; }
@@ -2364,7 +2342,7 @@ private:
 class Extensions final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = 0;
         for (size_t i = 0; i < values.size(); ++i)
@@ -2379,14 +2357,13 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, values, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         // This is actually a SEQUENCE, oddly, seems it should be a set
         // Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, values);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, values);
 
         if (ret)
         {
@@ -2501,13 +2478,13 @@ class Validity final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     const Time &GetNotBefore() const { return notBefore; }
     const Time &GetNotAfter() const { return notAfter; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = notBefore.EncodedSize() + notAfter.EncodedSize());
     }
@@ -2523,7 +2500,7 @@ public:
     TBSCertificate() = default;
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     // Accessors
     // version
@@ -2656,7 +2633,7 @@ public:
     const Extensions &GetExtensions() const { return extensions.GetInnerType(); }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         // To facilitate debugging
         size_t cbVersion = version.EncodedSize();
@@ -2702,7 +2679,7 @@ class Certificate final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     // Accessors
     // signatureValue
@@ -2731,7 +2708,7 @@ public:
     std::vector<std::byte> &GetThumbprint256() { return thumbprint256; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = tbsCertificate.EncodedSize() + signatureAlgorithm.EncodedSize() + signatureValue.EncodedSize();
         return cbData;
@@ -2761,14 +2738,14 @@ public:
 class IssuerSerial final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = issuer.EncodedSize() + serial.EncodedSize() + issuerUID.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     GeneralNames issuer;
     CertificateSerialNumber serial;
@@ -2780,7 +2757,7 @@ class ObjectDigestInfo final : public DerBase
 public:
     ObjectDigestInfo() {}
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             digestedObjectType.EncodedSize() +
@@ -2792,7 +2769,7 @@ public:
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     DigestedObjectType digestedObjectType;
     ObjectIdentifier otherObjectTypeID;
@@ -2805,14 +2782,14 @@ class Holder final : public DerBase
 public:
     Holder() {}
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = baseCertificateID.EncodedSize() + entityName.EncodedSize() + objectDigestInfo.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     IssuerSerial baseCertificateID; // optional
     GeneralNames entityName;
@@ -2822,10 +2799,10 @@ public:
 class AttCertValidityPeriod final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override { return (cbData = notBeforeTime.EncodedSize() + notAfterTime.EncodedSize()); }
+    virtual size_t UpdateAndGetDataSize() override { return (cbData = notBeforeTime.EncodedSize() + notAfterTime.EncodedSize()); }
     virtual void Encode(std::span<std::byte> out) override;
 
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     GeneralizedTime notBeforeTime;
     GeneralizedTime notAfterTime;
@@ -2834,14 +2811,14 @@ public:
 class V2Form final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = issuerName.EncodedSize() + baseCertificateID.EncodedSize() + objectDigestInfo.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     GeneralNames issuerName;
     IssuerSerial baseCertificateID;
@@ -2860,7 +2837,7 @@ public:
     {
     }
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             version.EncodedSize() +
@@ -2877,7 +2854,7 @@ public:
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     AttCertVersion version; // set this to CertVersionValue::v2
     Holder holder;
@@ -2893,13 +2870,13 @@ public:
 class AttributeCertificate final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = acinfo.EncodedSize() + signatureAlgorithm.EncodedSize() + signatureValue.EncodedSize());
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     AttributeCertificateInfo acinfo;
     AlgorithmIdentifier signatureAlgorithm;
@@ -2943,7 +2920,7 @@ public:
         value.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         return value.Decode(decoder);
     }
@@ -2951,9 +2928,9 @@ public:
     AnyType value;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
-        return (cbData = value.SetDataSize());
+        return (cbData = value.UpdateAndGetDataSize());
     }
 
 private:
@@ -2973,14 +2950,14 @@ class RevocationEntry final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     CertificateSerialNumber userCertificate;
     Time revocationDate;
     Extensions crlEntryExtensions; // optional
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = userCertificate.EncodedSize() + revocationDate.EncodedSize() + crlEntryExtensions.EncodedSize());
     }
@@ -2994,12 +2971,12 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSequence, entries, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        size_t cbPrefix = 0;
+
         size_t cbSize = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, entries);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, entries);
 
         if (ret)
         {
@@ -3013,7 +2990,7 @@ public:
     const RevocationEntry &GetRevocationEntry(size_t index) const { return entries[index]; }
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = 0;
         for (size_t i = 0; i < entries.size(); ++i)
@@ -3030,7 +3007,7 @@ protected:
 class TBSCertList final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             version.EncodedSize() +
@@ -3045,7 +3022,7 @@ public:
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     Integer version; // optional, must be v2 if present
     AlgorithmIdentifier signature;
@@ -3059,14 +3036,14 @@ public:
 class CertificateList final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = tbsCertList.EncodedSize() + signatureAlgorithm.EncodedSize() + signatureValue.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     TBSCertList tbsCertList;
     AlgorithmIdentifier signatureAlgorithm;
@@ -3077,13 +3054,13 @@ class OtherRevocationInfoFormat final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
     ObjectIdentifier otherRevInfoFormat;
     AnyType otherRevInfo;
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = otherRevInfoFormat.EncodedSize() + otherRevInfo.EncodedSize());
     }
@@ -3109,7 +3086,7 @@ public:
         value.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         return value.Decode(decoder);
     }
@@ -3117,9 +3094,9 @@ public:
     AnyType value;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
-        return (cbData = value.SetDataSize());
+        return (cbData = value.UpdateAndGetDataSize());
     }
 
 private:
@@ -3142,10 +3119,10 @@ class SignedData final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (
             cbData = version.EncodedSize() +
@@ -3167,14 +3144,14 @@ protected:
 class ContentInfo final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = contentType.EncodedSize() + content.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     ContentType contentType;
     AnyType content;
@@ -3203,7 +3180,7 @@ public:
     void SetValue(BMPString &bmpString) { SetValue(DisplayTextType::BMP, bmpString); }
     void SetValue(UTF8String &utf8String) { SetValue(DisplayTextType::UTF8, utf8String); }
 
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = value.EncodedSize();
         return cbData;
@@ -3214,7 +3191,7 @@ public:
         value.Encode(out);
     }
 
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     AnyType value;
 
@@ -3232,7 +3209,7 @@ private:
 class NoticeReference final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(noticeNumbers) + organization.EncodedSize();
         return cbData;
@@ -3240,7 +3217,7 @@ public:
 
     virtual void Encode(std::span<std::byte> out) override;
 
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     DisplayText organization;
     std::vector<Integer> noticeNumbers;
@@ -3250,10 +3227,10 @@ class UserNotice final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = noticeRef.EncodedSize() + explicitText.EncodedSize());
     }
@@ -3270,13 +3247,13 @@ public:
     // See https://tools.ietf.org/html/rfc3280 for specification
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     const PolicyQualifierId &GetPolicyQualifierId() const { return policyQualifierId; }
     const AnyType &GetQualifier() const { return qualifier; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = policyQualifierId.EncodedSize() + qualifier.EncodedSize());
     }
@@ -3291,13 +3268,13 @@ public:
     PolicyInformation() = default;
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     const CertPolicyId &GetPolicyIdentifier() const { return policyIdentifier; }
     const std::vector<PolicyQualifierInfo> &GetPolicyQualifiers() const { return policyQualifiers; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = policyIdentifier.EncodedSize() + GetEncodedSize(policyQualifiers));
     }
@@ -3341,12 +3318,11 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, certificatePolicies, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
         size_t cbSize = 0;
-        size_t cbPrefix = 0;
-        
-        bool ret = decoder.DecodeSequenceOf(cbPrefix, cbSize, certificatePolicies);
+
+        bool ret = decoder.DecodeSequenceOf(cbSize, certificatePolicies);
 
         if (ret)
         {
@@ -3360,7 +3336,7 @@ public:
     const std::vector<PolicyInformation> &GetPolicyInformationVector() const { return certificatePolicies; }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = GetEncodedSize(certificatePolicies));
     }
@@ -3372,10 +3348,10 @@ class ESSCertID final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = certHash.EncodedSize() + issuerSerial.EncodedSize());
     }
@@ -3393,10 +3369,10 @@ class SigningCertificate final : public DerBase
 	*/
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = GetEncodedSize(certs) + GetEncodedSize(policies));
     }
@@ -3411,10 +3387,10 @@ public:
     ESSCertIDv2(HashAlgorithm alg = HashAlgorithm::SHA256) : hashAlgorithm(alg) {}
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = hashAlgorithm.EncodedSize() + certHash.EncodedSize() + issuerSerial.EncodedSize());
     }
@@ -3433,7 +3409,7 @@ class SigningCertificateV2 final : public DerBase
 	*/
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     void AddSigningCert(const ESSCertIDv2 &certID)
     {
@@ -3446,7 +3422,7 @@ public:
     }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(certs) + GetEncodedSize(policies);
         return cbData;
@@ -3462,10 +3438,10 @@ class OtherHashAlgAndValue final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = hashAlgorithm.EncodedSize() + hashValue.EncodedSize();
         return cbData;
@@ -3481,10 +3457,10 @@ class SigPolicyQualifierInfo final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = sigPolicyQualifierId.EncodedSize() + sigQualifier.EncodedSize());
     }
@@ -3500,10 +3476,10 @@ class SignaturePolicyId final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = sigPolicyId.EncodedSize() + sigPolicyHash.EncodedSize() + GetEncodedSize(sigPolicyQualifiers));
     }
@@ -3540,10 +3516,10 @@ class SPUserNotice final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = noticeRef.EncodedSize() + explicitText.EncodedSize());
     }
@@ -3581,10 +3557,10 @@ class CommitmentTypeQualifier final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = commitmentTypeIdentifier.EncodedSize() + qualifier.EncodedSize());
     }
@@ -3602,10 +3578,10 @@ class CommitmentTypeIndication final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = commitmentTypeId.EncodedSize() + GetEncodedSize(commitmentTypeQualifier));
     }
@@ -3625,10 +3601,10 @@ class SignerLocation final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = countryName.EncodedSize() + localityName.EncodedSize() + GetEncodedSize(postalAdddress));
     }
@@ -3649,10 +3625,10 @@ class SignerAttribute final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(claimedAttributes) + certifiedAttributes.EncodedSize();
         return cbData;
@@ -3667,10 +3643,10 @@ class MessageImprint final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = hashAlgorithm.EncodedSize() + hashedMessage.EncodedSize();
         return cbData;
@@ -3686,10 +3662,10 @@ class TimeStampReq final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (
             cbData =
@@ -3755,14 +3731,14 @@ public:
         EncodeHelper::EncodeSetOrSequenceOf(DerType::ConstructedSet, values, out);
     }
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
+
         return decoder.DecodeSet(values);
     }
 
 protected:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = 0;
         for (uint32_t i = 0; i < values.size(); ++i)
@@ -3781,10 +3757,10 @@ class PKIStatusInfo final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = status.EncodedSize() + statusString.EncodedSize() + failInfo.EncodedSize();
         return cbData;
@@ -3799,10 +3775,10 @@ class TimeStampResp final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = status.EncodedSize() + timeStampToken.EncodedSize();
         return cbData;
@@ -3816,10 +3792,10 @@ class Accuracy final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = seconds.EncodedSize() + millis.EncodedSize() + micros.EncodedSize();
         return cbData;
@@ -3834,10 +3810,10 @@ class TSTInfo final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (
             cbData = version.EncodedSize() +
@@ -3893,10 +3869,10 @@ class OtherCertId final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = otherCertHash.EncodedSize() + issuerSerial.EncodedSize());
     }
@@ -3916,10 +3892,10 @@ class CrlIdentifier final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = crlissuer.EncodedSize() + crlIssuedTime.EncodedSize() + crlNumber.EncodedSize();
         return cbData;
@@ -3934,10 +3910,10 @@ class CrlValidatedID final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = crlHash.EncodedSize() + crlIdentifier.EncodedSize());
     }
@@ -3969,7 +3945,7 @@ public:
         value.Encode(out);
     }
 
-    bool Decode(DerDecode decoder)
+    bool Decode(DerDecode& decoder)
     {
         // TODO - assign type value once we can determine what this is
         return value.Decode(decoder);
@@ -3979,7 +3955,7 @@ public:
     void SetValue(KeyHash &byKey) { SetValue(ResponderIDType::KeyHash, byKey); }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = value.EncodedSize();
         return cbData;
@@ -3999,14 +3975,14 @@ private:
 class OcspIdentifier final : public DerBase
 {
 public:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = ocspResponderID.EncodedSize() + producedAt.EncodedSize();
         return cbData;
     }
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
     ResponderID ocspResponderID; //As in OCSP response data
@@ -4017,10 +3993,10 @@ class OcspResponsesID final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = ocspIdentifier.EncodedSize() + ocspRepHash.EncodedSize();
         return cbData;
@@ -4035,14 +4011,14 @@ class OcspListID final : public DerBase
 public:
     virtual void Encode(std::span<std::byte> out) override;
 
-    virtual bool Decode(DerDecode decoder) override
+    virtual bool Decode(DerDecode& decoder) override
     {
-        
+
         return decoder.DecodeSet(ocspResponses);
     }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(ocspResponses);
         return cbData;
@@ -4057,10 +4033,10 @@ class OtherRevRefs final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = otherRevRefType.EncodedSize() + otherRevRefs.EncodedSize();
         return cbData;
@@ -4074,10 +4050,10 @@ class CrlOcspRef final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(crlids) + ocspids.EncodedSize() + otherRev.EncodedSize();
         return cbData;
@@ -4109,10 +4085,10 @@ class OtherRevVals final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = otherRevValType.EncodedSize() + otherRevVals.EncodedSize();
         return cbData;
@@ -4197,10 +4173,10 @@ class RevokedInfo final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData = revocationTime.EncodedSize() + revocationReason.EncodedSize());
     }
@@ -4225,7 +4201,7 @@ public:
     CertStatus() : type(CertStatusType::Unknown) {}
 
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
     size_t EncodedSize() const override
     {
@@ -4236,7 +4212,7 @@ public:
     }
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         if (type != CertStatusType::Revoked)
             return 0; // No data for Null
@@ -4253,10 +4229,10 @@ class CertID final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             hashAlgorithm.EncodedSize() +
@@ -4276,10 +4252,10 @@ class SingleResponse final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         return (cbData =
                     certID.EncodedSize() +
@@ -4300,10 +4276,10 @@ class ResponseData final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             version.EncodedSize() +
@@ -4326,10 +4302,10 @@ class BasicOCSPResponse final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData =
             tbsResponseData.EncodedSize() +
@@ -4350,10 +4326,10 @@ class RevocationValues final : public DerBase
 {
 public:
     virtual void Encode(std::span<std::byte> out) override;
-    virtual bool Decode(DerDecode decoder) override;
+    virtual bool Decode(DerDecode& decoder) override;
 
 private:
-    virtual size_t SetDataSize() override
+    virtual size_t UpdateAndGetDataSize() override
     {
         cbData = GetEncodedSize(crlVals) + GetEncodedSize(ocspVals) + otherRevVals.EncodedSize();
         return cbData;

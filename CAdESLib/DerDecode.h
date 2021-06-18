@@ -18,23 +18,25 @@ public:
     {
     }
 
+    DerDecode() = default;
     ~DerDecode() = default;
     DerDecode(DerDecode &&rhs) = default;
     DerDecode(const DerDecode &) = default;
-    DerDecode &operator=(const DerDecode &rhs) = delete;
-    DerDecode &operator=(DerDecode &&rhs) = delete;
+    DerDecode &operator=(const DerDecode &rhs) = default;
+    DerDecode &operator=(DerDecode &&rhs) = default;
 
     // Basic check for any type
-    bool CheckDecode(std::span<const std::byte> bytesToValidate, DerType type, size_t &cbPrefix)
+    inline bool CheckDecode(std::span<const std::byte> bytesToValidate, DerType type, size_t &cbPrefix)
     {
-        size_t size = 0;
+        //size_t size = 0;
         // Check for sufficient incoming bytes
         if (bytesToValidate.size() >= 3 &&
             // If it is context-specific, allow it, else verify that it is the type we expect
             (std::byte{0} != (bytesToValidate[0] & std::byte{0x80}) || bytesToValidate[0] == static_cast<std::byte>(type)))
         {
-            if (!DecodeSize(bytesToValidate.subspan(1), size, cbPrefix) || 1 + cbPrefix + size > bytesToValidate.size())
-                throw std::out_of_range("Illegal size value");
+            //if (!DecodeSize(bytesToValidate.subspan(1), size, cbPrefix) || 1 + cbPrefix + size > bytesToValidate.size())
+            // if (!DecodeSize(size) || 1 + cbPrefix + size > bytesToValidate.size())
+            //     throw std::out_of_range("Illegal size value");
 
             cbPrefix++;
             return true;
@@ -61,8 +63,21 @@ public:
             return DecodeNull();
         }
 
-        remaining = in.subspan(cbPrefix);
-        DecodeInner(value);
+        remaining = remaining.subspan(cbPrefix);
+
+        size_t size = 0;
+        if (!DecodeSize(size) || size > remaining.size())
+        {
+            return false;
+        }
+        std::span<const std::byte> intBytes;
+        if (!GetNextBytes(size, intBytes)) {
+            return false;
+        }
+        
+        DerDecode innerDecoder{intBytes};
+
+        innerDecoder.DecodeInner(value);
 
         return true;
     }
@@ -80,6 +95,7 @@ public:
 
         if (remaining[0] == type)
         {
+            remaining = remaining.subspan(1);
             size_t cbPrefix = 0;
 
             if (!CheckDecode(remaining, static_cast<const DerType>(remaining[0]), cbPrefix))
@@ -99,20 +115,23 @@ public:
         return false;
     }
 
-    DecodeResult InitSequenceOrSet()
+    std::tuple<DecodeResult, DerDecode> InitSequenceOrSet()
     {
-        auto isNull = false;
-        // This checks internally to see if the data size is within bounds of in.size()
-        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, isNull))
-            return DecodeResult::Failed;
+        size_t size = 0;
+        std::span<const std::byte> sequenceBytes;
+        // This checks internally to see if the data size is within bounds of remaining.size()
+        if (!DecodeSequenceOrSet(DerType::ConstructedSequence, size) 
+        || !GetNextBytes(size, sequenceBytes))
+            return std::tuple{DecodeResult::Failed, *this};
 
-        if (isNull)
-            return DecodeResult::Null;
+        if (size == 0)
+            return std::tuple{DecodeResult::Null, *this};
 
-        if (0 == remaining.size())
-            return DecodeResult::EmptySequence;
+        DerDecode sequenceDecoder{sequenceBytes};
+        if (sequenceDecoder.Empty())
+            return std::tuple{DecodeResult::EmptySequence, sequenceDecoder};
 
-        return DecodeResult::Success;
+        return std::tuple{DecodeResult::Success, sequenceDecoder};
     }
 
     std::span<const std::byte> InitialData() const { return in; }
@@ -132,8 +151,6 @@ public:
 
     inline bool DecodeSize(size_t &size)
     {
-        uint32_t i = 0;
-
         size = 0;
 
         if (remaining.size() == 0)
@@ -144,7 +161,7 @@ public:
         // Detect short form
         if ((remaining[0] & std::byte{0x80}) == std::byte{0})
         {
-            size = std::to_integer<size_t>(in[0]);
+            size = std::to_integer<size_t>(remaining[0]);
             remaining = remaining.subspan(1);
             return true;
         }
@@ -161,14 +178,14 @@ public:
         if (bytesToDecode > 8 || bytesToDecode >= remaining.size() || bytesToDecode == 0)
             return false;
 
-        for (i = 1; i <= bytesToDecode; ++i)
+        for (size_t i = 1; i <= bytesToDecode; ++i)
         {
             tmp += std::to_integer<uint8_t>(remaining[i]);
 
             if (i < bytesToDecode)
                 tmp <<= 8;
         }
-        remaining = remaining.subspan(bytesToDecode + 1);
+        remaining = remaining.subspan(bytesToDecode + 1); // + 1 for the initial byte
 
         // We now have the size in a 64-bit value, check whether it fits in a size_t
         // Arbitrarily say that max size is 1/2 SIZE_T_MAX
@@ -179,7 +196,7 @@ public:
             return false;
         }
 
-        size = static_cast<size_t>(tmp);
+        size = tmp;
         return true;
     }
 
@@ -189,7 +206,7 @@ public:
         size_t cbPrefix = 0;
         size_t cbSize = 0;
 
-        if (DecodeSetOrSequenceOf(DerType::ConstructedSet, cbPrefix, cbSize, out))
+        if (DecodeSetOrSequenceOf(DerType::ConstructedSet, cbSize, out))
         {
             remaining = remaining.subspan(cbPrefix + cbSize);
             return true;
@@ -199,12 +216,24 @@ public:
     }
 
     template <typename T>
-    bool DecodeSequenceOf(size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
+    bool DecodeSequenceOf(size_t &cbSize, std::vector<T> &out)
     {
-        return DecodeSetOrSequenceOf(DerType::ConstructedSequence, cbPrefix, cbSize, out);
+        return DecodeSetOrSequenceOf(DerType::ConstructedSequence, cbSize, out);
     }
 
-    bool IsAllUsed() const { return cbUsed == in.size(); }
+    bool GetNextBytes(size_t size, std::span<const std::byte> &nextBytes)
+    {
+        if (remaining.size() < size)
+        {
+            return false;
+        }
+
+        nextBytes = remaining.subspan(0, size);
+        remaining = remaining.subspan(size);
+        return true;
+    }
+
+    bool Empty() const { return remaining.size() < 2; }
 
     // Used to help work with optional cases
     // where we don't know that it was optional until we decode into it
@@ -219,17 +248,15 @@ private:
     size_t prefixSize;
 
     // This checks whether the tag is for a sequence, as expected, and if it is,
-    // adjusts remaining.size() to only include the sequence
-    bool DecodeSequenceOrSet(DerType type, bool &isNull)
+    // adjusts remaining to only include the sequence
+    bool DecodeSequenceOrSet(DerType type, size_t &size)
     {
         // Avoid complications -
         if (DecodeNull())
         {
-            isNull = true;
+            size = 0;
             return true;
         }
-
-        isNull = false;
 
         // Validate the sequence
         size_t cbPrefix = 0;
@@ -241,31 +268,41 @@ private:
 
         // Adjust remaining data to start at the beginning of the sequence
         remaining = remaining.subspan(cbPrefix);
+
+        if (!DecodeSize(size))
+        {
+            return false;
+        }
         return true;
     }
 
     template <typename T>
-    bool DecodeSetOrSequenceOf(DerType type, size_t &cbPrefix, size_t &cbSize, std::vector<T> &out)
+    bool DecodeSetOrSequenceOf(DerType type, size_t &size, std::vector<T> &out)
     {
-        bool isNull = false;
-        
         out.clear();
-        if (!DecodeSequenceOrSet(type, isNull))
+        if (!DecodeSequenceOrSet(type, size))
         {
-            cbSize = 0;
+            size = 0;
             return false;
         }
 
-        if (isNull)
+        // null takes two bytes but has zero in the set/sequence
+        if (size == 0)
         {
-            cbSize = 0;
+            size = 2;
             return true;
         }
 
         //offset = cbPrefix;
         //in.size() = cbPrefix + cbSize;
+        std::span<const std::byte> setBytes;
+        if (!GetNextBytes(size, setBytes))
+        {
+            throw std::overflow_error("Not enough bytes remain for the sequence");
+        }
 
-        while (remaining.size() > 0)
+        DerDecode decoder{setBytes};
+        while (!decoder.Empty())
         {
             // size_t cbElement = 0;
             T t;
@@ -273,7 +310,7 @@ private:
             // if (offset > in.size())
             //     throw std::overflow_error("Integer overflow");
 
-            if (!t.Decode(*this))
+            if (!t.Decode(decoder))
             {
                 // Accomodate the case where we have to decode into the
                 // sequence to see if the element is optional
@@ -281,7 +318,7 @@ private:
                 // {
                 //     cbPrefix = 0;
                 // }
-                cbSize = 0;
+                size = 0;
                 return false;
             }
 
@@ -312,7 +349,7 @@ private:
     void DecodeInner(std::basic_string<CharType> &value)
     {
         auto pIn = reinterpret_cast<const CharType *>(remaining.data());
-        auto stringView = std::basic_string_view<CharType>{pIn, in.size()};
+        auto stringView = std::basic_string_view<CharType>{pIn, remaining.size()};
         value = std::basic_string<CharType>{stringView.begin(), stringView.end()};
     }
 };
