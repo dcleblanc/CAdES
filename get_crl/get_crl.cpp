@@ -1,6 +1,7 @@
 #include <CAdESLib/Common.h>
 #include <CAdESLib/DerTypes.h>
 #include <CAdESLib/CAdES.h>
+#include <CAdESLib/TestDerTypes.h>
 #include <algorithm>
 
 enum class LoadResult
@@ -25,8 +26,11 @@ LoadResult LoadObjectFromFile(std::string szFile, T &obj)
     bool fDecode = false;
     try
     {
-        DerDecode decoder{contents};
-        fDecode = obj.Decode(decoder);
+        // DerDecode decoder{contents};
+        // fDecode = obj.Decode(decoder);
+
+        auto tdt = TestDerType::Init(contents);
+        tdt->Print();
     }
     catch (...)
     {
